@@ -2,6 +2,7 @@ from uuid import UUID
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
 
 from src.chat.gpt_dialog import GPTDialog
@@ -127,6 +128,11 @@ class GPTListWidgetItem(QWidget):
         main_layout.setContentsMargins(7, 7, 7, 7)
         strange_widget.setLayout(main_layout)
 
+        self._icon_label = Label()
+        self._icon_label.setFixedSize(30, 30)
+        self._icon_label.mouseMoving.connect(lambda: self.set_hover(True))
+        main_layout.addWidget(self._icon_label)
+
         self._name_label = Label()
         self.update_name()
         self._name_label.mouseMoving.connect(lambda: self.set_hover(True))
@@ -138,6 +144,13 @@ class GPTListWidgetItem(QWidget):
         main_layout.addWidget(self._button_delete)
 
     def update_name(self):
+        icons = {
+            GPTDialog.SIMPLE: 'simple_chat',
+            GPTDialog.TRANSLATE: 'translate',
+        }
+        self._icon_label.setPixmap(QPixmap(self._tm.get_image(
+            icons.get(self._chat.type, 'simple_chat'))).scaledToWidth(30))
+
         if self._chat.name.strip():
             self._name_label.setText(self._chat.name)
         elif self._chat.messages:

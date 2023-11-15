@@ -6,6 +6,9 @@ from src.commands import write_file, read_json
 
 
 class GPTDialog:
+    SIMPLE = 0
+    TRANSLATE = 1
+
     def __init__(self, path, dialog_id=None):
         self._data_path = path
 
@@ -17,6 +20,8 @@ class GPTDialog:
         self._path = f"{self._data_path}/{self.id}.json"
 
         self.messages = []
+        self.type = GPTDialog.SIMPLE
+        self.data = dict()
         self.name = ''
         self.time = 0
         self.used_messages = 10
@@ -26,6 +31,8 @@ class GPTDialog:
 
     def store(self):
         write_file(self._path, json.dumps({
+            'type': self.type,
+            'data': self.data,
             'name': self.name,
             'messages': self.messages,
             'time': self.time,
@@ -37,6 +44,8 @@ class GPTDialog:
 
     def load(self):
         data = read_json(self._path)
+        self.type = data.get('type', GPTDialog.SIMPLE)
+        self.data = data.get('data', dict())
         self.name = data.get('name', '')
         self.time = data.get('time', 0)
         self.messages = data.get('messages', [])
@@ -69,3 +78,11 @@ class GPTDialog:
     def delete(self):
         if os.path.isfile(self._path):
             os.remove(self._path)
+
+    def system_prompts(self):
+        match self.type:
+            case GPTDialog.SIMPLE:
+                return []
+            case GPTDialog.TRANSLATE:
+                return [{'role': 'system', 'content': f"You translate messages from {self.data['language1']} to "
+                                                      f"{self.data['language2']} or vice versa"}]

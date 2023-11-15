@@ -85,7 +85,11 @@ class ChatWidget(QWidget):
         self.add_bubble(text, ChatBubble.SIDE_RIGHT)
         self._text_edit.setText("")
         self._dialog.append_message('user', text)
-        self.looper = Looper(self._dialog.messages[-self._dialog.used_messages:], temperature=self._dialog.temperature)
+
+        messages = self._dialog.system_prompts()
+        messages.extend(self._dialog.messages[-self._dialog.used_messages:])
+
+        self.looper = Looper(messages, temperature=self._dialog.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
         self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)

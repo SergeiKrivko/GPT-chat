@@ -4,7 +4,7 @@ from time import time, sleep
 from uuid import UUID
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QLabel
 
 from src.chat import gpt
 from src.chat.gpt_dialog import GPTDialog
@@ -12,6 +12,7 @@ from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.settings_window import ChatSettingsWindow
 from src.ui.button import Button
+from src.ui.custom_dialog import CustomDialog
 
 
 class ChatPanel(QWidget):
@@ -41,6 +42,11 @@ class ChatPanel(QWidget):
         self._button_add.setFixedSize(36, 36)
         self._button_add.clicked.connect(self._new_dialog)
         top_layout.addWidget(self._button_add)
+
+        self._button_add_special = Button(self.tm, 'plus', css='Bg')
+        self._button_add_special.setFixedSize(36, 36)
+        self._button_add_special.clicked.connect(self._new_special_dialog)
+        top_layout.addWidget(self._button_add_special)
 
         self._button_settings = Button(self.tm, 'generate', css='Bg')
         self._button_settings.setFixedSize(36, 36)
@@ -77,12 +83,25 @@ class ChatPanel(QWidget):
                 dialog = GPTDialog(self._data_path, el[:-len('.json')])
                 dialog.load()
                 self._add_dialog(dialog)
+        if (dialog_id := UUID(self.sm.get('current_dialog', ''))) in self.chat_widgets:
+            self._select_dialog(dialog_id)
+            self._list_widget.select(dialog_id)
 
     def _on_dialog_loaded(self, dialog: GPTDialog):
         self._add_dialog(dialog)
         if dialog.id == self._last_dialog:
             self._select_dialog(dialog.id)
             self._list_widget.select(dialog.id)
+
+    def _new_special_dialog(self):
+        dialog = GPTDialog(self._data_path)
+        dialog.type = GPTDialog.TRANSLATE
+        dialog.data['language1'] = 'russian'
+        dialog.data['language2'] = 'english'
+        dialog.name = f"Переводчик {dialog.data['language1']} ↔ {dialog.data['language2']}"
+        dialog.used_messages = 1
+        dialog.time = time()
+        self._add_dialog(dialog)
 
     def _new_dialog(self):
         dialog = GPTDialog(self._data_path)
@@ -149,9 +168,26 @@ class ChatPanel(QWidget):
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
+        self._button_add_special.set_theme()
         self._list_widget.set_theme()
         for el in self.chat_widgets.values():
             el.set_theme()
+
+
+class NewChatDialog(CustomDialog):
+    def __init__(self, tm):
+        super().__init__(tm, "Новый диалог", True, True)
+
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+        self._labels = []
+
+        label = QLabel("Тип диалога")
+
+        self.set_theme()
+
+    def set_theme(self):
+        super().set_theme()
 
 
 class DialogLoader(QThread):
