@@ -1,5 +1,6 @@
 import json
 import os.path
+import time
 from uuid import uuid4, UUID
 
 from src.commands import write_file, read_json
@@ -24,6 +25,7 @@ class GPTDialog:
         self.data = dict()
         self.name = ''
         self.time = 0
+        self.utime = 0
         self.used_messages = 10
         self.saved_messages = 100
         self.temperature = 0.5
@@ -36,6 +38,7 @@ class GPTDialog:
             'name': self.name,
             'messages': self.messages,
             'time': self.time,
+            'utime': self.utime,
             'used_messages': self.used_messages,
             'saved_messages': self.saved_messages,
             'temperature': self.temperature,
@@ -48,6 +51,7 @@ class GPTDialog:
         self.data = data.get('data', dict())
         self.name = data.get('name', '')
         self.time = data.get('time', 0)
+        self.utime = data.get('utime', 0)
         self.messages = data.get('messages', [])
         self.used_messages = data.get('used_messages', 0)
         self.saved_messages = data.get('saved_messages', 0)
@@ -67,6 +71,7 @@ class GPTDialog:
         self.messages.append(message)
         while len(self.messages) > self.saved_messages:
             self.messages.pop(0)
+        self.utime = time.time()
         self.store()
         return message
 

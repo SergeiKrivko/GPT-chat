@@ -122,7 +122,7 @@ class ChatBubble(QWidget):
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
-            background-color: {self._tm['BgColor']};
+            background-color: {self._tm['MenuColor']};
             border: 1px solid {self._tm['BorderColor']};
             border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
             border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;

@@ -13,6 +13,7 @@ from src.ui.button import Button
 
 class ChatWidget(QWidget):
     buttonBackPressed = pyqtSignal(UUID)
+    updated = pyqtSignal()
 
     def __init__(self, sm, tm, dialog: GPTDialog):
         super().__init__()
@@ -117,6 +118,7 @@ class ChatWidget(QWidget):
     def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._delete_message(bubble))
         if index is None:
+            self.updated.emit()
             self._scroll_layout.addWidget(bubble)
             self._bubbles.append(bubble)
         else:

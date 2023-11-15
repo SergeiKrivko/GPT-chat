@@ -10,7 +10,7 @@ fig = plt.figure()
 def render_latex(sm, tm, latex: str):
     # Создание области отрисовки
     fig.clear()
-    fig.set_facecolor(tm['BgColor'])
+    fig.set_facecolor(tm['MenuColor'])
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_axis_off()
 

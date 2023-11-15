@@ -43,6 +43,19 @@ class GPTListWidget(QScrollArea):
     def select(self, chat_id):
         self._items[chat_id].set_selected(True)
 
+    def sort_dialogs(self):
+        for el in self._items.values():
+            el.setParent(None)
+        items = sorted(self._items.values(), key=lambda item: item._chat.utime, reverse=True)
+        for el in items:
+            self._layout.addWidget(el)
+
+    def move_to_top(self, chat_id):
+        item = self._items[chat_id]
+        item.setParent(None)
+        item.update_name()
+        self._layout.insertWidget(0, item)
+
     def update_item_name(self, dialog_id):
         self._items[dialog_id].update_name()
 
@@ -163,6 +176,7 @@ class GPTListWidgetItem(QWidget):
             self.set_selected(True)
 
     def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
+        super().mouseMoveEvent(a0)
         if 0 < a0.pos().x() < self.width() and 0 < a0.pos().y() < self.height():
             self.set_hover(True)
         else:

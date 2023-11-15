@@ -58,7 +58,10 @@ class ChatPanel(QWidget):
         self.chat_widgets = dict()
         self.current = None
 
-        self._last_dialog = UUID(self.sm.get('current_dialog', ''))
+        try:
+            self._last_dialog = UUID(self.sm.get('current_dialog', ''))
+        except ValueError:
+            self._last_dialog = None
         self._loading_started = False
 
     def _open_settings(self):
@@ -78,6 +81,7 @@ class ChatPanel(QWidget):
     def _load_dialogs(self):
         self._loader = DialogLoader(self._data_path, str(self._last_dialog))
         self._loader.addDialog.connect(self._on_dialog_loaded)
+        self._loader.finished.connect(self._list_widget.sort_dialogs)
         self.sm.run_process(self._loader, 'loading')
 
     def _on_dialog_loaded(self, dialog: GPTDialog):
@@ -107,6 +111,7 @@ class ChatPanel(QWidget):
         chat_widget = ChatWidget(self.sm, self.tm, dialog)
         chat_widget.buttonBackPressed.connect(self._close_dialog)
         chat_widget.hide()
+        chat_widget.updated.connect(lambda: self._list_widget.move_to_top(dialog.id))
         self._layout.addWidget(chat_widget, 2)
         self.chat_widgets[dialog.id] = chat_widget
         chat_widget.set_theme()
@@ -207,7 +212,6 @@ class DialogLoader(QThread):
                 self.addDialog.emit(dialog)
                 sleep(0.1)
             except Exception as ex:
-                print(f"{not ex.__class__.__name__}: {ex}")
                 pass
         for el in os.listdir(self._data_path):
             if el.endswith('.json') and el[:-len('.json')] != self._first:
