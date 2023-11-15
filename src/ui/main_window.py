@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMainWindow
 
 from src import config
@@ -10,6 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
+        self.setWindowIcon(QIcon('icon.png'))
 
         self.sm = SettingsManager()
         self.tm = ThemeManager(self.sm, self.sm.get('theme', 'basic'))

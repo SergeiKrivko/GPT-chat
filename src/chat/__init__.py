@@ -114,6 +114,8 @@ class ChatPanel(QWidget):
             self._close_dialog(self.current)
         self.sm.set('current_dialog', str(dialog_id))
         self.set_list_hidden(self.width() < 400)
+        if self.width() >= 400:
+            self._list_widget.setMaximumWidth(max(220, self.width() // 3))
         self.chat_widgets[dialog_id].show()
         self.chat_widgets[dialog_id].set_top_hidden(self.width() > 400)
         self.current = dialog_id
@@ -121,6 +123,7 @@ class ChatPanel(QWidget):
     def _close_dialog(self, dialog_id):
         self.chat_widgets[dialog_id].hide()
         self.set_list_hidden(False)
+        self._list_widget.setMaximumWidth(10000)
         self._list_widget.deselect(dialog_id)
         self._list_widget.update_item_name(dialog_id)
         self.current = None
