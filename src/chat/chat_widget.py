@@ -1,3 +1,4 @@
+from time import sleep
 from uuid import UUID
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -74,10 +75,10 @@ class ChatWidget(QWidget):
         self._messages_is_loaded = False
 
     def _load_messages(self):
-        for el in self._dialog.messages:
-            self.add_bubble(el.get('content', ''),
-                            ChatBubble.SIDE_RIGHT if el.get('role') == 'user' else ChatBubble.SIDE_LEFT)
         self._messages_is_loaded = True
+        loader = MessageLoader(self._dialog)
+        loader.messageLoaded.connect(self.insert_bubble)
+        self._sm.run_process(loader, f"load-{self._dialog.id}")
 
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
@@ -101,17 +102,26 @@ class ChatWidget(QWidget):
 
     def add_bubble(self, text, side):
         bubble = ChatBubble(self._sm, self._tm, text, side)
-        self._add_buble(bubble)
+        self._add_bubble(bubble)
+        return bubble
+
+    def insert_bubble(self, text, side):
+        bubble = ChatBubble(self._sm, self._tm, text, side)
+        self._add_bubble(bubble, 0)
         return bubble
 
     def set_top_hidden(self, hidden):
         for el in [self._name_label, self._button_settings, self._button_back]:
             el.setHidden(hidden)
 
-    def _add_buble(self, bubble):
+    def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._delete_message(bubble))
-        self._scroll_layout.addWidget(bubble)
-        self._bubbles.append(bubble)
+        if index is None:
+            self._scroll_layout.addWidget(bubble)
+            self._bubbles.append(bubble)
+        else:
+            self._scroll_layout.insertWidget(index, bubble)
+            self._bubbles.insert(index, bubble)
         bubble.set_theme()
 
     def _insert_bubble(self, bubble):
@@ -218,3 +228,17 @@ class _ScrollWidget(QWidget):
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
         self.resized.emit()
+
+
+class MessageLoader(QThread):
+    messageLoaded = pyqtSignal(str, int)
+
+    def __init__(self, dialog):
+        super().__init__()
+        self._dialog = dialog
+
+    def run(self) -> None:
+        for el in reversed(self._dialog.messages):
+            self.messageLoaded.emit(el.get('content', ''),
+                                    ChatBubble.SIDE_RIGHT if el.get('role') == 'user' else ChatBubble.SIDE_LEFT)
+            sleep(0.1)

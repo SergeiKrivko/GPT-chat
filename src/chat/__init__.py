@@ -21,10 +21,6 @@ class ChatPanel(QWidget):
         self.sm = sm
         self.tm = tm
         self._data_path = f"{self.sm.app_data_dir}/dialogs"
-        try:
-            shutil.rmtree(f"{sm.app_data_dir}/temp")
-        except Exception:
-            pass
 
         self._layout = QHBoxLayout()
         self._layout.setContentsMargins(10, 10, 0, 10)
@@ -62,11 +58,8 @@ class ChatPanel(QWidget):
         self.chat_widgets = dict()
         self.current = None
 
-        # self._last_dialog = UUID(self.sm.get('current_dialog', ''))
-        # self._loader = DialogLoader(self._data_path)
-        # self._loader.addDialog.connect(self._on_dialog_loaded)
-        # self._loader.start()
-        self._load_dialogs()
+        self._last_dialog = UUID(self.sm.get('current_dialog', ''))
+        self._loading_started = False
 
     def _open_settings(self):
         dialog = None if self.current is None else self.dialogs[self.current]
@@ -76,16 +69,16 @@ class ChatPanel(QWidget):
         if dialog:
             dialog.store()
 
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        if not self._loading_started:
+            self._loading_started = True
+            self._load_dialogs()
+
     def _load_dialogs(self):
-        os.makedirs(self._data_path, exist_ok=True)
-        for el in os.listdir(self._data_path):
-            if el.endswith('.json'):
-                dialog = GPTDialog(self._data_path, el[:-len('.json')])
-                dialog.load()
-                self._add_dialog(dialog)
-        if (dialog_id := UUID(self.sm.get('current_dialog', ''))) in self.chat_widgets:
-            self._select_dialog(dialog_id)
-            self._list_widget.select(dialog_id)
+        self._loader = DialogLoader(self._data_path, str(self._last_dialog))
+        self._loader.addDialog.connect(self._on_dialog_loaded)
+        self.sm.run_process(self._loader, 'loading')
 
     def _on_dialog_loaded(self, dialog: GPTDialog):
         self._add_dialog(dialog)
@@ -165,6 +158,13 @@ class ChatPanel(QWidget):
             self.set_list_hidden(True)
             self.chat_widgets[self.current].set_top_hidden(False)
 
+    def closeEvent(self, a0) -> None:
+        super().closeEvent(a0)
+        try:
+            shutil.rmtree(f"{self.sm.app_data_dir}/temp")
+        except Exception:
+            pass
+
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
@@ -193,16 +193,25 @@ class NewChatDialog(CustomDialog):
 class DialogLoader(QThread):
     addDialog = pyqtSignal(GPTDialog)
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, first=None):
         super().__init__()
         self._data_path = data_path
+        self._first = first
 
     def run(self) -> None:
-        sleep(1)
         os.makedirs(self._data_path, exist_ok=True)
+        if self._first:
+            try:
+                dialog = GPTDialog(self._data_path, self._first)
+                dialog.load()
+                self.addDialog.emit(dialog)
+                sleep(0.1)
+            except Exception as ex:
+                print(f"{not ex.__class__.__name__}: {ex}")
+                pass
         for el in os.listdir(self._data_path):
-            if el.endswith('.json'):
+            if el.endswith('.json') and el[:-len('.json')] != self._first:
                 dialog = GPTDialog(self._data_path, el[:-len('.json')])
                 dialog.load()
                 self.addDialog.emit(dialog)
-                sleep(0.01)
+                sleep(0.1)
