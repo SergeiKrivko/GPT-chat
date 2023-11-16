@@ -20,8 +20,6 @@ class ChatBubble(QWidget):
         self._tm = tm
         self._side = side
         self._text = text
-        # self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        # self.customContextMenuRequested.connect(self.run_context_menu)
 
         layout = QHBoxLayout()
         layout.setDirection(QHBoxLayout.Direction.LeftToRight if self._side == ChatBubble.SIDE_LEFT
@@ -30,11 +28,6 @@ class ChatBubble(QWidget):
             Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
-
-        v_layout = QVBoxLayout()
-        v_layout.setContentsMargins(0, 0, 0, 0)
-        v_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        layout.addLayout(v_layout, 10)
 
         self._font_metrics = QFontMetrics(self._tm.font_medium)
 
@@ -47,18 +40,12 @@ class ChatBubble(QWidget):
         self._set_html()
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
-        v_layout.addWidget(self._text_edit)
-
-        self._progress_marker = QLabel("GPT печатает...")
-        v_layout.addWidget(self._progress_marker)
-        self._progress_marker.hide()
+        layout.addWidget(self._text_edit, 10)
 
         self._widget = QWidget()
         layout.addWidget(self._widget, 1)
 
     def _set_html(self):
-        # html = f"<style>{read_file(r'C:/Users/sergi/AppData/Local/SergeiKrivko/TestGenerator/GPT/dialogs/codehilite.css')}</style>\n{markdown.markdown(self._text, extensions=['fenced_code', 'codehilite'])}"
-        # self._text_edit.setHtml(html)
         self._text_edit.setMarkdown(self.parse_latex())
 
     def parse_latex(self):

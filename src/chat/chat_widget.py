@@ -5,7 +5,8 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel
 
-from src.chat import gpt, GPTDialog
+from src.chat import gpt
+from src.chat.gpt_dialog import GPTDialog
 from src.chat.chat_bubble import ChatBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.ui.button import Button
@@ -52,10 +53,20 @@ class ChatWidget(QWidget):
         self._scroll_area.setWidget(self._scroll_widget)
         self._scroll_area.verticalScrollBar().valueChanged.connect(self._on_scrolled)
         self._scroll_area.setWidgetResizable(True)
+
+        scroll_layout = QVBoxLayout()
+        self._scroll_area.setLayout(scroll_layout)
+        scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
         self._scroll_layout = QVBoxLayout()
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        # self._scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self._scroll_widget.setLayout(self._scroll_layout)
+        self._scroll_layout.setContentsMargins(0, 0, 0, 0)
+        self._scroll_widget.setLayout(scroll_layout)
+        scroll_layout.addLayout(self._scroll_layout)
+
+        self._progress_marker = QLabel("GPT печатает...")
+        scroll_layout.addWidget(self._progress_marker)
+        self._progress_marker.hide()
 
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
@@ -94,11 +105,10 @@ class ChatWidget(QWidget):
         self.looper = Looper(messages, temperature=self._dialog.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
-        self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
-        self._last_bubble.start_progress()
         self._last_message = None
+        self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
-        self.looper.finished.connect(self._last_bubble.end_progress)
+        self.looper.finished.connect(self._progress_marker.hide)
         self.looper.start()
 
     def add_bubble(self, text, side):
@@ -140,12 +150,13 @@ class ChatWidget(QWidget):
                 break
 
     def add_text(self, text):
-        self._last_bubble.add_text(text)
         if self._last_message is None:
+            self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
             self._last_message = self._dialog.append_message('assistant', text)
         else:
             self._last_message['content'] += text
             self._dialog.store()
+        self._last_bubble.add_text(text)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -

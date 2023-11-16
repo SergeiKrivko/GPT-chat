@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
     QDoubleSpinBox, QComboBox, QWidget
 
-from src.chat import GPTDialog
+from src.chat.gpt_dialog import GPTDialog
 from src.ui.custom_dialog import CustomDialog
 
 
