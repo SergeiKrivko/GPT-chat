@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self._chat_widget = ChatPanel(self.sm, self.tm)
         self.setCentralWidget(self._chat_widget)
 
-        self.resize(self.sm.get('window_width', 300), self.sm.get('window_height', 600))
+        self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))
         if self.sm.get('maximized', False):
             self.showMaximized()
 

@@ -27,6 +27,7 @@ class GPTDialog:
         self.name = ''
         self.time = 0
         self.utime = 0
+        self.pinned = False
         self.used_messages = 10
         self.saved_messages = 100
         self.temperature = 0.5
@@ -40,6 +41,7 @@ class GPTDialog:
             'messages': self.messages,
             'time': self.time,
             'utime': self.utime,
+            'pinned': self.pinned,
             'used_messages': self.used_messages,
             'saved_messages': self.saved_messages,
             'temperature': self.temperature,
@@ -53,11 +55,20 @@ class GPTDialog:
         self.name = data.get('name', '')
         self.time = data.get('time', 0)
         self.utime = data.get('utime', 0)
+        self.pinned = data.get('pinned', False)
         self.messages = data.get('messages', [])
         self.used_messages = data.get('used_messages', 0)
         self.saved_messages = data.get('saved_messages', 0)
         self.temperature = data.get('temperature', 0)
         self.scrolling_pos = data.get('scrolling_pos', 0)
+
+    def get_sort_key(self):
+        res = self.utime
+        if res <= 0:
+            res = self.time
+        if self.pinned:
+            res += 10000000000
+        return res
 
     def set_name(self, name):
         self.name = name
@@ -65,6 +76,10 @@ class GPTDialog:
 
     def set_time(self, time):
         self.time = time
+        self.store()
+
+    def set_pinned(self, flag):
+        self.pinned = flag
         self.store()
 
     def append_message(self, role, content):
@@ -91,6 +106,7 @@ class GPTDialog:
                 return []
             case GPTDialog.TRANSLATE:
                 return [{'role': 'system', 'content': f"You translate messages from {self.data['language1']} to "
-                                                      f"{self.data['language2']} or vice versa"}]
+                                                      f"{self.data['language2']} or vice versa. ONLY TRANSLATE!"}]
             case GPTDialog.SUMMARY:
-                return [{'role': 'system', 'content': "you compose a summary of the messages sent to you"}]
+                return [{'role': 'user', 'content': "You compose a summary of the messages sent to you using"
+                                                    " russian language"}]

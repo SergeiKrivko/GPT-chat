@@ -2,8 +2,8 @@ from uuid import UUID
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
+from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu
 
 from src.chat.gpt_dialog import GPTDialog
 from src.ui.button import Button
@@ -46,15 +46,16 @@ class GPTListWidget(QScrollArea):
     def sort_dialogs(self):
         for el in self._items.values():
             el.setParent(None)
-        items = sorted(self._items.values(), key=lambda item: item._chat.utime, reverse=True)
+        items = sorted(self._items.values(), key=lambda item: item.chat.get_sort_key(), reverse=True)
         for el in items:
             self._layout.addWidget(el)
 
     def move_to_top(self, chat_id):
-        item = self._items[chat_id]
-        item.setParent(None)
-        item.update_name()
-        self._layout.insertWidget(0, item)
+        self.sort_dialogs()
+        # item = self._items[chat_id]
+        # item.setParent(None)
+        # item.update_name()
+        # self._layout.insertWidget(0, item)
 
     def update_item_name(self, dialog_id):
         self._items[dialog_id].update_name()
@@ -77,10 +78,14 @@ class GPTListWidget(QScrollArea):
         item.selected.connect(self._on_item_selected)
         item.hover.connect(self._on_item_hover)
         item.deleteRequested.connect(self.deleteItem)
+        item.pinRequested.connect(self.pin_chat)
         chat_id = chat.id
         item.set_theme()
         self._items[chat_id] = item
         self._layout.addWidget(item)
+
+    def pin_chat(self, chat_id):
+        self.sort_dialogs()
 
     def delete_item(self, chat_id):
         self._items[chat_id].setParent(None)
@@ -119,15 +124,20 @@ class GPTListWidgetItem(QWidget):
     PALETTE = 'Main'
     selected = pyqtSignal(UUID)
     hover = pyqtSignal(UUID)
+
     deleteRequested = pyqtSignal(UUID)
+    pinRequested = pyqtSignal(UUID)
 
     def __init__(self, tm, chat: GPTDialog):
         super().__init__()
         self._tm = tm
-        self._chat = chat
+        self.chat = chat
         self._chat_id = chat.id
         self._selected = False
         self._hover = False
+
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.run_context_menu)
 
         self.setFixedHeight(44)
 
@@ -147,14 +157,15 @@ class GPTListWidgetItem(QWidget):
         main_layout.addWidget(self._icon_label)
 
         self._name_label = Label()
+        self._name_label.setWordWrap(True)
         self.update_name()
         self._name_label.mouseMoving.connect(lambda: self.set_hover(True))
         main_layout.addWidget(self._name_label)
 
-        self._button_delete = Button(self._tm, 'delete', css='Main')
-        self._button_delete.setFixedSize(30, 30)
-        self._button_delete.clicked.connect(lambda: self.deleteRequested.emit(self._chat_id))
-        main_layout.addWidget(self._button_delete)
+        # self._button_delete = Button(self._tm, 'delete', css='Main')
+        # self._button_delete.setFixedSize(30, 30)
+        # self._button_delete.clicked.connect(lambda: self.deleteRequested.emit(self._chat_id))
+        # main_layout.addWidget(self._button_delete)
 
     def update_name(self):
         icons = {
@@ -163,14 +174,28 @@ class GPTListWidgetItem(QWidget):
             GPTDialog.SUMMARY: 'summary',
         }
         self._icon_label.setPixmap(QPixmap(self._tm.get_image(
-            icons.get(self._chat.type, 'simple_chat'))).scaledToWidth(30))
+            icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(30))
 
-        if self._chat.name.strip():
-            self._name_label.setText(self._chat.name)
-        elif self._chat.messages:
-            self._name_label.setText(self._chat.messages[-1].get('content', ''))
+        if self.chat.name.strip():
+            self._name_label.setText(self.chat.name)
+        elif self.chat.messages:
+            self._name_label.setText(self.chat.messages[-1].get('content', ''))
         else:
             self._name_label.setText('<Новый диалог>')
+
+    def run_context_menu(self, pos):
+        menu = ContextMenu(self._tm, self.chat)
+        menu.move(self.mapToGlobal(pos))
+        menu.exec()
+        match menu.action:
+            case ContextMenu.DELETE:
+                self.deleteRequested.emit(self._chat_id)
+            case ContextMenu.PIN:
+                self.chat.set_pinned(True)
+                self.pinRequested.emit(self._chat_id)
+            case ContextMenu.UNPIN:
+                self.chat.set_pinned(False)
+                self.pinRequested.emit(self._chat_id)
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         if a0.button() == Qt.MouseButton.LeftButton:
@@ -213,4 +238,30 @@ class GPTListWidgetItem(QWidget):
                                color: {self._tm['TextColor']};""")
         self._name_label.setStyleSheet("border: none;")
         self._name_label.setFont(self._tm.font_medium)
-        self._button_delete.set_theme()
+
+
+class ContextMenu(QMenu):
+    DELETE = 0
+    PIN = 1
+    UNPIN = 2
+
+    def __init__(self, tm, chat):
+        super().__init__()
+        self.tm = tm
+        self._chat = chat
+        self.action = None
+
+        action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить")
+        action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
+
+        if self._chat.pinned:
+            action = self.addAction(QIcon(self.tm.get_image('unpin')), "Открепить")
+            action.triggered.connect(lambda: self.set_action(ContextMenu.UNPIN))
+        else:
+            action = self.addAction(QIcon(self.tm.get_image('pin')), "Закрепить")
+            action.triggered.connect(lambda: self.set_action(ContextMenu.PIN))
+
+        self.tm.auto_css(self)
+
+    def set_action(self, action):
+        self.action = action
