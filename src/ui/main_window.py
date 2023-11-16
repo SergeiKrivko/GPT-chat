@@ -20,11 +20,18 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self._chat_widget)
 
         self.resize(self.sm.get('window_width', 300), self.sm.get('window_height', 600))
+        if self.sm.get('maximized', False):
+            self.showMaximized()
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
-        self.sm.set('window_width', self.width())
-        self.sm.set('window_height', self.height())
+        if not self.isMaximized():
+            self.sm.set('window_width', self.width())
+            self.sm.set('window_height', self.height())
+
+    def closeEvent(self, a0) -> None:
+        self.sm.set('maximized', 1 if self.isMaximized() else 0)
+        super().closeEvent(a0)
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)

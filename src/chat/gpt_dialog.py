@@ -9,6 +9,7 @@ from src.commands import write_file, read_json
 class GPTDialog:
     SIMPLE = 0
     TRANSLATE = 1
+    SUMMARY = 2
 
     def __init__(self, path, dialog_id=None):
         self._data_path = path
@@ -91,3 +92,5 @@ class GPTDialog:
             case GPTDialog.TRANSLATE:
                 return [{'role': 'system', 'content': f"You translate messages from {self.data['language1']} to "
                                                       f"{self.data['language2']} or vice versa"}]
+            case GPTDialog.SUMMARY:
+                return [{'role': 'system', 'content': "you compose a summary of the messages sent to you"}]

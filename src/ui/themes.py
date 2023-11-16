@@ -1239,6 +1239,10 @@ QMenu {{
     padding: 3px;
 }}
 
+QMenu::icon {{
+    padding-left: 10px;
+}}
+
 QMenu::item {{
     border: 0px solid {self['BorderColor']};
     background-color: transparent;

@@ -20,8 +20,8 @@ class ChatBubble(QWidget):
         self._tm = tm
         self._side = side
         self._text = text
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.run_context_menu)
+        # self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.run_context_menu)
 
         layout = QHBoxLayout()
         layout.setDirection(QHBoxLayout.Direction.LeftToRight if self._side == ChatBubble.SIDE_LEFT
@@ -39,7 +39,8 @@ class ChatBubble(QWidget):
         self._font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
-        self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._text_edit.customContextMenuRequested.connect(self.run_context_menu)
         self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
@@ -52,8 +53,8 @@ class ChatBubble(QWidget):
         v_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
-        widget = QWidget()
-        layout.addWidget(widget, 1)
+        self._widget = QWidget()
+        layout.addWidget(self._widget, 1)
 
     def _set_html(self):
         # html = f"<style>{read_file(r'C:/Users/sergi/AppData/Local/SergeiKrivko/TestGenerator/GPT/dialogs/codehilite.css')}</style>\n{markdown.markdown(self._text, extensions=['fenced_code', 'codehilite'])}"
@@ -81,7 +82,7 @@ class ChatBubble(QWidget):
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self._tm)
-        menu.move(self.mapToGlobal(pos))
+        menu.move(self._text_edit.mapToGlobal(pos))
         menu.exec()
         match menu.action:
             case ContextMenu.DELETE_MESSAGE:
@@ -111,6 +112,7 @@ class ChatBubble(QWidget):
     def _resize(self):
         self._text_edit.setFixedHeight(10)
         self._text_edit.setFixedHeight(10 + self._text_edit.verticalScrollBar().maximum())
+        self._widget.setFixedHeight(self._text_edit.height())
 
     def add_text(self, text: str):
         self._text += text
@@ -154,10 +156,10 @@ class ContextMenu(QMenu):
         action = self.addAction('Удалить')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
-        self.addSeparator()
-
-        action = self.addAction('Переслать в Telegram')
-        action.triggered.connect(lambda: self.set_action(ContextMenu.SEND_TO_TELEGRAM))
+        # self.addSeparator()
+        #
+        # action = self.addAction('Переслать в Telegram')
+        # action.triggered.connect(lambda: self.set_action(ContextMenu.SEND_TO_TELEGRAM))
 
         self.setStyleSheet(tm.menu_css())
 

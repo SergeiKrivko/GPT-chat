@@ -160,6 +160,7 @@ class GPTListWidgetItem(QWidget):
         icons = {
             GPTDialog.SIMPLE: 'simple_chat',
             GPTDialog.TRANSLATE: 'translate',
+            GPTDialog.SUMMARY: 'summary',
         }
         self._icon_label.setPixmap(QPixmap(self._tm.get_image(
             icons.get(self._chat.type, 'simple_chat'))).scaledToWidth(30))

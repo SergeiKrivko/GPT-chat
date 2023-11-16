@@ -4,7 +4,8 @@ from time import time, sleep
 from uuid import UUID
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QLabel, QMenu, QPushButton
 
 from src.chat import gpt
 from src.chat.gpt_dialog import GPTDialog
@@ -34,15 +35,20 @@ class ChatPanel(QWidget):
         top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(top_layout)
 
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        top_layout.addLayout(layout)
+
         self._button_add = Button(self.tm, 'plus', css='Bg')
         self._button_add.setFixedSize(36, 36)
-        self._button_add.clicked.connect(self._new_dialog)
-        top_layout.addWidget(self._button_add)
+        self._button_add.clicked.connect(lambda: self._new_dialog())
+        layout.addWidget(self._button_add)
 
-        self._button_add_special = Button(self.tm, 'plus', css='Bg')
-        self._button_add_special.setFixedSize(36, 36)
-        self._button_add_special.clicked.connect(self._new_special_dialog)
-        top_layout.addWidget(self._button_add_special)
+        self._button_add_special = QPushButton()
+        self._button_add_special.setFixedSize(20, 36)
+        self._button_add_special.setMenu(NewChatMenu(self.tm, self._new_dialog))
+        layout.addWidget(self._button_add_special)
 
         self._button_settings = Button(self.tm, 'generate', css='Bg')
         self._button_settings.setFixedSize(36, 36)
@@ -90,19 +96,21 @@ class ChatPanel(QWidget):
             self._select_dialog(dialog.id)
             self._list_widget.select(dialog.id)
 
-    def _new_special_dialog(self):
+    def _new_dialog(self, dialog_type=GPTDialog.SIMPLE):
         dialog = GPTDialog(self._data_path)
-        dialog.type = GPTDialog.TRANSLATE
-        dialog.data['language1'] = 'russian'
-        dialog.data['language2'] = 'english'
-        dialog.name = f"Переводчик {dialog.data['language1']} ↔ {dialog.data['language2']}"
-        dialog.used_messages = 1
         dialog.time = time()
-        self._add_dialog(dialog)
+        dialog.type = dialog_type
 
-    def _new_dialog(self):
-        dialog = GPTDialog(self._data_path)
-        dialog.time = time()
+        match dialog_type:
+            case GPTDialog.TRANSLATE:
+                dialog.data['language1'] = 'russian'
+                dialog.data['language2'] = 'english'
+                dialog.name = f"{dialog.data['language1'].capitalize()} ↔ {dialog.data['language2'].capitalize()}"
+                dialog.used_messages = 1
+            case GPTDialog.SUMMARY:
+                dialog.name = f"Краткое содержание"
+                dialog.used_messages = 1
+
         self._add_dialog(dialog)
 
     def _add_dialog(self, dialog):
@@ -146,7 +154,7 @@ class ChatPanel(QWidget):
         self.current = None
 
     def set_list_hidden(self, hidden):
-        for el in [self._button_add, self._button_settings, self._list_widget]:
+        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget]:
             el.setHidden(hidden)
 
     def resizeEvent(self, a0) -> None:
@@ -173,26 +181,28 @@ class ChatPanel(QWidget):
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
-        self._button_add_special.set_theme()
+        self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
         self._list_widget.set_theme()
         for el in self.chat_widgets.values():
             el.set_theme()
 
 
-class NewChatDialog(CustomDialog):
-    def __init__(self, tm):
-        super().__init__(tm, "Новый диалог", True, True)
+class NewChatMenu(QMenu):
+    def __init__(self, tm, func):
+        super().__init__()
+        self.tm = tm
+        self.func = func
 
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-        self._labels = []
+        action = self.addAction(QIcon(self.tm.get_image('simple_chat')), "Обычный диалог")
+        action.triggered.connect(lambda: func(GPTDialog.SIMPLE))
 
-        label = QLabel("Тип диалога")
+        action = self.addAction(QIcon(self.tm.get_image('translate')), "Переводчик")
+        action.triggered.connect(lambda: func(GPTDialog.TRANSLATE))
 
-        self.set_theme()
+        action = self.addAction(QIcon(self.tm.get_image('summary')), "Краткое содержание")
+        action.triggered.connect(lambda: func(GPTDialog.SUMMARY))
 
-    def set_theme(self):
-        super().set_theme()
+        self.tm.auto_css(self)
 
 
 class DialogLoader(QThread):
