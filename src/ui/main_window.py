@@ -1,3 +1,5 @@
+import shutil
+
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMainWindow
 
@@ -31,6 +33,10 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, a0) -> None:
         self.sm.set('maximized', 1 if self.isMaximized() else 0)
+        try:
+            shutil.rmtree(f"{self.sm.app_data_dir}/temp")
+        except Exception:
+            pass
         super().closeEvent(a0)
 
     def set_theme(self):
