@@ -36,6 +36,7 @@ class ChatBubble(QWidget):
         self._text_edit.customContextMenuRequested.connect(self.run_context_menu)
         self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self._set_html()
         self._text_edit.setReadOnly(True)
@@ -60,7 +61,10 @@ class ChatBubble(QWidget):
             if '\\]' in text:
                 ind = text.index('\\]')
                 formula = text[:ind]
-                lst.append(f"![image.svg]({render_latex(self._sm, self._tm, formula)})")
+                try:
+                    lst.append(f"![image.svg]({render_latex(self._sm, self._tm, formula)})")
+                except Exception:
+                    lst.append(f"\\[ {formula} \\]")
                 text = text[ind + 2:]
 
         lst.append(text)
@@ -75,7 +79,9 @@ class ChatBubble(QWidget):
             case ContextMenu.DELETE_MESSAGE:
                 self.deleteRequested.emit()
             case ContextMenu.COPY_AS_TEXT:
-                pass
+                self._sm.copy_text(self._text_edit.toPlainText())
+            case ContextMenu.COPY_AS_MARKDOWN:
+                self._sm.copy_text(self._text_edit.toMarkdown())
             case ContextMenu.SELECT_ALL:
                 self._text_edit.selectAll()
                 self._text_edit.setFocus()
@@ -89,12 +95,6 @@ class ChatBubble(QWidget):
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
         self._resize()
-
-    def start_progress(self):
-        self._progress_marker.show()
-
-    def end_progress(self):
-        self._progress_marker.hide()
 
     def _resize(self):
         self._text_edit.setFixedHeight(10)
@@ -127,6 +127,7 @@ class ContextMenu(QMenu):
     COPY_AS_TEXT = 2
     SELECT_ALL = 3
     SEND_TO_TELEGRAM = 4
+    COPY_AS_MARKDOWN = 5
 
     def __init__(self, tm):
         super().__init__()
@@ -137,6 +138,9 @@ class ContextMenu(QMenu):
 
         action = self.addAction('Копировать как текст')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_TEXT))
+
+        action = self.addAction('Копировать как Markdown')
+        action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_MARKDOWN))
 
         self.addSeparator()
 

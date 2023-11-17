@@ -8,12 +8,12 @@ from src.ui.themes import ThemeManager
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
         self.setWindowIcon(QIcon('icon.png'))
 
-        self.sm = SettingsManager()
+        self.sm = SettingsManager(app)
         self.tm = ThemeManager(self.sm, self.sm.get('theme', 'basic'))
 
         self._chat_widget = ChatPanel(self.sm, self.tm)

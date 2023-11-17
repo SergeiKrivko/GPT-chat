@@ -17,7 +17,7 @@ def main():
     app.setApplicationName(config.APP_NAME)
     app.setApplicationVersion(config.APP_VERSION)
 
-    window = MainWindow()
+    window = MainWindow(app)
 
     window.show()
     window.set_theme()

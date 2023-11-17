@@ -150,6 +150,7 @@ class ChatPanel(QWidget):
         self._list_widget.deselect(dialog_id)
         self._list_widget.update_item_name(dialog_id)
         self.current = None
+        self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
         for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget]:

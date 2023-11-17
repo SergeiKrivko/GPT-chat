@@ -1,12 +1,23 @@
 from uuid import UUID
 
 from PyQt6 import QtGui
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu
 
 from src.chat.gpt_dialog import GPTDialog
-from src.ui.button import Button
+
+
+class Widget(QWidget):
+    mouseMove = pyqtSignal(QPoint)
+
+    def __init__(self):
+        super().__init__()
+        self.setMouseTracking(True)
+
+    def mouseMoveEvent(self, a0) -> None:
+        super().mouseMoveEvent(a0)
+        self.mouseMove.emit(a0.pos())
 
 
 class GPTListWidget(QScrollArea):
@@ -18,7 +29,8 @@ class GPTListWidget(QScrollArea):
         self._tm = tm
         self.setMinimumWidth(240)
 
-        scroll_widget = QWidget()
+        scroll_widget = Widget()
+        scroll_widget.mouseMove.connect(self._on_mouse_move)
         self.setWidget(scroll_widget)
         self.setWidgetResizable(True)
 
@@ -29,6 +41,13 @@ class GPTListWidget(QScrollArea):
         scroll_widget.setLayout(self._layout)
 
         self._items = dict()
+
+    def _on_mouse_move(self, point: QPoint):
+        for i in range(len(self._items)):
+            item = self._layout.itemAt(i).widget()
+            if isinstance(item, GPTListWidgetItem):
+                item.set_hover(0 <= point.x() - item.pos().x() <= item.width() and
+                               0 <= point.y() - item.pos().y() <= item.height())
 
     def _on_item_hover(self, chat_id):
         if isinstance(chat_id, str):
@@ -135,6 +154,7 @@ class GPTListWidgetItem(QWidget):
         self._chat_id = chat.id
         self._selected = False
         self._hover = False
+        self.setMouseTracking(True)
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.run_context_menu)
@@ -200,13 +220,6 @@ class GPTListWidgetItem(QWidget):
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         if a0.button() == Qt.MouseButton.LeftButton:
             self.set_selected(True)
-
-    def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
-        super().mouseMoveEvent(a0)
-        if 0 < a0.pos().x() < self.width() and 0 < a0.pos().y() < self.height():
-            self.set_hover(True)
-        else:
-            self.set_hover(False)
 
     def set_selected(self, status):
         if self._selected == bool(status):

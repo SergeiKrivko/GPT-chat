@@ -10,6 +10,7 @@ from src.chat.gpt_dialog import GPTDialog
 from src.chat.chat_bubble import ChatBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.ui.button import Button
+from src.ui.message_box import MessageBox
 
 
 class ChatWidget(QWidget):
@@ -108,6 +109,7 @@ class ChatWidget(QWidget):
         self._last_message = None
         self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
+        self.looper.exception.connect(self._on_gpt_error)
         self.looper.finished.connect(self._progress_marker.hide)
         self.looper.start()
 
@@ -180,6 +182,9 @@ class ChatWidget(QWidget):
         self._dialog.store()
         self._name_label.setText(self._dialog.name if self._dialog.name.strip() else 'Диалог')
 
+    def _on_gpt_error(self, ex):
+        MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
+
     def set_theme(self):
         self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
         for el in [self._scroll_area, self._text_edit, self._button, self._button_back, self._name_label,
@@ -191,6 +196,7 @@ class ChatWidget(QWidget):
 
 class Looper(QThread):
     sendMessage = pyqtSignal(str)
+    exception = pyqtSignal(Exception)
 
     def __init__(self, text, **kwargs):
         super().__init__()
@@ -198,8 +204,11 @@ class Looper(QThread):
         self.kwargs = kwargs
 
     def run(self):
-        for el in gpt.stream_response(self.text, **self.kwargs):
-            self.sendMessage.emit(el)
+        try:
+            for el in gpt.stream_response(self.text, **self.kwargs):
+                self.sendMessage.emit(el)
+        except Exception as ex:
+            self.exception.emit(ex)
 
 
 class ChatInputArea(QTextEdit):

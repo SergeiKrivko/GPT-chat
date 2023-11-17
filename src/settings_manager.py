@@ -2,14 +2,16 @@ from types import FunctionType
 
 import appdirs
 from PyQt6.QtCore import QSettings, QObject, QThread
+from PyQt6.QtWidgets import QApplication
 
 from src import config
 
 
 class SettingsManager(QObject):
-    def __init__(self):
+    def __init__(self, app: QApplication):
         super().__init__()
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
+        self.app = app
         self.q_settings = QSettings()
         self.app_data_dir = appdirs.user_data_dir(config.APP_NAME, config.ORGANISATION_NAME).replace('\\', '/')
 
@@ -48,6 +50,9 @@ class SettingsManager(QObject):
     def terminate_all(self):
         for item in self._background_processes.values():
             item.terminate()
+
+    def copy_text(self, text):
+        self.app.clipboard().setText(text)
 
 
 class Looper(QThread):

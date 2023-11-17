@@ -108,5 +108,5 @@ class GPTDialog:
                 return [{'role': 'system', 'content': f"You translate messages from {self.data['language1']} to "
                                                       f"{self.data['language2']} or vice versa. ONLY TRANSLATE!"}]
             case GPTDialog.SUMMARY:
-                return [{'role': 'user', 'content': "You compose a summary of the messages sent to you using"
-                                                    " russian language"}]
+                return [{'role': 'system', 'content': "You compose a summary of the messages sent to you using"
+                                                      " russian language"}]
