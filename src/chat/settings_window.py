@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
     QDoubleSpinBox, QComboBox, QWidget
 
+from src.chat import gpt
 from src.chat.gpt_dialog import GPTDialog
 from src.ui.custom_dialog import CustomDialog
 
@@ -50,6 +51,14 @@ class ChatSettingsWindow(CustomDialog):
         self._labels.append(self._time_label)
         main_layout.addWidget(self._time_label)
 
+        label = QLabel("Модель")
+        self._labels.append(label)
+        main_layout.addWidget(label)
+
+        self._model_box = QComboBox()
+        self._model_box.addItems(gpt.get_models())
+        main_layout.addWidget(self._model_box)
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -94,6 +103,7 @@ class ChatSettingsWindow(CustomDialog):
         layout.addWidget(self._temperature_box)
 
         if self._dialog is not None:
+            self._model_box.setCurrentText(self._dialog.model)
             self._temperature_box.setValue(self._dialog.temperature)
             self._saved_messages_box.setValue(self._dialog.saved_messages)
             self._used_messages_box.setValue(self._dialog.used_messages)
@@ -103,6 +113,7 @@ class ChatSettingsWindow(CustomDialog):
             self._temperature_box.hide()
             self._saved_messages_box.hide()
             self._used_messages_box.hide()
+            self._model_box.hide()
             self._time_label.hide()
             self._name_label.hide()
             for el in self._labels[1:]:
@@ -114,6 +125,7 @@ class ChatSettingsWindow(CustomDialog):
             self._dialog.used_messages = self._used_messages_box.value()
             self._dialog.saved_messages = self._saved_messages_box.value()
             self._dialog.temperature = self._temperature_box.value()
+            self._dialog.model = self._model_box.currentText()
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
@@ -124,7 +136,7 @@ class ChatSettingsWindow(CustomDialog):
         for el in self._labels:
             self.tm.auto_css(el)
         for el in [self._name_label, self._used_messages_box, self._saved_messages_box, self._temperature_box,
-                   self._theme_box]:
+                   self._theme_box, self._model_box]:
             self.tm.auto_css(el)
         self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
 

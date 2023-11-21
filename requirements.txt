@@ -1,5 +1,5 @@
 PyQt6~=6.5.3
 Pillow~=9.5.0
 appdirs~=1.4.4
-g4f~=0.1.8.3
+g4f~=0.1.8.8
 matplotlib~=3.8.0

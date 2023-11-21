@@ -3,9 +3,12 @@ import g4f
 g4f.check_version = False  # Disable automatic version checking
 
 
-def stream_response(messages: list[dict[str: str]], **kwargs):
+def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
+    if model is None or model == 'default':
+        model = g4f.models.default
+    print(model)
     response = g4f.ChatCompletion.create(
-        model=g4f.models.default,
+        model=model,
         messages=messages,
         timeout=120,
         stream=True,
@@ -15,9 +18,11 @@ def stream_response(messages: list[dict[str: str]], **kwargs):
         yield el
 
 
-def simple_response(messages: list[dict[str: str]], **kwargs):
+def simple_response(messages: list[dict[str: str]], model=None, **kwargs):
+    if model is None or model == 'default':
+        model = g4f.models.default
     response = g4f.ChatCompletion.create(
-        model=g4f.models.default,
+        model=model,
         messages=messages,
         timeout=120,
         **kwargs
@@ -25,11 +30,13 @@ def simple_response(messages: list[dict[str: str]], **kwargs):
     return response
 
 
-def try_response(messages: list[dict[str: str]], count=5, handler=None, **kwargs):
+def try_response(messages: list[dict[str: str]], model=None, count=5, handler=None, **kwargs):
+    if model is None or model == 'default':
+        model = g4f.models.default
     for _ in range(count):
         try:
             response = g4f.ChatCompletion.create(
-                model=g4f.models.default,
+                model=model,
                 messages=messages,
                 timeout=120,
                 **kwargs
@@ -40,3 +47,7 @@ def try_response(messages: list[dict[str: str]], count=5, handler=None, **kwargs
         except RuntimeError:
             pass
     return ''
+
+
+def get_models():
+    return ['default'] + g4f.models._all_models

@@ -32,6 +32,7 @@ class GPTDialog:
         self.saved_messages = 100
         self.temperature = 0.5
         self.scrolling_pos = 0
+        self.model = 'default'
 
     def store(self):
         write_file(self._path, json.dumps({
@@ -42,6 +43,7 @@ class GPTDialog:
             'time': self.time,
             'utime': self.utime,
             'pinned': self.pinned,
+            'model': self.model,
             'used_messages': self.used_messages,
             'saved_messages': self.saved_messages,
             'temperature': self.temperature,
@@ -57,6 +59,7 @@ class GPTDialog:
         self.utime = data.get('utime', 0)
         self.pinned = data.get('pinned', False)
         self.messages = data.get('messages', [])
+        self.model = data.get('model', 'default')
         self.used_messages = data.get('used_messages', 0)
         self.saved_messages = data.get('saved_messages', 0)
         self.temperature = data.get('temperature', 0)
