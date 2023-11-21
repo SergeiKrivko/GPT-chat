@@ -38,10 +38,13 @@ def parse_args(args: list[str]):
         elif arg in ['-j', '--json'] and i + 1 < len(args):
             path = args[i + 1]
             messages.extend(read_json(path, list))
+            i += 1
         elif arg in ['-m', '--message'] and i + 1 < len(args):
             messages.append({'role': 'user', 'content': args[i + 1]})
+            i += 1
         elif arg in ['--model'] and i + 1 < len(args):
             model = args[i + 1]
+            i += 1
         elif len(args) == 2:
             messages.append({'role': 'user', 'content': arg})
         else:
@@ -53,6 +56,7 @@ def parse_args(args: list[str]):
         from src.chat import gpt
         for el in gpt.stream_response(messages):
             print(el, end='')
+        print()
     else:
         run_app()
 
