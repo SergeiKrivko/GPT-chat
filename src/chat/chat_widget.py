@@ -103,7 +103,7 @@ class ChatWidget(QWidget):
         messages = self._dialog.system_prompts()
         messages.extend(self._dialog.messages[-self._dialog.used_messages:])
 
-        self.looper = Looper(messages, temperature=self._dialog.temperature)
+        self.looper = Looper(messages, self._dialog, temperature=self._dialog.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
         self._last_message = None
@@ -198,14 +198,15 @@ class Looper(QThread):
     sendMessage = pyqtSignal(str)
     exception = pyqtSignal(Exception)
 
-    def __init__(self, text, **kwargs):
+    def __init__(self, text, chat, **kwargs):
         super().__init__()
         self.text = text
+        self.chat = chat
         self.kwargs = kwargs
 
     def run(self):
         try:
-            for el in gpt.stream_response(self.text, **self.kwargs):
+            for el in gpt.stream_response(self.text, model=self.chat.model, **self.kwargs):
                 self.sendMessage.emit(el)
         except Exception as ex:
             self.exception.emit(ex)

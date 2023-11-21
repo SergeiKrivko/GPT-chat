@@ -16,6 +16,8 @@ from src.ui.button import Button
 
 
 class ChatPanel(QWidget):
+    WIDTH = 550
+
     def __init__(self, sm, tm):
         super().__init__()
         self.sm = sm
@@ -23,6 +25,7 @@ class ChatPanel(QWidget):
         self._data_path = f"{self.sm.app_data_dir}/dialogs"
 
         self._layout = QHBoxLayout()
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._layout.setContentsMargins(10, 10, 0, 10)
         self.setLayout(self._layout)
 
@@ -86,7 +89,7 @@ class ChatPanel(QWidget):
     def _load_dialogs(self):
         self._loader = DialogLoader(self._data_path, str(self._last_dialog))
         self._loader.addDialog.connect(self._on_dialog_loaded)
-        self._loader.finished.connect(self._list_widget.sort_dialogs)
+        self._loader.finished.connect(lambda: (self._list_widget.sort_dialogs(), self._resize()))
         self.sm.run_process(self._loader, 'loading')
 
     def _on_dialog_loaded(self, dialog: GPTDialog):
@@ -136,39 +139,41 @@ class ChatPanel(QWidget):
         if self.current is not None:
             self._close_dialog(self.current)
         self.sm.set('current_dialog', str(dialog_id))
-        self.set_list_hidden(self.width() < 400)
-        if self.width() >= 400:
-            self._list_widget.setMaximumWidth(max(220, self.width() // 3))
         self.chat_widgets[dialog_id].show()
-        self.chat_widgets[dialog_id].set_top_hidden(self.width() > 400)
         self.current = dialog_id
+        self._resize()
 
     def _close_dialog(self, dialog_id):
         self.chat_widgets[dialog_id].hide()
         self.set_list_hidden(False)
-        self._list_widget.setMaximumWidth(10000)
+        self.current = None
+        self._resize()
         self._list_widget.deselect(dialog_id)
         self._list_widget.update_item_name(dialog_id)
-        self.current = None
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
         for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget]:
             el.setHidden(hidden)
 
-    def resizeEvent(self, a0) -> None:
-        super().resizeEvent(a0)
-        if self.width() > 400:
+    def _resize(self):
+        if self.width() > 550:
             self.set_list_hidden(False)
             if self.current is not None:
-                self._list_widget.setMaximumWidth(max(220, self.width() // 3))
                 self.chat_widgets[self.current].set_top_hidden(True)
-            else:
-                self._list_widget.setMaximumWidth(10000)
+            self._list_widget.setFixedWidth(max(220, self.width() // 4))
+            # else:
+            #     self._list_widget.setMaximumWidth(10000)
         elif self.current is not None:
-            self._list_widget.setMaximumWidth(10000)
             self.set_list_hidden(True)
             self.chat_widgets[self.current].set_top_hidden(False)
+        else:
+            self.set_list_hidden(False)
+            self._list_widget.setMaximumWidth(10000)
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        self._resize()
 
     def closeEvent(self, a0) -> None:
         super().closeEvent(a0)
