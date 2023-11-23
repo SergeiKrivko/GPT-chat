@@ -4,10 +4,13 @@ from uuid import uuid4
 import matplotlib.pyplot as plt
 
 
-fig = plt.figure()
+fig = None
 
 
 def render_latex(sm, tm, latex: str):
+    global fig
+    if fig is None:
+        fig = plt.figure()
     # Создание области отрисовки
     fig.clear()
     fig.set_facecolor(tm['MenuColor'])
