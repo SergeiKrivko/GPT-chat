@@ -5,7 +5,7 @@ from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu
 
-from src.chat.gpt_chat import GPTChat
+from src.gpt.chat import GPTChat
 
 
 class Widget(QWidget):
@@ -198,8 +198,8 @@ class GPTListWidgetItem(QWidget):
 
         if self.chat.name.strip():
             self._name_label.setText(self.chat.name)
-        elif self.chat.messages:
-            self._name_label.setText(self.chat.messages[-1].get('content', ''))
+        elif self.chat.messages_order:
+            self._name_label.setText(self.chat.last_message.content)
         else:
             self._name_label.setText('<Новый диалог>')
 

@@ -7,10 +7,9 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
 
-from src.chat import gpt
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
-from src.chat.gpt_chat import GPTChat
+from src.gpt.chat import GPTChat
 from src.chat.settings_window import ChatSettingsWindow
 from src.ui.button import Button
 

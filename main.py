@@ -53,7 +53,7 @@ def parse_args(args: list[str]):
         i += 1
 
     if messages:
-        from src.chat import gpt
+        from src.gpt import __init__
         for el in gpt.stream_response(messages):
             print(el, end='')
         print()

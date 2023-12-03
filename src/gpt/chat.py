@@ -4,6 +4,7 @@ import time
 from uuid import uuid4, UUID
 
 from src.commands import write_file, read_json
+from src.gpt.message import GPTMessage
 
 
 class GPTChat:
@@ -21,9 +22,12 @@ class GPTChat:
 
         self._path = f"{self._data_path}/{self.id}.json"
 
-        self.messages = []
+        self.messages: dict[UUID: GPTMessage] = dict()
+        self.messages_order = []
+
         self.type = GPTChat.SIMPLE
         self.data = dict()
+
         self.name = ''
         self.time = 0
         self.utime = 0
@@ -39,7 +43,7 @@ class GPTChat:
             'type': self.type,
             'data': self.data,
             'name': self.name,
-            'messages': self.messages,
+            'messages': [self.messages[message_id].to_json() for message_id in self.messages_order],
             'time': self.time,
             'utime': self.utime,
             'pinned': self.pinned,
@@ -58,7 +62,10 @@ class GPTChat:
         self.time = data.get('time', 0)
         self.utime = data.get('utime', 0)
         self.pinned = data.get('pinned', False)
-        self.messages = data.get('messages', [])
+
+        for el in data.get('messages', []):
+            self.append_message(el['role'], el['content'])
+
         self.model = data.get('model', 'default')
         self.used_messages = data.get('used_messages', 0)
         self.saved_messages = data.get('saved_messages', 0)
@@ -85,17 +92,32 @@ class GPTChat:
         self.pinned = flag
         self.store()
 
+    @property
+    def last_message(self):
+        return self.messages[self.messages_order[-1]]
+
+    def messages_to_prompt(self, reply: list[UUID] = tuple()):
+        ind = min(len(self.messages), self.used_messages)
+        ids = self.messages_order[-ind:]
+        for el in reversed(reply):
+            if el not in ids:
+                ids.insert(0, el)
+
+        return self.system_prompts() + [self.messages[message_id].to_json() for message_id in ids]
+
     def append_message(self, role, content):
-        message = {'role': role, 'content': content}
-        self.messages.append(message)
+        message = GPTMessage(role, content)
+        self.messages[message.id] = message
+        self.messages_order.append(message.id)
         while len(self.messages) > self.saved_messages:
             self.messages.pop(0)
         self.utime = time.time()
         self.store()
         return message
 
-    def pop_message(self, index):
-        res = self.messages.pop(index)
+    def pop_message(self, message_id):
+        self.messages_order.remove(message_id)
+        res = self.messages.pop(message_id)
         self.store()
         return res
 

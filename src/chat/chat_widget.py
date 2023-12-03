@@ -5,10 +5,12 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel
 
-from src.chat import gpt
-from src.chat.gpt_chat import GPTChat
+from src import gpt
+from src.chat.reply_widget import ReplyList
+from src.gpt.chat import GPTChat
 from src.chat.chat_bubble import ChatBubble
 from src.chat.settings_window import ChatSettingsWindow
+from src.gpt.message import GPTMessage
 from src.ui.button import Button
 from src.ui.message_box import MessageBox
 
@@ -23,7 +25,7 @@ class ChatWidget(QWidget):
         self._tm = tm
         self._chat = chat
 
-        self._bubbles = []
+        self._bubbles = dict()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 10, 0)
@@ -69,6 +71,9 @@ class ChatWidget(QWidget):
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
+        self._reply_list = ReplyList(self._tm, self._chat)
+        layout.addLayout(self._reply_list)
+
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
 
@@ -96,12 +101,11 @@ class ChatWidget(QWidget):
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
-        self.add_bubble(text, ChatBubble.SIDE_RIGHT)
+        self.add_bubble(self._chat.append_message('user', text))
         self._text_edit.setText("")
-        self._chat.append_message('user', text)
 
-        messages = self._chat.system_prompts()
-        messages.extend(self._chat.messages[-self._chat.used_messages:])
+        messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
+        self._reply_list.clear()
 
         self.looper = Looper(messages, self._chat, temperature=self._chat.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
@@ -113,13 +117,13 @@ class ChatWidget(QWidget):
         self.looper.finished.connect(self._progress_marker.hide)
         self.looper.start()
 
-    def add_bubble(self, text, side):
-        bubble = ChatBubble(self._sm, self._tm, text, side)
+    def add_bubble(self, message: GPTMessage):
+        bubble = ChatBubble(self._sm, self._tm, message)
         self._add_bubble(bubble)
         return bubble
 
-    def insert_bubble(self, text, side):
-        bubble = ChatBubble(self._sm, self._tm, text, side)
+    def insert_bubble(self, message: GPTMessage):
+        bubble = ChatBubble(self._sm, self._tm, message)
         self._add_bubble(bubble, 0)
         return bubble
 
@@ -128,37 +132,28 @@ class ChatWidget(QWidget):
             el.setHidden(hidden)
 
     def _add_bubble(self, bubble, index=None):
-        bubble.deleteRequested.connect(lambda: self._delete_message(bubble))
+        bubble.deleteRequested.connect(lambda: self._delete_message(bubble.message.id))
+        bubble.replyRequested.connect(lambda: self._reply_list.add_message(bubble.message.id))
         if index is None:
             self.updated.emit()
             self._scroll_layout.addWidget(bubble)
-            self._bubbles.append(bubble)
+            self._bubbles[bubble.message.id] = bubble
         else:
             self._scroll_layout.insertWidget(index, bubble)
-            self._bubbles.insert(index, bubble)
+            self._bubbles[bubble.message.id] = bubble
         bubble.set_theme()
 
-    def _insert_bubble(self, bubble):
-        self._scroll_layout.insertWidget(0, bubble)
-        self._bubbles.insert(0, bubble)
-        bubble.set_theme()
-
-    def _delete_message(self, bubble):
-        for i, b in enumerate(self._bubbles):
-            if b == bubble:
-                self._bubbles.pop(i)
-                self._chat.pop_message(i)
-                bubble.setParent(None)
-                break
+    def _delete_message(self, message_id):
+        self._chat.pop_message(message_id)
+        self._bubbles.pop(message_id).setParent(None)
 
     def add_text(self, text):
         if self._last_message is None:
-            self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
             self._last_message = self._chat.append_message('assistant', text)
+            self._last_bubble = self.add_bubble(self._last_message)
         else:
-            self._last_message['content'] += text
-            self._chat.store()
-        self._last_bubble.add_text(text)
+            self._last_bubble.add_text(text)
+        self._chat.store()
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
@@ -254,14 +249,13 @@ class _ScrollWidget(QWidget):
 
 
 class MessageLoader(QThread):
-    messageLoaded = pyqtSignal(str, int)
+    messageLoaded = pyqtSignal(GPTMessage)
 
     def __init__(self, chat):
         super().__init__()
         self._chat = chat
 
     def run(self) -> None:
-        for el in reversed(self._chat.messages):
-            self.messageLoaded.emit(el.get('content', ''),
-                                    ChatBubble.SIDE_RIGHT if el.get('role') == 'user' else ChatBubble.SIDE_LEFT)
+        for el in reversed(self._chat.messages.values()):
+            self.messageLoaded.emit(el)
             sleep(0.1)

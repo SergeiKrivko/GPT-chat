@@ -1,9 +1,10 @@
 # import markdown
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtGui import QFontMetrics, QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QLabel, QVBoxLayout
 
 from src.chat.render_latex import render_latex
+from src.gpt.message import GPTMessage
 
 
 class ChatBubble(QWidget):
@@ -13,13 +14,14 @@ class ChatBubble(QWidget):
     _BORDER_RADIUS = 10
 
     deleteRequested = pyqtSignal()
+    replyRequested = pyqtSignal()
 
-    def __init__(self, sm, tm, text, side):
+    def __init__(self, sm, tm, message: GPTMessage):
         super().__init__()
         self._sm = sm
         self._tm = tm
-        self._side = side
-        self._text = text
+        self._message = message
+        self._side = ChatBubble.SIDE_RIGHT if message.role == 'user' else ChatBubble.SIDE_LEFT
 
         layout = QHBoxLayout()
         layout.setDirection(QHBoxLayout.Direction.LeftToRight if self._side == ChatBubble.SIDE_LEFT
@@ -34,7 +36,7 @@ class ChatBubble(QWidget):
         self._text_edit = QTextEdit()
         self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._text_edit.customContextMenuRequested.connect(self.run_context_menu)
-        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
+        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
@@ -52,7 +54,7 @@ class ChatBubble(QWidget):
     def parse_latex(self):
         lst = []
 
-        text = self._text.replace('\\(', '\\[').replace('\\)', '\\]')
+        text = self._message.content.replace('\\(', '\\[').replace('\\)', '\\]')
         while '\\[' in text:
             ind = text.index('\\[')
             lst.append(text[:ind])
@@ -78,6 +80,8 @@ class ChatBubble(QWidget):
         match menu.action:
             case ContextMenu.DELETE_MESSAGE:
                 self.deleteRequested.emit()
+            case ContextMenu.REPLY:
+                self.replyRequested.emit()
             case ContextMenu.COPY_AS_TEXT:
                 self._sm.copy_text(self._text_edit.toPlainText())
             case ContextMenu.COPY_AS_MARKDOWN:
@@ -86,7 +90,7 @@ class ChatBubble(QWidget):
                 self._text_edit.selectAll()
                 self._text_edit.setFocus()
             case ContextMenu.SEND_TO_TELEGRAM:
-                self._bm.side_tab_command('telegram', self._text)
+                self._bm.side_tab_command('telegram', self._message.content)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -102,12 +106,17 @@ class ChatBubble(QWidget):
         self._widget.setFixedHeight(self._text_edit.height())
 
     def add_text(self, text: str):
-        self._text += text
-        self._text_edit.setMarkdown(self._text)
-        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
+        self._message.content += text
+        self._text_edit.setMarkdown(self._message.content)
+        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
 
+    @property
     def text(self):
-        return self._text
+        return self._message.content
+
+    @property
+    def message(self):
+        return self._message
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
@@ -128,23 +137,29 @@ class ContextMenu(QMenu):
     SELECT_ALL = 3
     SEND_TO_TELEGRAM = 4
     COPY_AS_MARKDOWN = 5
+    REPLY = 6
 
     def __init__(self, tm):
         super().__init__()
         self.action = None
 
+        action = self.addAction(QIcon(tm.get_image('reply')), 'Ответить')
+        action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
+
+        self.addSeparator()
+
         action = self.addAction('Выделить все')
         action.triggered.connect(lambda: self.set_action(ContextMenu.SELECT_ALL))
 
-        action = self.addAction('Копировать как текст')
+        action = self.addAction(QIcon(tm.get_image('copy')), 'Копировать как текст')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_TEXT))
 
-        action = self.addAction('Копировать как Markdown')
+        action = self.addAction(QIcon(tm.get_image('md')), 'Копировать как Markdown')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_MARKDOWN))
 
         self.addSeparator()
 
-        action = self.addAction('Удалить')
+        action = self.addAction(QIcon(tm.get_image('button_delete')), 'Удалить')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
         # self.addSeparator()
@@ -152,7 +167,7 @@ class ContextMenu(QMenu):
         # action = self.addAction('Переслать в Telegram')
         # action.triggered.connect(lambda: self.set_action(ContextMenu.SEND_TO_TELEGRAM))
 
-        self.setStyleSheet(tm.menu_css())
+        self.setStyleSheet(tm.menu_css(palette='Menu'))
 
     def set_action(self, action):
         self.action = action
