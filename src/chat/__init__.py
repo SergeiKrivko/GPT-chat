@@ -222,14 +222,14 @@ class ChatLoader(QThread):
         if self._first:
             try:
                 chat = GPTChat(self._data_path, self._first)
-                dialog.load()
-                self.addChat.emit(dialog)
+                chat.load()
+                self.addChat.emit(chat)
                 sleep(0.1)
             except Exception as ex:
                 pass
         for el in os.listdir(self._data_path):
             if el.endswith('.json') and el[:-len('.json')] != self._first:
-                dialog = GPTChat(self._data_path, el[:-len('.json')])
-                dialog.load()
-                self.addChat.emit(dialog)
+                chat = GPTChat(self._data_path, el[:-len('.json')])
+                chat.load()
+                self.addChat.emit(chat)
                 sleep(0.1)
