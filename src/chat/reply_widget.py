@@ -1,19 +1,25 @@
 from uuid import UUID
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QLabel
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QLabel, QPushButton
 
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
 from src.ui.button import Button
 
 
-class ReplyList(QVBoxLayout):
+class ReplyList(QWidget):
+    scrollRequested = pyqtSignal(UUID)
+
     def __init__(self, tm, chat: GPTChat):
         super().__init__()
         self._tm = tm
         self._chat = chat
+
+        self._layout = QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
 
         self._messages = list()
         self._widgets = dict()
@@ -34,19 +40,33 @@ class ReplyList(QVBoxLayout):
 
         self._messages.insert(index, message_id)
         item = _ReplyItem(self._tm, self._chat.messages[message_id])
+
         item.deleteRequested.connect(self.delete_item)
+        item.scrollRequested.connect(self.scrollRequested.emit)
+
+        item.setMaximumWidth(self.width())
+        item.setMinimumWidth(0)
         self._widgets[message_id] = item
-        self.insertWidget(index, item)
+        self._layout.insertWidget(index, item)
+        self.show()
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        for el in self._widgets.values():
+            el.setMaximumWidth(self.width())
 
     def delete_item(self, message_id):
         self._messages.remove(message_id)
         self._widgets[message_id].setParent(None)
+        if not self._messages:
+            self.hide()
 
     def clear(self):
         for el in self._widgets.values():
             el.setParent(None)
         self._widgets.clear()
         self._messages.clear()
+        self.hide()
 
     @property
     def messages(self):
@@ -54,28 +74,22 @@ class ReplyList(QVBoxLayout):
             yield el
 
 
-class _ReplyItem(QWidget):
+class _ReplyItem(QPushButton):
     deleteRequested = pyqtSignal(UUID)
+    scrollRequested = pyqtSignal(UUID)
 
     def __init__(self, tm, message: GPTMessage):
         super().__init__()
         self._message = message
         self._tm = tm
 
-        strange_layout = QHBoxLayout()
-        strange_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(strange_layout)
-        strange_widget = QWidget()
-        strange_layout.addWidget(strange_widget)
+        self.setIcon(QIcon(self._tm.get_image('reply')))
+        self.setFixedHeight(26)
+        self.clicked.connect(lambda: self.scrollRequested.emit(self._message.id))
 
         main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(2, 2, 2, 2)
-        strange_widget.setLayout(main_layout)
-
-        self._icon = QLabel()
-        self._icon.setPixmap(QPixmap(self._tm.get_image('reply')))
-        self._icon.setFixedSize(18, 18)
-        main_layout.addWidget(self._icon)
+        main_layout.setContentsMargins(36, 2, 2, 2)
+        self.setLayout(main_layout)
 
         self._label = QLabel(self._message.content.split('\n')[0])
         self._label.setFixedHeight(16)
@@ -85,11 +99,12 @@ class _ReplyItem(QWidget):
         self._button = Button(self._tm, 'button_delete')
         self._button.clicked.connect(lambda: self.deleteRequested.emit(self._message.id))
         self._button.setFixedSize(22, 22)
-        main_layout.addWidget(self._button)
+        main_layout.addWidget(self._button, Qt.AlignmentFlag.AlignRight)
 
         self.set_theme()
 
     def set_theme(self):
-        self.setStyleSheet(self._tm.base_css(palette='Main', border=False))
-        for el in [self._button, self._label]:
-            self._tm.auto_css(el)
+        self.setStyleSheet(self._tm.button_css(palette='Main', border=True, padding=True, align='left'))
+        for el in [self._label, self._button]:
+            self._tm.auto_css(el, palette='Main')
+        self._label.setStyleSheet(f"background-color: #00000000;")

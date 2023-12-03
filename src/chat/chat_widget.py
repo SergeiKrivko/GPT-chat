@@ -72,7 +72,8 @@ class ChatWidget(QWidget):
         self._progress_marker.hide()
 
         self._reply_list = ReplyList(self._tm, self._chat)
-        layout.addLayout(self._reply_list)
+        self._reply_list.scrollRequested.connect(self.scroll_to_message)
+        layout.addWidget(self._reply_list)
 
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
@@ -154,6 +155,9 @@ class ChatWidget(QWidget):
         else:
             self._last_bubble.add_text(text)
         self._chat.store()
+
+    def scroll_to_message(self, message_id):
+        self._scroll_area.verticalScrollBar().setValue(self._bubbles[message_id].pos().y() - 5)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -

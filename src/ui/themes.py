@@ -3,7 +3,8 @@ import shutil
 
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu, \
+    QSlider
 import PIL.Image as Image
 
 from src.ui.button import Button
@@ -339,6 +340,8 @@ class ThemeManager:
             widget.setStyleSheet(self.checkbox_css(palette))
         elif isinstance(widget, QMenu):
             widget.setStyleSheet(self.menu_css(palette))
+        elif isinstance(widget, QSlider):
+            widget.setStyleSheet(self.slider_css(palette))
 
     def set_theme(self, theme_name):
         self.theme_name = theme_name
@@ -749,7 +752,7 @@ QSpinBox::disabled {{
     def double_spinbox_css(self, palette='Bg'):
         return self.spinbox_css(palette=palette).replace('QSpinBox', 'QDoubleSpinBox')
 
-    def button_css(self, palette='Bg', border=True, border_radius=True, padding=False):
+    def button_css(self, palette='Bg', border=True, border_radius=True, padding=False, align='none'):
         return f"""
 QPushButton {{
     color: {self['TextColor']};
@@ -757,6 +760,7 @@ QPushButton {{
     border: {'1' if border else '0'}px solid {self['BorderColor']};
     border-radius: {'5' if border_radius else '0'}px;
     {'padding: 3px 8px 3px 8px;' if padding else 'padding: 0px;'}
+    text-align: {align};
 }}
 QPushButton::hover {{
     background-color: {self[f'{palette}HoverColor']};
@@ -871,6 +875,31 @@ QMenu::separator {{
     height: 1px;
     background: {self['BorderColor']};
     margin: 4px 10px;
+}}"""
+
+    def slider_css(self, palette='Bg'):
+        return f"""
+QSlider {{
+    height: 28;
+}}
+QSlider::groove:horizontal {{
+    border: 1px solid {self['BorderColor']};
+    height: 8px;
+    background-color: {self[f'{palette}Color']};
+    margin: 2px 0;
+}}
+QSlider::add-page:horizontal {{
+    background: {self[f'{palette}Color']};
+}}
+QSlider::sub-page:horizontal {{
+    background: {self[f'{palette}SelectedColor']};
+}}
+QSlider::handle:horizontal {{
+    border: 1px solid {self['BorderColor']};
+    background-color: {self[f'{palette}Color']};
+    width: 8px;
+    height: 26px;
+    margin: -8px 0;
 }}"""
 
     def get_image(self, name: str, default=None, color=None):
