@@ -6,7 +6,7 @@ from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel
 
 from src.chat import gpt
-from src.chat.gpt_dialog import GPTDialog
+from src.chat.gpt_chat import GPTChat
 from src.chat.chat_bubble import ChatBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.ui.button import Button
@@ -17,11 +17,11 @@ class ChatWidget(QWidget):
     buttonBackPressed = pyqtSignal(UUID)
     updated = pyqtSignal()
 
-    def __init__(self, sm, tm, dialog: GPTDialog):
+    def __init__(self, sm, tm, chat: GPTChat):
         super().__init__()
         self._sm = sm
         self._tm = tm
-        self._dialog = dialog
+        self._chat = chat
 
         self._bubbles = []
 
@@ -35,10 +35,10 @@ class ChatWidget(QWidget):
 
         self._button_back = Button(self._tm, 'button_back', css='Bg')
         self._button_back.setFixedSize(36, 36)
-        self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._dialog.id))
+        self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         top_layout.addWidget(self._button_back)
 
-        self._name_label = QLabel(dialog.name if dialog.name.strip() else 'Диалог')
+        self._name_label = QLabel(chat.name if chat.name.strip() else 'Диалог')
         top_layout.addWidget(self._name_label)
 
         self._button_settings = Button(self._tm, 'generate', css='Bg')
@@ -89,21 +89,21 @@ class ChatWidget(QWidget):
 
     def _load_messages(self):
         self._messages_is_loaded = True
-        loader = MessageLoader(self._dialog)
+        loader = MessageLoader(self._chat)
         loader.messageLoaded.connect(self.insert_bubble)
-        self._sm.run_process(loader, f"load-{self._dialog.id}")
+        self._sm.run_process(loader, f"load-{self._chat.id}")
 
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
         self.add_bubble(text, ChatBubble.SIDE_RIGHT)
         self._text_edit.setText("")
-        self._dialog.append_message('user', text)
+        self._chat.append_message('user', text)
 
-        messages = self._dialog.system_prompts()
-        messages.extend(self._dialog.messages[-self._dialog.used_messages:])
+        messages = self._chat.system_prompts()
+        messages.extend(self._chat.messages[-self._chat.used_messages:])
 
-        self.looper = Looper(messages, self._dialog, temperature=self._dialog.temperature)
+        self.looper = Looper(messages, self._chat, temperature=self._chat.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
         self._last_message = None
@@ -147,23 +147,23 @@ class ChatWidget(QWidget):
         for i, b in enumerate(self._bubbles):
             if b == bubble:
                 self._bubbles.pop(i)
-                self._dialog.pop_message(i)
+                self._chat.pop_message(i)
                 bubble.setParent(None)
                 break
 
     def add_text(self, text):
         if self._last_message is None:
             self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
-            self._last_message = self._dialog.append_message('assistant', text)
+            self._last_message = self._chat.append_message('assistant', text)
         else:
             self._last_message['content'] += text
-            self._dialog.store()
+            self._chat.store()
         self._last_bubble.add_text(text)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
                               self._scroll_area.verticalScrollBar().value()) < 5
-        self._dialog.scrolling_pos = self._scroll_area.verticalScrollBar().value()
+        self._chat.scrolling_pos = self._scroll_area.verticalScrollBar().value()
 
     def _scroll(self):
         if self._to_bottom:
@@ -173,14 +173,14 @@ class ChatWidget(QWidget):
         super().showEvent(a0)
         if not self._messages_is_loaded:
             self._load_messages()
-        self._scroll_area.verticalScrollBar().setValue(self._dialog.scrolling_pos)
+        self._scroll_area.verticalScrollBar().setValue(self._chat.scrolling_pos)
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self._sm, self._tm, self._dialog)
+        dialog = ChatSettingsWindow(self._sm, self._tm, self._chat)
         dialog.exec()
         dialog.save()
-        self._dialog.store()
-        self._name_label.setText(self._dialog.name if self._dialog.name.strip() else 'Диалог')
+        self._chat.store()
+        self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')
 
     def _on_gpt_error(self, ex):
         MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
@@ -256,12 +256,12 @@ class _ScrollWidget(QWidget):
 class MessageLoader(QThread):
     messageLoaded = pyqtSignal(str, int)
 
-    def __init__(self, dialog):
+    def __init__(self, chat):
         super().__init__()
-        self._dialog = dialog
+        self._chat = chat
 
     def run(self) -> None:
-        for el in reversed(self._dialog.messages):
+        for el in reversed(self._chat.messages):
             self.messageLoaded.emit(el.get('content', ''),
                                     ChatBubble.SIDE_RIGHT if el.get('role') == 'user' else ChatBubble.SIDE_LEFT)
             sleep(0.1)

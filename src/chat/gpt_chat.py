@@ -6,23 +6,23 @@ from uuid import uuid4, UUID
 from src.commands import write_file, read_json
 
 
-class GPTDialog:
+class GPTChat:
     SIMPLE = 0
     TRANSLATE = 1
     SUMMARY = 2
 
-    def __init__(self, path, dialog_id=None):
+    def __init__(self, path, chat_id=None):
         self._data_path = path
 
-        if dialog_id:
-            self.id = UUID(dialog_id)
+        if chat_id:
+            self.id = UUID(chat_id)
         else:
             self.id = uuid4()
 
         self._path = f"{self._data_path}/{self.id}.json"
 
         self.messages = []
-        self.type = GPTDialog.SIMPLE
+        self.type = GPTChat.SIMPLE
         self.data = dict()
         self.name = ''
         self.time = 0
@@ -52,7 +52,7 @@ class GPTDialog:
 
     def load(self):
         data = read_json(self._path)
-        self.type = data.get('type', GPTDialog.SIMPLE)
+        self.type = data.get('type', GPTChat.SIMPLE)
         self.data = data.get('data', dict())
         self.name = data.get('name', '')
         self.time = data.get('time', 0)
@@ -105,11 +105,11 @@ class GPTDialog:
 
     def system_prompts(self):
         match self.type:
-            case GPTDialog.SIMPLE:
+            case GPTChat.SIMPLE:
                 return []
-            case GPTDialog.TRANSLATE:
+            case GPTChat.TRANSLATE:
                 return [{'role': 'system', 'content': f"You translate messages from {self.data['language1']} to "
                                                       f"{self.data['language2']} or vice versa. ONLY TRANSLATE!"}]
-            case GPTDialog.SUMMARY:
+            case GPTChat.SUMMARY:
                 return [{'role': 'system', 'content': "You compose a summary of the messages sent to you using"
                                                       " russian language"}]

@@ -5,7 +5,7 @@ from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu
 
-from src.chat.gpt_dialog import GPTDialog
+from src.chat.gpt_chat import GPTChat
 
 
 class Widget(QWidget):
@@ -62,7 +62,7 @@ class GPTListWidget(QScrollArea):
     def select(self, chat_id):
         self._items[chat_id].set_selected(True)
 
-    def sort_dialogs(self):
+    def sort_chats(self):
         for el in self._items.values():
             el.setParent(None)
         items = sorted(self._items.values(), key=lambda item: item.chat.get_sort_key(), reverse=True)
@@ -70,14 +70,14 @@ class GPTListWidget(QScrollArea):
             self._layout.addWidget(el)
 
     def move_to_top(self, chat_id):
-        self.sort_dialogs()
+        self.sort_chats()
         # item = self._items[chat_id]
         # item.setParent(None)
         # item.update_name()
         # self._layout.insertWidget(0, item)
 
-    def update_item_name(self, dialog_id):
-        self._items[dialog_id].update_name()
+    def update_item_name(self, chat_id):
+        self._items[chat_id].update_name()
 
     def _on_item_selected(self, chat_id: UUID):
         for key, item in self._items.items():
@@ -92,7 +92,7 @@ class GPTListWidget(QScrollArea):
         if chat_id in self._items:
             self._items[chat_id].set_selected(True)
 
-    def add_item(self, chat: GPTDialog):
+    def add_item(self, chat: GPTChat):
         item = GPTListWidgetItem(self._tm, chat)
         item.selected.connect(self._on_item_selected)
         item.hover.connect(self._on_item_hover)
@@ -104,7 +104,7 @@ class GPTListWidget(QScrollArea):
         self._layout.addWidget(item)
 
     def pin_chat(self, chat_id):
-        self.sort_dialogs()
+        self.sort_chats()
 
     def delete_item(self, chat_id):
         self._items[chat_id].setParent(None)
@@ -147,7 +147,7 @@ class GPTListWidgetItem(QWidget):
     deleteRequested = pyqtSignal(UUID)
     pinRequested = pyqtSignal(UUID)
 
-    def __init__(self, tm, chat: GPTDialog):
+    def __init__(self, tm, chat: GPTChat):
         super().__init__()
         self._tm = tm
         self.chat = chat
@@ -189,9 +189,9 @@ class GPTListWidgetItem(QWidget):
 
     def update_name(self):
         icons = {
-            GPTDialog.SIMPLE: 'simple_chat',
-            GPTDialog.TRANSLATE: 'translate',
-            GPTDialog.SUMMARY: 'summary',
+            GPTChat.SIMPLE: 'simple_chat',
+            GPTChat.TRANSLATE: 'translate',
+            GPTChat.SUMMARY: 'summary',
         }
         self._icon_label.setPixmap(QPixmap(self._tm.get_image(
             icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(30))

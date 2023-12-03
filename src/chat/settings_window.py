@@ -5,14 +5,14 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBo
     QDoubleSpinBox, QComboBox, QWidget
 
 from src.chat import gpt
-from src.chat.gpt_dialog import GPTDialog
+from src.chat.gpt_chat import GPTChat
 from src.ui.custom_dialog import CustomDialog
 
 
 class ChatSettingsWindow(CustomDialog):
-    def __init__(self, sm, tm, dialog: GPTDialog):
+    def __init__(self, sm, tm, chat: GPTChat):
         super().__init__(tm, "Настройки", True, True)
-        self._dialog = dialog
+        self._chat = chat
         self.sm = sm
 
         self._labels = []
@@ -102,13 +102,13 @@ class ChatSettingsWindow(CustomDialog):
         self._temperature_box.setSingleStep(0.01)
         layout.addWidget(self._temperature_box)
 
-        if self._dialog is not None:
-            self._model_box.setCurrentText(self._dialog.model)
-            self._temperature_box.setValue(self._dialog.temperature)
-            self._saved_messages_box.setValue(self._dialog.saved_messages)
-            self._used_messages_box.setValue(self._dialog.used_messages)
-            self._time_label.setText(f"Создан: {datetime.datetime.fromtimestamp(self._dialog.time).strftime('%D %H:%M')}")
-            self._name_label.setText(self._dialog.name)
+        if self._chat is not None:
+            self._model_box.setCurrentText(self._chat.model)
+            self._temperature_box.setValue(self._chat.temperature)
+            self._saved_messages_box.setValue(self._chat.saved_messages)
+            self._used_messages_box.setValue(self._chat.used_messages)
+            self._time_label.setText(f"Создан: {datetime.datetime.fromtimestamp(self._chat.time).strftime('%D %H:%M')}")
+            self._name_label.setText(self._chat.name)
         else:
             self._temperature_box.hide()
             self._saved_messages_box.hide()
@@ -120,12 +120,12 @@ class ChatSettingsWindow(CustomDialog):
                 el.hide()
 
     def save(self):
-        if self._dialog is not None:
-            self._dialog.name = self._name_label.text()
-            self._dialog.used_messages = self._used_messages_box.value()
-            self._dialog.saved_messages = self._saved_messages_box.value()
-            self._dialog.temperature = self._temperature_box.value()
-            self._dialog.model = self._model_box.currentText()
+        if self._chat is not None:
+            self._chat.name = self._name_label.text()
+            self._chat.used_messages = self._used_messages_box.value()
+            self._chat.saved_messages = self._saved_messages_box.value()
+            self._chat.temperature = self._temperature_box.value()
+            self._chat.model = self._model_box.currentText()
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
