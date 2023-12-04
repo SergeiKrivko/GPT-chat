@@ -105,8 +105,8 @@ class GPTChat:
 
         return self.system_prompts() + [self.messages[message_id].to_json() for message_id in ids]
 
-    def append_message(self, role, content):
-        message = GPTMessage(role, content)
+    def append_message(self, role, content, reply=tuple()):
+        message = GPTMessage(role, content, reply)
         self.messages[message.id] = message
         self.messages_order.append(message.id)
         while len(self.messages) > self.saved_messages:

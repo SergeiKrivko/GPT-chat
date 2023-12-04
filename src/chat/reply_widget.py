@@ -12,10 +12,11 @@ from src.ui.button import Button
 class ReplyList(QWidget):
     scrollRequested = pyqtSignal(UUID)
 
-    def __init__(self, tm, chat: GPTChat):
+    def __init__(self, tm, chat: GPTChat, mode=1):
         super().__init__()
         self._tm = tm
         self._chat = chat
+        self._mode = mode
 
         self._layout = QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -39,7 +40,7 @@ class ReplyList(QWidget):
                         break
 
         self._messages.insert(index, message_id)
-        item = _ReplyItem(self._tm, self._chat.messages[message_id])
+        item = _ReplyItem(self._tm, self._chat.messages[message_id], can_be_deleted=self._mode == 1)
 
         item.deleteRequested.connect(self.delete_item)
         item.scrollRequested.connect(self.scrollRequested.emit)
@@ -78,10 +79,11 @@ class _ReplyItem(QPushButton):
     deleteRequested = pyqtSignal(UUID)
     scrollRequested = pyqtSignal(UUID)
 
-    def __init__(self, tm, message: GPTMessage):
+    def __init__(self, tm, message: GPTMessage, can_be_deleted=True):
         super().__init__()
         self._message = message
         self._tm = tm
+        self._can_be_deleted = can_be_deleted
 
         self.setIcon(QIcon(self._tm.get_image('reply')))
         self.setFixedHeight(26)
@@ -100,6 +102,8 @@ class _ReplyItem(QPushButton):
         self._button.clicked.connect(lambda: self.deleteRequested.emit(self._message.id))
         self._button.setFixedSize(22, 22)
         main_layout.addWidget(self._button, Qt.AlignmentFlag.AlignRight)
+        if not self._can_be_deleted:
+            self._button.hide()
 
         self.set_theme()
 
@@ -107,4 +111,4 @@ class _ReplyItem(QPushButton):
         self.setStyleSheet(self._tm.button_css(palette='Main', border=True, padding=True, align='left'))
         for el in [self._label, self._button]:
             self._tm.auto_css(el, palette='Main')
-        self._label.setStyleSheet(f"background-color: #00000000;")
+        self._label.setStyleSheet(f"background-color: #00000000; border: none;")

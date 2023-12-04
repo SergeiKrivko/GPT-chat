@@ -102,7 +102,7 @@ class ChatWidget(QWidget):
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
-        self.add_bubble(self._chat.append_message('user', text))
+        self.add_bubble(self._chat.append_message('user', text, tuple(self._reply_list.messages)))
         self._text_edit.setText("")
 
         messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
@@ -119,12 +119,12 @@ class ChatWidget(QWidget):
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
-        bubble = ChatBubble(self._sm, self._tm, message)
+        bubble = ChatBubble(self._sm, self._tm,self._chat, message)
         self._add_bubble(bubble)
         return bubble
 
     def insert_bubble(self, message: GPTMessage):
-        bubble = ChatBubble(self._sm, self._tm, message)
+        bubble = ChatBubble(self._sm, self._tm, self._chat, message)
         self._add_bubble(bubble, 0)
         return bubble
 
@@ -135,6 +135,7 @@ class ChatWidget(QWidget):
     def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._delete_message(bubble.message.id))
         bubble.replyRequested.connect(lambda: self._reply_list.add_message(bubble.message.id))
+        bubble.scrollRequested.connect(self.scroll_to_message)
         if index is None:
             self.updated.emit()
             self._scroll_layout.addWidget(bubble)

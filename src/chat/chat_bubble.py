@@ -1,9 +1,12 @@
 # import markdown
+from uuid import UUID
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QLabel, QVBoxLayout
 
 from src.chat.render_latex import render_latex
+from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
 
 
@@ -15,11 +18,13 @@ class ChatBubble(QWidget):
 
     deleteRequested = pyqtSignal()
     replyRequested = pyqtSignal()
+    scrollRequested = pyqtSignal(UUID)
 
-    def __init__(self, sm, tm, message: GPTMessage):
+    def __init__(self, sm, tm, chat, message: GPTMessage):
         super().__init__()
         self._sm = sm
         self._tm = tm
+        self._chat = chat
         self._message = message
         self._side = ChatBubble.SIDE_RIGHT if message.role == 'user' else ChatBubble.SIDE_LEFT
 
@@ -27,23 +32,36 @@ class ChatBubble(QWidget):
         layout.setDirection(QHBoxLayout.Direction.LeftToRight if self._side == ChatBubble.SIDE_LEFT
                             else QHBoxLayout.Direction.RightToLeft)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop |
-            Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
+                            Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
+
+        self._bubble_widget = QWidget()
+        layout.addWidget(self._bubble_widget, 10)
+
+        bubble_layout = QVBoxLayout()
+        bubble_layout.setContentsMargins(4, 4, 4, 4)
+        self._bubble_widget.setLayout(bubble_layout)
+
+        self._reply_widget = ReplyList(self._tm, self._chat, 2)
+        self._reply_widget.scrollRequested.connect(self.scrollRequested.emit)
+        bubble_layout.addWidget(self._reply_widget)
+        for el in self._message.reply:
+            self._reply_widget.add_message(el)
 
         self._font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
         self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._text_edit.customContextMenuRequested.connect(self.run_context_menu)
-        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
+        self._bubble_widget.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self._set_html()
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
-        layout.addWidget(self._text_edit, 10)
+        bubble_layout.addWidget(self._text_edit)
 
         self._widget = QWidget()
         layout.addWidget(self._widget, 1)
@@ -125,10 +143,10 @@ class ChatBubble(QWidget):
             border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
             border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;
             border-bottom-left-radius: {0 if self._side == ChatBubble.SIDE_LEFT else ChatBubble._BORDER_RADIUS}px;
-            border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;
-            padding: 4px;"""
-        self._text_edit.setStyleSheet(css)
-        self._text_edit.setFont(self._tm.font_medium)
+            border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;"""
+        self._bubble_widget.setStyleSheet(css)
+
+        self._tm.auto_css(self._text_edit, palette='Menu', border=False)
 
 
 class ContextMenu(QMenu):
@@ -171,4 +189,3 @@ class ContextMenu(QMenu):
 
     def set_action(self, action):
         self.action = action
-

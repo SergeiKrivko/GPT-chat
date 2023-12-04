@@ -313,7 +313,7 @@ class ThemeManager:
         elif isinstance(widget, QLineEdit):
             widget.setStyleSheet(self.base_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
-            widget.setStyleSheet(self.text_edit_css(palette))
+            widget.setStyleSheet(self.text_edit_css(palette, border))
         elif isinstance(widget, QTreeWidget):
             widget.setStyleSheet(self.tree_widget_css(palette, border, border_radius))
         elif isinstance(widget, QScrollArea):
@@ -591,10 +591,10 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
 }}
 """
 
-    def text_edit_css(self, palette):
+    def text_edit_css(self, palette, border=True):
         return f"""
 QTextEdit {{
-    {self.base_css(palette)}
+    {self.base_css(palette, border)}
 }}
 QTextEdit QScrollBar:vertical {{
     background: {self[f'{palette}Color']};
