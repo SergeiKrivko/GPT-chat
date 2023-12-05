@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QLabel, QPushButton
@@ -10,7 +8,7 @@ from src.ui.button import Button
 
 
 class ReplyList(QWidget):
-    scrollRequested = pyqtSignal(UUID)
+    scrollRequested = pyqtSignal(int)
 
     def __init__(self, tm, chat: GPTChat, mode=1):
         super().__init__()
@@ -25,13 +23,14 @@ class ReplyList(QWidget):
         self._messages = list()
         self._widgets = dict()
 
-    def add_message(self, message_id: UUID):
+    def add_message(self, message: GPTMessage):
+        message_id = message.id
         if message_id in self._messages:
             return
 
         index = 0
         if self._messages:
-            for i in self._chat.messages_order:
+            for i in self._chat.message_ids:
                 if i == message_id:
                     break
                 if i == self._messages[index]:
@@ -40,7 +39,7 @@ class ReplyList(QWidget):
                         break
 
         self._messages.insert(index, message_id)
-        item = _ReplyItem(self._tm, self._chat.messages[message_id], can_be_deleted=self._mode == 1)
+        item = _ReplyItem(self._tm, message, can_be_deleted=self._mode == 1)
 
         item.deleteRequested.connect(self.delete_item)
         item.scrollRequested.connect(self.scrollRequested.emit)
@@ -76,8 +75,8 @@ class ReplyList(QWidget):
 
 
 class _ReplyItem(QPushButton):
-    deleteRequested = pyqtSignal(UUID)
-    scrollRequested = pyqtSignal(UUID)
+    deleteRequested = pyqtSignal(int)
+    scrollRequested = pyqtSignal(int)
 
     def __init__(self, tm, message: GPTMessage, can_be_deleted=True):
         super().__init__()

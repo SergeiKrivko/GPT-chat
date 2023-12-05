@@ -18,7 +18,7 @@ class ChatBubble(QWidget):
 
     deleteRequested = pyqtSignal()
     replyRequested = pyqtSignal()
-    scrollRequested = pyqtSignal(UUID)
+    scrollRequested = pyqtSignal(int)
 
     def __init__(self, sm, tm, chat, message: GPTMessage):
         super().__init__()
@@ -46,7 +46,7 @@ class ChatBubble(QWidget):
         self._reply_widget = ReplyList(self._tm, self._chat, 2)
         self._reply_widget.scrollRequested.connect(self.scrollRequested.emit)
         bubble_layout.addWidget(self._reply_widget)
-        for el in self._message.reply:
+        for el in self._message.replys:
             self._reply_widget.add_message(el)
 
         self._font_metrics = QFontMetrics(self._tm.font_medium)
@@ -124,9 +124,9 @@ class ChatBubble(QWidget):
         self._widget.setFixedHeight(self._text_edit.height())
 
     def add_text(self, text: str):
-        self._message.content += text
+        self._message.add_text(text)
         self._text_edit.setMarkdown(self._message.content)
-        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
+        self._bubble_widget.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
 
     @property
     def text(self):

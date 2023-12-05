@@ -1,7 +1,5 @@
-import os
 import shutil
-from time import time, sleep
-from uuid import UUID
+from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
@@ -9,8 +7,9 @@ from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButto
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
-from src.gpt.chat import GPTChat
 from src.chat.settings_window import ChatSettingsWindow
+from src.gpt.chat import GPTChat
+from src.gpt.database import Database
 from src.ui.button import Button
 
 
@@ -21,6 +20,7 @@ class ChatPanel(QWidget):
         super().__init__()
         self.sm = sm
         self.tm = tm
+        self.db = Database(self.sm)
         self._data_path = f"{self.sm.app_data_dir}/dialogs"
 
         self._layout = QHBoxLayout()
@@ -66,7 +66,7 @@ class ChatPanel(QWidget):
         self.current = None
 
         try:
-            self._last_chat = UUID(self.sm.get('current_dialog', ''))
+            self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
             self._last_chat = None
         self._loading_started = False
@@ -77,7 +77,7 @@ class ChatPanel(QWidget):
         window.exec()
         window.save()
         if chat:
-            chat.store()
+            self.db.commit()
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
@@ -86,7 +86,7 @@ class ChatPanel(QWidget):
             self._load_chats()
 
     def _load_chats(self):
-        self._loader = ChatLoader(self._data_path, str(self._last_chat))
+        self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
         self._loader.addChat.connect(self._on_chat_loaded)
         self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
         self.sm.run_process(self._loader, 'loading')
@@ -97,9 +97,7 @@ class ChatPanel(QWidget):
             self._list_widget.select(chat.id)
 
     def _new_chat(self, chat_type=GPTChat.SIMPLE):
-        chat = GPTChat(self._data_path)
-        chat.time = time()
-        chat.type = chat_type
+        chat = self.db.add_chat()
 
         match chat_type:
             case GPTChat.TRANSLATE:
@@ -176,6 +174,7 @@ class ChatPanel(QWidget):
 
     def closeEvent(self, a0) -> None:
         super().closeEvent(a0)
+        self.db.commit()
         try:
             shutil.rmtree(f"{self.sm.app_data_dir}/temp")
         except Exception:
@@ -211,24 +210,12 @@ class NewChatMenu(QMenu):
 class ChatLoader(QThread):
     addChat = pyqtSignal(GPTChat)
 
-    def __init__(self, data_path, first=None):
+    def __init__(self, chats: list[GPTChat], first=None):
         super().__init__()
-        self._data_path = data_path
+        self._chats: chats = chats
         self._first = first
 
     def run(self) -> None:
-        os.makedirs(self._data_path, exist_ok=True)
-        if self._first:
-            try:
-                chat = GPTChat(self._data_path, self._first)
-                chat.load()
-                self.addChat.emit(chat)
-                sleep(0.1)
-            except Exception as ex:
-                pass
-        for el in os.listdir(self._data_path):
-            if el.endswith('.json') and el[:-len('.json')] != self._first:
-                chat = GPTChat(self._data_path, el[:-len('.json')])
-                chat.load()
-                self.addChat.emit(chat)
-                sleep(0.1)
+        for c in self._chats:
+            self.addChat.emit(c)
+            sleep(0.1)

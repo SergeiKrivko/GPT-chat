@@ -128,7 +128,8 @@ class ChatSettingsWindow(CustomDialog):
             # self._saved_messages_slider.setValue(self._chat.saved_messages)
             self._used_messages_slider.setValue(self._chat.used_messages)
             self._used_messages_label.setText(str(self._chat.used_messages))
-            self._time_label.setText(f"Создан: {datetime.datetime.fromtimestamp(self._chat.time).strftime('%D %H:%M')}")
+            self._time_label.setText(
+                f"Создан: {datetime.datetime.fromtimestamp(self._chat.ctime).strftime('%D %H:%M')}")
             self._name_label.setText(self._chat.name)
         else:
             self._temperature_box.hide()
