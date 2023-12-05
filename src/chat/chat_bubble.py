@@ -45,6 +45,7 @@ class ChatBubble(QWidget):
 
         self._reply_widget = ReplyList(self._tm, self._chat, 2)
         self._reply_widget.scrollRequested.connect(self.scrollRequested.emit)
+        self._reply_widget.hide()
         bubble_layout.addWidget(self._reply_widget)
         for el in self._message.replys:
             self._reply_widget.add_message(el)

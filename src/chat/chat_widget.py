@@ -92,16 +92,23 @@ class ChatWidget(QWidget):
         self._last_message = None
         self._to_bottom = True
         self._last_maximum = 0
+        self._want_to_scroll = None
         self._messages_is_loaded = False
         self._loading_messages = False
 
-    def _load_messages(self):
+    def _load_messages(self, to_message=None):
         self._loading_messages = True
         self._messages_is_loaded = True
-        loader = MessageLoader(list(self._chat.load_messages()))
+        loader = MessageLoader(list(self._chat.load_messages(to_message=to_message)))
         loader.messageLoaded.connect(self.insert_bubble)
-        loader.finished.connect(lambda: setattr(self, '_loading_messages', False))
+        loader.finished.connect(self._on_load_finished)
         self._sm.run_process(loader, f"load-{self._chat.id}")
+
+    def _on_load_finished(self):
+        self._loading_messages = False
+        if self._want_to_scroll is not None:
+            self.scroll_to_message(self._want_to_scroll)
+            self._want_to_scroll = None
 
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
@@ -164,6 +171,9 @@ class ChatWidget(QWidget):
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:
+            if not self._chat.get_message(message_id).deleted:
+                self._want_to_scroll = message_id
+                self._load_messages(to_message=message_id)
             return
         self._scroll_area.verticalScrollBar().setValue(self._bubbles[message_id].pos().y() - 5)
 
@@ -188,6 +198,19 @@ class ChatWidget(QWidget):
         if not self._messages_is_loaded:
             self._load_messages()
         # self._scroll_area.verticalScrollBar().setValue(self._chat.scrolling_pos)
+
+    def hideEvent(self, a0) -> None:
+        super().hideEvent(a0)
+        lst = list(self._bubbles.keys())
+        lst.sort(reverse=False)
+        ind = 0
+        for i, el in enumerate(lst):
+            if self._bubbles[el].pos().y() < self._scroll_area.verticalScrollBar().value():
+                ind = i
+        ind -= 5
+        if ind > 0:
+            for el in self._chat.drop_messages(self._bubbles[lst[ind]]._message.id):
+                self._bubbles.pop(el.id).setParent(None)
 
     def _open_settings(self):
         dialog = ChatSettingsWindow(self._sm, self._tm, self._chat)
