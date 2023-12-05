@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
@@ -28,6 +26,7 @@ class GPTListWidget(QScrollArea):
         super().__init__()
         self._tm = tm
         self.setMinimumWidth(240)
+        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         scroll_widget = Widget()
         scroll_widget.mouseMove.connect(self._on_mouse_move)
@@ -37,7 +36,7 @@ class GPTListWidget(QScrollArea):
         self._layout = QVBoxLayout()
         self._layout.setSpacing(5)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._layout.setContentsMargins(5, 5, 15, 5)
+        self._layout.setContentsMargins(5, 5, 5, 5)
         scroll_widget.setLayout(self._layout)
 
         self._items = dict()
@@ -102,6 +101,7 @@ class GPTListWidget(QScrollArea):
         item.set_theme()
         self._items[chat_id] = item
         self._layout.addWidget(item)
+        self._set_items_width()
 
     def pin_chat(self, chat_id):
         self.sort_chats()
@@ -115,9 +115,9 @@ class GPTListWidget(QScrollArea):
         self._set_items_width()
 
     def _set_items_width(self):
-        width = self.width() - 25
-        # if self.verticalScrollBar().maximum():
-        #     width -= 10
+        width = self.width() - 15
+        if self.verticalScrollBar().maximum():
+            width -= 8
         for el in self._items.values():
             el.setFixedWidth(width)
 

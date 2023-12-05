@@ -193,11 +193,13 @@ class ChatWidget(QWidget):
             self._load_messages()
 
     def _scroll(self, to_bottom=False):
+        self._button_scroll.setHidden(self._to_bottom)
         if to_bottom or self._to_bottom:
             self._to_bottom = True
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
             if self._scroll_area.verticalScrollBar().value() < self._scroll_area.verticalScrollBar().maximum():
                 self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+            self._button_scroll.setHidden(True)
         elif self._loading_messages:
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().value() +
                                                            self._scroll_area.verticalScrollBar().maximum() -

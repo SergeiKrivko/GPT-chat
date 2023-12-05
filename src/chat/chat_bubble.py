@@ -1,9 +1,6 @@
-# import markdown
-from uuid import UUID
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QIcon
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QLabel, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy
 
 from src.chat.render_latex import render_latex
 from src.chat.reply_widget import ReplyList
@@ -37,9 +34,14 @@ class ChatBubble(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._bubble_widget = QWidget()
+        self._bubble_widget.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed))
+        self._bubble_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._bubble_widget.customContextMenuRequested.connect(
+            lambda pos: self.run_context_menu(self._bubble_widget.mapToGlobal(pos)))
         layout.addWidget(self._bubble_widget, 10)
 
         bubble_layout = QVBoxLayout()
+        bubble_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         bubble_layout.setContentsMargins(4, 4, 4, 4)
         self._bubble_widget.setLayout(bubble_layout)
 
@@ -54,7 +56,8 @@ class ChatBubble(QWidget):
 
         self._text_edit = QTextEdit()
         self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._text_edit.customContextMenuRequested.connect(self.run_context_menu)
+        self._text_edit.customContextMenuRequested.connect(
+            lambda pos: self.run_context_menu(self._text_edit.mapToGlobal(pos)))
         self._bubble_widget.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -94,7 +97,7 @@ class ChatBubble(QWidget):
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self._tm)
-        menu.move(self._text_edit.mapToGlobal(pos))
+        menu.move(pos)
         menu.exec()
         match menu.action:
             case ContextMenu.DELETE_MESSAGE:
