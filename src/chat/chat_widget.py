@@ -47,7 +47,7 @@ class ChatWidget(QWidget):
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
 
-        self._scroll_area = QScrollArea()
+        self._scroll_area = ScrollArea()
         layout.addWidget(self._scroll_area, 1)
 
         self._scroll_widget = _ScrollWidget()
@@ -86,6 +86,13 @@ class ChatWidget(QWidget):
         self._button.setFixedSize(30, 30)
         self._button.clicked.connect(self.send_message)
         bottom_layout.addWidget(self._button)
+
+        self._button_scroll = Button(self._tm, 'down_arrow', css='Bg')
+        self._button_scroll.setFixedSize(36, 36)
+        self._scroll_area.resized.connect(
+            lambda: self._button_scroll.move(self._scroll_area.width() - 51, self._scroll_area.height() - 46))
+        self._button_scroll.clicked.connect(lambda: self._scroll(True))
+        self._button_scroll.setParent(self._scroll_area)
 
         self.looper = None
         self._last_bubble = None
@@ -179,14 +186,18 @@ class ChatWidget(QWidget):
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
-                              self._scroll_area.verticalScrollBar().value()) < 5
+                              self._scroll_area.verticalScrollBar().value()) < 20
+        self._button_scroll.setHidden(self._to_bottom)
         self._chat.scrolling_pos = self._scroll_area.verticalScrollBar().value()
         if self._scroll_area.verticalScrollBar().value() <= 100 and not self._loading_messages:
             self._load_messages()
 
-    def _scroll(self):
-        if self._to_bottom:
+    def _scroll(self, to_bottom=False):
+        if to_bottom or self._to_bottom:
+            self._to_bottom = True
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+            if self._scroll_area.verticalScrollBar().value() < self._scroll_area.verticalScrollBar().maximum():
+                self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
         elif self._loading_messages:
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().value() +
                                                            self._scroll_area.verticalScrollBar().maximum() -
@@ -209,8 +220,10 @@ class ChatWidget(QWidget):
                 ind = i
         ind -= 5
         if ind > 0:
-            for el in self._chat.drop_messages(self._bubbles[lst[ind]]._message.id):
-                self._bubbles.pop(el.id).setParent(None)
+            for el in self._chat.drop_messages(self._bubbles[lst[ind]].message.id):
+                bubble: ChatBubble = self._bubbles.pop(el.id)
+                bubble.setParent(None)
+                bubble.disconnect()
 
     def _open_settings(self):
         dialog = ChatSettingsWindow(self._sm, self._tm, self._chat)
@@ -225,8 +238,21 @@ class ChatWidget(QWidget):
     def set_theme(self):
         self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
         for el in [self._scroll_area, self._text_edit, self._button, self._button_back, self._name_label,
-                   self._button_settings]:
+                   self._button_settings, self._button_scroll]:
             self._tm.auto_css(el)
+
+        css = f"""
+        QPushButton {{
+            background-color: {self._tm['BgColor']};  
+            border: 1px solid {self._tm['BorderColor']}; 
+            border-radius: {self._button_scroll.width() // 2}px; 
+        }}
+        QPushButton:hover {{
+            background-color: {self._tm['BgHoverColor']};
+        }}
+        """
+        self._button_scroll.setStyleSheet(css)
+
         for el in self._bubbles:
             el.set_theme()
 
@@ -302,3 +328,11 @@ class MessageLoader(QThread):
         for el in self._messages:
             self.messageLoaded.emit(el)
             sleep(0.1)
+
+
+class ScrollArea(QScrollArea):
+    resized = pyqtSignal()
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        self.resized.emit()
