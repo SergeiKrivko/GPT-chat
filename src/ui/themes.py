@@ -12,17 +12,17 @@ from src.ui.resources import resources
 
 basic_theme = {
     'MainColor': '#FFFFFF',
-    'MainHoverColor': '#E5F3FF',
-    'MainSelectedColor': '#CCE8FF',
-    'BgColor': '#F0F0F0',
-    'BgHoverColor': '#E3E3E3',
-    'BgSelectedColor': '#B8E3E3',
-    'MenuColor': '#ADADAD',
-    'MenuHoverColor': '#8F8F8F',
-    'MenuSelectedColor': '#6AA39E',
-    'BorderColor': '#969696',
-    'TextColor': '#000000',
-    'ImageColor': (0, 0, 0),
+    'MainHoverColor': '#C9CBCF',
+    'MainSelectedColor': '#4BA4FC',
+    'BgColor': '#DFE1E3',
+    'BgHoverColor': '#CBCDCF',
+    'BgSelectedColor': '#5283C9',
+    'MenuColor': '#F7F8FA',
+    'MenuHoverColor': '#DFE1E5',
+    'MenuSelectedColor': '#3573F0',
+    'BorderColor': '#BFC0C2',
+    'TextColor': '#222222',
+    'ImageColor': (25, 28, 66),
 
     'FontFamily': "Calibri",
     'CodeFontFamily': "Consolas",
@@ -48,41 +48,26 @@ class Theme:
 
 
 class ThemeManager:
-    BASIC_THEME = 'basic'
+    BASIC_THEME = 'light'
 
     def __init__(self, sm, theme_name='basic'):
         self.sm = sm
         self.themes = {
             ThemeManager.BASIC_THEME: Theme(basic_theme),
-            'darcula':
+            'dark':
                 Theme({
-                    'MainColor': '#606060',
-                    'MainHoverColor': '#777777',
-                    'MainSelectedColor': '#909090',
-                    'BgColor': '#303030',
-                    'BgHoverColor': '#474747',
-                    'BgSelectedColor': '#575757',
-                    'MenuColor': '#1F1F1F',
-                    'MenuHoverColor': '#2E2E2E',
-                    'MenuSelectedColor': '#3D3D3D',
-                    'BorderColor': '#101010',
+                    'MainColor': '#2B2D30',
+                    'MainHoverColor': '#3E4145',
+                    'MainSelectedColor': '#2E436E',
+                    'BgColor': '#141517',
+                    'BgHoverColor': '#222345',
+                    'BgSelectedColor': '#323466',
+                    'MenuColor': '#1F2024',
+                    'MenuHoverColor': '#4E5157',
+                    'MenuSelectedColor': '#3574F0',
+                    'BorderColor': '#474747',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (250, 250, 250),
-                }),
-            'ocean':
-                Theme({
-                    'MainColor': '#E7F6F2',
-                    'MainHoverColor': '#C1EDF5',
-                    'MainSelectedColor': '#A2D7E5',
-                    'BgColor': '#A5C9CA',
-                    'BgHoverColor': '#98B9BA',
-                    'BgSelectedColor': '#93A3A3',
-                    'MenuColor': '#4D7B87',
-                    'MenuHoverColor': '#446D78',
-                    'MenuSelectedColor': '#3A5D66',
-                    'BorderColor': '#3E5875',
-                    'TextColor': '#191C42',
-                    'ImageColor': (25, 28, 66),
                 }),
             'fresh':
                 Theme({
@@ -159,21 +144,6 @@ class ThemeManager:
                     'TextColor': '#2F1233',
                     'ImageColor': (47, 18, 51),
                 }),
-            'cyan':
-                Theme({
-                    'MainColor': '#BBDED0',
-                    'MainHoverColor': '#8CF2D8',
-                    'MainSelectedColor': '#66F2CB',
-                    'BgColor': '#E8E8E8',
-                    'BgHoverColor': '#CFE8E5',
-                    'BgSelectedColor': '#BAE8E2',
-                    'MenuColor': '#5BC2A8',
-                    'MenuHoverColor': '#4DA38D',
-                    'MenuSelectedColor': '#5299A3',
-                    'BorderColor': '#93699E',
-                    'TextColor': '#0C3326',
-                    'ImageColor': (12, 51, 38),
-                }),
             'space':
                 Theme({
                     'MainColor': '#292E3D',
@@ -188,36 +158,6 @@ class ThemeManager:
                     'BorderColor': '#07093B',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (240, 240, 240),
-                }),
-            'summer':
-                Theme({
-                    'MainColor': '#A0C95E',
-                    'MainHoverColor': '#86A84F',
-                    'MainSelectedColor': '#B1D12D',
-                    'BgColor': '#E8E8E8',
-                    'BgHoverColor': '#D3E8C9',
-                    'BgSelectedColor': '#C0E8B0',
-                    'MenuColor': '#62B854',
-                    'MenuHoverColor': '#6AC75A',
-                    'MenuSelectedColor': '#80F06D',
-                    'BorderColor': '#4F8C25',
-                    'TextColor': '#354711',
-                    'ImageColor': (57, 71, 17),
-                }),
-            'dark':
-                Theme({
-                    'MainColor': '#2B2D30',
-                    'MainHoverColor': '#3E4145',
-                    'MainSelectedColor': '#2E436E',
-                    'BgColor': '#141517',
-                    'BgHoverColor': '#222345',
-                    'BgSelectedColor': '#323466',
-                    'MenuColor': '#1F2024',
-                    'MenuHoverColor': '#4E5157',
-                    'MenuSelectedColor': '#3574F0',
-                    'BorderColor': '#474747',
-                    'TextColor': '#F0F0F0',
-                    'ImageColor': (250, 250, 250),
                 }),
             'christmas':
                 Theme({
@@ -247,21 +187,6 @@ class ThemeManager:
                     'MenuSelectedColor': '#2971C7',
                     'BorderColor': '#3E5875',
                     'TextColor': '#191C42',
-                    'ImageColor': (25, 28, 66),
-                }),
-            'light':
-                Theme({
-                    'MainColor': '#FFFFFF',
-                    'MainHoverColor': '#C9CBCF',
-                    'MainSelectedColor': '#4BA4FC',
-                    'BgColor': '#DFE1E3',
-                    'BgHoverColor': '#CBCDCF',
-                    'BgSelectedColor': '#5283C9',
-                    'MenuColor': '#F7F8FA',
-                    'MenuHoverColor': '#DFE1E5',
-                    'MenuSelectedColor': '#3573F0',
-                    'BorderColor': '#BFC0C2',
-                    'TextColor': '#222222',
                     'ImageColor': (25, 28, 66),
                 }),
         }

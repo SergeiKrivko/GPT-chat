@@ -11,6 +11,9 @@ from src.settings_manager import SettingsManager
 class Database:
     def __init__(self, sm: SettingsManager):
         self._sm = sm
+        os.makedirs(self._sm.app_data_dir, exist_ok=True)
+        need_loading = not os.path.isfile(f"{self._sm.app_data_dir}/database.db") and \
+                       os.path.isdir(f"{self._sm.app_data_dir}/dialogs")
         self._connection = sqlite3.connect(f"{self._sm.app_data_dir}/database.db")
         # self._connection = sqlite3.connect("database.db")
 
@@ -35,7 +38,7 @@ class Database:
         for chat_id in self.chat_ids:
             self._create_chat_table(chat_id)
 
-        if not os.path.isfile(f"{self._sm.app_data_dir}/database.db"):
+        if need_loading:
             for file in os.listdir(f"{self._sm.app_data_dir}/dialogs"):
                 self.from_json_file(os.path.join(f"{self._sm.app_data_dir}/dialogs", file))
 

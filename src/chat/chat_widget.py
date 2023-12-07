@@ -2,7 +2,7 @@ from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
 
 from src import gpt
 from src.chat.reply_widget import ReplyList
@@ -187,17 +187,20 @@ class ChatWidget(QWidget):
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
                               self._scroll_area.verticalScrollBar().value()) < 20
-        self._button_scroll.setHidden(self._to_bottom)
+        self._button_scroll.setHidden(abs(self._scroll_area.verticalScrollBar().maximum() -
+                                          self._scroll_area.verticalScrollBar().value()) < 300)
         self._chat.scrolling_pos = self._scroll_area.verticalScrollBar().value()
         if self._scroll_area.verticalScrollBar().value() <= 100 and not self._loading_messages:
             self._load_messages()
 
     def _scroll(self, to_bottom=False):
+        self._button_scroll.setHidden(self._to_bottom)
         if to_bottom or self._to_bottom:
             self._to_bottom = True
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
             if self._scroll_area.verticalScrollBar().value() < self._scroll_area.verticalScrollBar().maximum():
                 self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+            self._button_scroll.setHidden(True)
         elif self._loading_messages:
             self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().value() +
                                                            self._scroll_area.verticalScrollBar().maximum() -
@@ -295,18 +298,12 @@ class ChatInputArea(QTextEdit):
         self.setFixedHeight(min(300, self.height() + height))
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        if (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter) and not self._shift_pressed:
+        modifiers = QApplication.keyboardModifiers()
+        if (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter) and \
+                modifiers != Qt.KeyboardModifier.ShiftModifier:
             self.returnPressed.emit()
-        elif e.key() == Qt.Key.Key_Shift:
-            self._shift_pressed = True
-            super().keyPressEvent(e)
         else:
             super().keyPressEvent(e)
-
-    def keyReleaseEvent(self, e) -> None:
-        if e.key() == Qt.Key.Key_Shift:
-            self._shift_pressed = False
-        super().keyPressEvent(e)
 
 
 class _ScrollWidget(QWidget):

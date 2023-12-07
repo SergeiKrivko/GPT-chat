@@ -38,12 +38,14 @@ class GPTChat:
         if to_message is not None:
             self._db.cursor.execute(f"""SELECT id FROM Messages{self.id} WHERE deleted = 0 AND 
             id < {self._first_message} AND id >= {to_message} ORDER BY id DESC""")
+            chats = self._db.cursor.fetchall()
         elif self._first_message is None:
             self._db.cursor.execute(f'SELECT id FROM Messages{self.id} WHERE deleted = 0 ORDER BY id DESC')
+            chats = self._db.cursor.fetchmany(limit)
         else:
             self._db.cursor.execute(
                 f'SELECT id FROM Messages{self.id} WHERE deleted = 0 AND id < {self._first_message} ORDER BY id DESC')
-        chats = self._db.cursor.fetchmany(limit)
+            chats = self._db.cursor.fetchmany(limit)
         for el in chats:
             self._first_message = el[0]
             yield GPTMessage(self._db, self.id, el[0])
