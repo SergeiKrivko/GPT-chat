@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy
 
-from src.chat.render_latex import render_latex
+from src.chat.render_latex import render_latex, delete_image
 from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
 
@@ -24,6 +24,7 @@ class ChatBubble(QWidget):
         self._chat = chat
         self._message = message
         self._side = ChatBubble.SIDE_RIGHT if message.role == 'user' else ChatBubble.SIDE_LEFT
+        self._images = dict()
 
         layout = QHBoxLayout()
         layout.setDirection(QHBoxLayout.Direction.LeftToRight if self._side == ChatBubble.SIDE_LEFT
@@ -86,7 +87,11 @@ class ChatBubble(QWidget):
                 ind = text.index('\\]')
                 formula = text[:ind]
                 try:
-                    lst.append(f"![image.svg]({render_latex(self._sm, self._tm, formula)})")
+                    if formula in self._images:
+                        image = self._images[formula]
+                    else:
+                        image = render_latex(self._sm, self._tm, formula)
+                    lst.append(f"![image.svg]({image})")
                 except Exception:
                     lst.append(f"\\[ {formula} \\]")
                 text = text[ind + 2:]
@@ -94,6 +99,10 @@ class ChatBubble(QWidget):
         lst.append(text)
 
         return ''.join(lst)
+
+    def __del__(self):
+        for el in self._images:
+            delete_image(el)
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self._tm)
@@ -129,7 +138,7 @@ class ChatBubble(QWidget):
 
     def add_text(self, text: str):
         self._message.add_text(text)
-        self._text_edit.setMarkdown(self._message.content)
+        self._set_html()
         self._bubble_widget.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
 
     @property
