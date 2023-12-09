@@ -239,10 +239,11 @@ class ChatWidget(QWidget):
         MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
 
     def set_theme(self):
-        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
         for el in [self._scroll_area, self._text_edit, self._button, self._button_back, self._name_label,
                    self._button_settings, self._button_scroll]:
             self._tm.auto_css(el)
+        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='ChatBg', border=False))
+        # self._tm.auto_css(self._scroll_area, palette='ChatBg')
 
         css = f"""
         QPushButton {{
@@ -275,7 +276,6 @@ class Looper(QThread):
             for el in gpt.stream_response(self.text, **self.kwargs):
                 self.sendMessage.emit(el)
         except Exception as ex:
-            raise ex
             self.exception.emit(ex)
 
 

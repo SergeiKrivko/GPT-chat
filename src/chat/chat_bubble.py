@@ -142,7 +142,7 @@ class ChatBubble(QWidget):
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
-            background-color: {self._tm['MenuColor']};
+            background-color: {self._tm['UserMessageColor' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessageColor']};
             border: 1px solid {self._tm['BorderColor']};
             border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
             border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;
@@ -151,6 +151,8 @@ class ChatBubble(QWidget):
         self._bubble_widget.setStyleSheet(css)
 
         self._tm.auto_css(self._text_edit, palette='Menu', border=False)
+        self._text_edit.setStyleSheet("background-color: transparent; border: none;")
+        self._widget.setStyleSheet("background-color: transparent; border: none;")
 
 
 class ContextMenu(QMenu):

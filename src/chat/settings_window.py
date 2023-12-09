@@ -2,7 +2,7 @@ import datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QWidget, QSlider
+    QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox
 
 from src import gpt
 from src.gpt.chat import GPTChat
@@ -21,19 +21,24 @@ class ChatSettingsWindow(CustomDialog):
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
+        self._theme_checkbox = QCheckBox("Темная тема")
+        self._theme_checkbox.setChecked(self.sm.get('dark_theme', 'light') == 'dark')
+        self._theme_checkbox.stateChanged.connect(self._on_theme_changed)
+        main_layout.addWidget(self._theme_checkbox)
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(layout)
 
-        label = QLabel("Тема:")
+        label = QLabel("Оформление:")
         self._labels.append(label)
         layout.addWidget(label)
 
         self._theme_box = QComboBox()
-        self._theme_box.addItems(list(self.tm.themes.keys()))
-        self._theme_box.currentTextChanged.connect(lambda text: self.sm.set('theme', text))
-        self._theme_box.setCurrentText(self.tm.theme_name)
+        self._theme_box.addItems(['grey', 'blue', 'green', 'red', 'orange', 'pink'])
+        self._theme_box.setCurrentText(self.sm.get('theme', 'blue'))
+        self._theme_box.currentTextChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
 
         self._separator = QWidget()
@@ -151,6 +156,10 @@ class ChatSettingsWindow(CustomDialog):
             self._chat.temperature = self._temperature_box.value()
             self._chat.model = self._model_box.currentText()
 
+    def _on_theme_changed(self):
+        self.sm.set('dark_theme', 'dark' if self._theme_checkbox.isChecked() else 'light')
+        self.sm.set('theme', self._theme_box.currentText())
+
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
         self.set_theme()
@@ -160,7 +169,7 @@ class ChatSettingsWindow(CustomDialog):
         for el in self._labels:
             self.tm.auto_css(el)
         for el in [self._name_label, self._used_messages_slider, self._used_messages_label, self._saved_messages_box,
-                   self._temperature_box, self._theme_box, self._model_box]:
+                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox]:
             self.tm.auto_css(el)
         self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
 

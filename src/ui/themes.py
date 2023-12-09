@@ -30,29 +30,111 @@ basic_theme = {
 
 
 class Theme:
-    def __init__(self, theme_data):
-        self.theme_data = theme_data
+    def __init__(self, theme_data, inherit: 'Theme' = None):
+        self._theme_data = theme_data
+        self._inherit = inherit
 
     def get(self, key):
-        return self.theme_data.get(key, basic_theme.get(key))
+        if self._inherit:
+            return self._theme_data.get(key, self._inherit.get(key))
+        return self._theme_data.get(key, basic_theme.get(key))
 
     def __getitem__(self, item):
         return self.get(item)
 
     def code_colors(self, lexer):
-        if lexer in self.theme_data:
+        if lexer in self._theme_data:
             for key, item in basic_theme[lexer].items():
-                yield key, self.theme_data[lexer].get(key, item)
+                yield key, self._theme_data[lexer].get(key, item)
         else:
             return basic_theme[lexer].items()
 
 
-class ThemeManager:
-    BASIC_THEME = 'light'
+_LIGHT_THEME = Theme({
+    'MainColor': '#FFFFFF',
+    'MainHoverColor': '#C9CBCF',
+    'MainSelectedColor': '#4BA4FC',
+    'BgColor': '#DFE1E3',
+    'BgHoverColor': '#CBCDCF',
+    'BgSelectedColor': '#5283C9',
+    'MenuColor': '#F7F8FA',
+    'MenuHoverColor': '#DFE1E5',
+    'MenuSelectedColor': '#3573F0',
+    'BorderColor': '#BFC0C2',
+    'TextColor': '#222222',
+    'ImageColor': (25, 28, 66),
 
-    def __init__(self, sm, theme_name='basic'):
+    'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8F8F8F, stop:1 #D5D5D5)',
+    'ChatBgColor': '#FAFAFA',
+})
+
+_DARK_THEME = Theme({
+    'MainColor': '#2B2D30',
+    'MainHoverColor': '#3E4145',
+    'MainSelectedColor': '#2E436E',
+    'BgColor': '#18191C',
+    'BgHoverColor': '#4E5157',
+    'BgSelectedColor': '#3574F0',
+    'MenuColor': '#141517',
+    'MenuHoverColor': '#222345',
+    'MenuSelectedColor': '#323466',
+    'BorderColor': '#474747',
+    'TextColor': '#F0F0F0',
+    'ImageColor': (250, 250, 250),
+
+    'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18191C, stop:1 #2A2B30)',
+    'ChatBgColor': '#2A2B30',
+})
+
+
+class ThemeManager:
+    BASIC_THEME = 'dark_grey'
+
+    def __init__(self, sm, theme_name='dark_grey'):
         self.sm = sm
+
         self.themes = {
+            'light_grey': Theme({
+
+            }, inherit=_LIGHT_THEME),
+            'light_blue': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #264773, stop:1 #3C72B8)',
+                'MainSelectedColor': '#264773',
+            }, inherit=_LIGHT_THEME),
+            'light_red': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B82819, stop:1 #B83C23)',
+                'MainSelectedColor': '#B83920',
+            }, inherit=_LIGHT_THEME),
+            'light_green': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
+                'MainSelectedColor': '#306E25',
+            }, inherit=_LIGHT_THEME),
+            'light_orange': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C9650C, stop:1 #E38710)',
+                'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
+                'MainSelectedColor': '#E37412',
+            }, inherit=_LIGHT_THEME),
+
+            'dark_grey': Theme({
+                'UserMessageColor': '#',
+                'GptMessageColor': '#',
+                'ChatBgColor': '#',
+            }, inherit=_DARK_THEME),
+            'dark_blue': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #264773, stop:1 #3C72B8)',
+                'MainSelectedColor': '#264773',
+            }, inherit=_DARK_THEME),
+            'dark_red': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B81818, stop:1 #B83D25)',
+                'MainSelectedColor': '#B81818',
+            }, inherit=_DARK_THEME),
+            'dark_green': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
+                'MainSelectedColor': '#306E25',
+            }, inherit=_DARK_THEME),
+        }
+
+        themes = {
             ThemeManager.BASIC_THEME: Theme(basic_theme),
             'dark':
                 Theme({
@@ -212,20 +294,8 @@ class ThemeManager:
     def get(self, item):
         return self.theme.get(item)
 
-    def code_colors(self, lexer):
-        return self.theme.code_colors(lexer)
-
-    def set_theme_to_list_widget(self, widget, font=None, palette='Main', border=True, border_radius=True):
-        # widget.setFocusPolicy(False)
-        widget.setStyleSheet(self.list_widget_css(palette, border, border_radius))
-        for i in range(widget.count()):
-            item = widget.item(i)
-            if hasattr(item, 'set_theme'):
-                item.set_theme()
-            else:
-                item.setFont(font if font else self.font_medium)
-
-    def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True, padding=False):
+    def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True,
+                 padding=False):
         if code_font:
             widget.setFont(self.code_font)
         else:
@@ -259,8 +329,6 @@ class ThemeManager:
             widget.setStyleSheet(self.tab_bar_css(palette))
         elif isinstance(widget, QTabWidget):
             widget.setStyleSheet(self.tab_widget_css(palette))
-        elif isinstance(widget, QListWidget):
-            self.set_theme_to_list_widget(widget, palette=palette, border=border, border_radius=border_radius)
         elif isinstance(widget, QCheckBox):
             widget.setStyleSheet(self.checkbox_css(palette))
         elif isinstance(widget, QMenu):

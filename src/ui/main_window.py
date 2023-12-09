@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('icon.png'))
 
         self.sm = SettingsManager(app)
-        self.tm = ThemeManager(self.sm, self.sm.get('theme', 'basic'))
+        self.tm = ThemeManager(self.sm, f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
 
         self._chat_widget = ChatPanel(self.sm, self.tm)
         self.setCentralWidget(self._chat_widget)
