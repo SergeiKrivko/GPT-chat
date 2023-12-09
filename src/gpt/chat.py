@@ -175,6 +175,9 @@ class GPTChat:
         message_id = self._db.cursor.lastrowid
         self.utime = t
 
+        if self._first_message is None:
+            self._first_message = message_id
+
         self._db.commit()
         return GPTMessage(self._db, self.id, message_id)
 
