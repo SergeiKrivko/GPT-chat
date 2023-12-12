@@ -36,7 +36,7 @@ class ChatSettingsWindow(CustomDialog):
         layout.addWidget(label)
 
         self._theme_box = QComboBox()
-        self._theme_box.addItems(['grey', 'blue', 'green', 'red', 'orange', 'pink'])
+        self._theme_box.addItems(['blue', 'green', 'red', 'orange', 'pink'])
         self._theme_box.setCurrentText(self.sm.get('theme', 'blue'))
         self._theme_box.currentTextChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
@@ -147,6 +147,8 @@ class ChatSettingsWindow(CustomDialog):
             for el in self._labels[1:]:
                 el.hide()
 
+        self.tm.themeChanged.connect(self.set_theme)
+
     def save(self):
         if self._chat is not None:
             self._chat.name = self._name_label.text()
@@ -159,6 +161,7 @@ class ChatSettingsWindow(CustomDialog):
     def _on_theme_changed(self):
         self.sm.set('dark_theme', 'dark' if self._theme_checkbox.isChecked() else 'light')
         self.sm.set('theme', self._theme_box.currentText())
+        self.tm.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)

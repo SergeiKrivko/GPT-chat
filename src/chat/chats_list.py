@@ -201,6 +201,7 @@ class GPTListWidgetItem(QPushButton):
         self._name_label.setStyleSheet("background: transparent; border: none;")
         self._name_label.setFont(self._tm.font_medium)
         self._icon_label.setStyleSheet("background: transparent; border: none;")
+        self.update_name()
 
 
 class ContextMenu(QMenu):

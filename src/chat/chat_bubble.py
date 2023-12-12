@@ -163,6 +163,7 @@ class ChatBubble(QWidget):
         self._tm.auto_css(self._text_edit, palette='Menu', border=False)
         self._text_edit.setStyleSheet("background-color: transparent; border: none;")
         self._widget.setStyleSheet("background-color: transparent; border: none;")
+        self._set_html()
 
 
 class ContextMenu(QMenu):

@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QMainWindow
 
 from src import config
 from src.chat import ChatPanel
+from src.chat.render_latex import rerender_all
 from src.settings_manager import SettingsManager
 from src.ui.themes import ThemeManager
 
@@ -17,6 +18,7 @@ class MainWindow(QMainWindow):
 
         self.sm = SettingsManager(app)
         self.tm = ThemeManager(self.sm, f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
+        self.tm.themeChanged.connect(self.set_theme)
 
         self._chat_widget = ChatPanel(self.sm, self.tm)
         self.setCentralWidget(self._chat_widget)
@@ -40,5 +42,6 @@ class MainWindow(QMainWindow):
         super().closeEvent(a0)
 
     def set_theme(self):
+        rerender_all(self.tm)
         self.setStyleSheet(self.tm.bg_style_sheet)
         self._chat_widget.set_theme()

@@ -261,7 +261,7 @@ class ChatWidget(QWidget):
         """
         self._button_scroll.setStyleSheet(css)
 
-        for el in self._bubbles:
+        for el in self._bubbles.values():
             el.set_theme()
 
 

@@ -8,10 +8,11 @@ _fig = None
 
 
 class _LatexImage:
-    def __init__(self, formula, path):
+    def __init__(self, formula, path, color):
         self.formula = formula
         self.path = path
         self.count = 1
+        self.color = color
 
     def add(self):
         self.count += 1
@@ -63,9 +64,40 @@ def render_latex(sm, tm, latex: str):
     image_id = uuid4()
     path = f"{sm.app_data_dir}/temp/{image_id}.svg"
     plt.savefig(path)
-    _images[latex] = _LatexImage(latex, path)
+    _images[latex] = _LatexImage(latex, path, tm['TextColor'])
     return path
 
 
 def delete_image(formula):
     _images[formula].delete()
+
+
+def rerender_all(tm):
+    for el in _images.values():
+        if el.color == tm['TextColor']:
+            continue
+
+        global _fig
+        if _fig is None:
+            _fig = plt.figure()
+        # Создание области отрисовки
+        _fig.clear()
+        _fig.set_facecolor("#00000000")
+        ax = _fig.add_axes([0, 0, 1, 1])
+        ax.set_axis_off()
+
+        # Отрисовка формулы
+        t = ax.text(0.5, 0.5, f"${el.formula}$",
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=14, color=tm['TextColor'])
+        el.color = tm['TextColor']
+
+        # Определение размеров формулы
+        ax.figure.canvas.draw()
+        bbox = t.get_window_extent()
+
+        # Установка размеров области отрисовки
+        _fig.set_size_inches(bbox.width / 100, bbox.height / 100)  # dpi=80
+
+        plt.savefig(el.path)

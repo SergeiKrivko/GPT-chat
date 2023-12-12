@@ -1,6 +1,7 @@
 import os
 import shutil
 
+from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu, \
@@ -60,11 +61,11 @@ _LIGHT_THEME = Theme({
     'MenuColor': '#F7F8FA',
     'MenuHoverColor': '#DFE1E5',
     'MenuSelectedColor': '#3573F0',
-    'BorderColor': '#BFC0C2',
+    'BorderColor': '#858687',
     'TextColor': '#222222',
     'ImageColor': (25, 28, 66),
 
-    'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8F8F8F, stop:1 #D5D5D5)',
+    'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)',
     'ChatBgColor': '#FAFAFA',
 })
 
@@ -87,10 +88,12 @@ _DARK_THEME = Theme({
 })
 
 
-class ThemeManager:
-    BASIC_THEME = 'dark_grey'
+class ThemeManager(QObject):
+    themeChanged = pyqtSignal()
+    BASIC_THEME = 'dark_blue'
 
-    def __init__(self, sm, theme_name='dark_grey'):
+    def __init__(self, sm, theme_name='dark_blue'):
+        super().__init__()
         self.sm = sm
 
         self.themes = {
@@ -98,21 +101,25 @@ class ThemeManager:
 
             }, inherit=_LIGHT_THEME),
             'light_blue': Theme({
-                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #264773, stop:1 #3C72B8)',
-                'MainSelectedColor': '#264773',
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3F76BF, stop:1 #3B97CF)',
+                'MainSelectedColor': '#3B97CF',
             }, inherit=_LIGHT_THEME),
             'light_red': Theme({
-                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B82819, stop:1 #B83C23)',
-                'MainSelectedColor': '#B83920',
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F23C18, stop:1 #F26149)',
+                'MainSelectedColor': '#F23C18',
             }, inherit=_LIGHT_THEME),
             'light_green': Theme({
-                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
-                'MainSelectedColor': '#306E25',
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #377D2A, stop:1 #72B238)',
+                'MainSelectedColor': '#67A132',
             }, inherit=_LIGHT_THEME),
             'light_orange': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C9650C, stop:1 #E38710)',
                 'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
                 'MainSelectedColor': '#E37412',
+            }, inherit=_LIGHT_THEME),
+            'light_pink': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C25EBD, stop:1 #C086C2)',
+                'MainSelectedColor': '#C25EBD',
             }, inherit=_LIGHT_THEME),
 
             'dark_grey': Theme({
@@ -131,6 +138,14 @@ class ThemeManager:
             'dark_green': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
                 'MainSelectedColor': '#306E25',
+            }, inherit=_DARK_THEME),
+            'dark_orange': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B25B15, stop:1 #B28F32)',
+                'MainSelectedColor': '#B25B15',
+            }, inherit=_DARK_THEME),
+            'dark_pink': Theme({
+                'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #75165F, stop:1 #B32291)',
+                'MainSelectedColor': '#75165F',
             }, inherit=_DARK_THEME),
         }
 
@@ -349,6 +364,7 @@ class ThemeManager:
         self.code_font = QFont(self.get('CodeFontFamily'), 11)
         self.bg_style_sheet = f"color: {self['TextColor']};\n" \
                               f"background-color: {self['BgColor']};"
+        self.themeChanged.emit()
 
     def scintilla_css(self, border=False):
         return f"""
