@@ -19,7 +19,13 @@ class _LatexImage:
     def delete(self):
         self.count -= 1
         if self.count <= 0:
-            _images.pop(self)
+            _images.pop(self.formula)
+            try:
+                os.remove(self.path)
+            except PermissionError:
+                pass
+            except FileNotFoundError:
+                pass
 
 
 _images: dict[str: _LatexImage] = dict()

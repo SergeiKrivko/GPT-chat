@@ -91,6 +91,7 @@ class ChatBubble(QWidget):
                         image = self._images[formula]
                     else:
                         image = render_latex(self._sm, self._tm, formula)
+                        self._images[formula] = image
                     lst.append(f"![image.svg]({image})")
                 except Exception:
                     lst.append(f"\\[ {formula} \\]")
@@ -100,7 +101,7 @@ class ChatBubble(QWidget):
 
         return ''.join(lst)
 
-    def __del__(self):
+    def delete(self):
         for el in self._images:
             delete_image(el)
 

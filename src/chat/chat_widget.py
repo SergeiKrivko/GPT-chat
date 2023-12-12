@@ -167,7 +167,10 @@ class ChatWidget(QWidget):
 
     def _delete_message(self, message_id):
         self._chat.delete_message(message_id)
-        self._bubbles.pop(message_id).setParent(None)
+        bubble = self._bubbles.pop(message_id)
+        bubble.setParent(None)
+        bubble.disconnect()
+        bubble.delete()
 
     def add_text(self, text):
         if self._last_message is None:
@@ -226,6 +229,7 @@ class ChatWidget(QWidget):
             for el in self._chat.drop_messages(self._bubbles[lst[ind]].message.id):
                 bubble: ChatBubble = self._bubbles.pop(el.id)
                 bubble.setParent(None)
+                bubble.delete()
                 bubble.disconnect()
 
     def _open_settings(self):
