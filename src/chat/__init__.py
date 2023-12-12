@@ -205,6 +205,7 @@ class NewChatMenu(QMenu):
         action.triggered.connect(lambda: func(GPTChat.SUMMARY))
 
         self.tm.auto_css(self)
+        self.tm.themeChanged.connect(lambda: self.tm.auto_css(self))
 
 
 class ChatLoader(QThread):
