@@ -14,11 +14,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd "D:\a\GPT-chat\GPT-chat\master"
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
       - name: Build by Pyinstaller
         run: |
+          cd "D:\a\GPT-chat\GPT-chat\master"
           pyinstaller --noconfirm build/GPT-chat.spec
 
       - name: Fix Qt6, Update setup.iss
