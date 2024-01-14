@@ -15,8 +15,6 @@ jobs:
       - name: Install dependencies
         run: |
           cd "D:\a\GPT-chat\GPT-chat\master"
-          ls
-          ls dist
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
@@ -24,11 +22,15 @@ jobs:
         run: |
           cd "D:\a\GPT-chat\GPT-chat\master"
           pyinstaller --noconfirm GPT-chat.spec
+          ls
 
       - name: Fix Qt6, Update setup.iss
         run: |
-          ls dist
+          cd "D:\a\GPT-chat\GPT-chat\master"
           python dist/fix_version.py
+          ls
+          ls build
+          ls dist
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
