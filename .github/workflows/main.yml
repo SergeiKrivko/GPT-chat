@@ -1,0 +1,37 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    name: Build for Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: master
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+
+      - name: Build by Pyinstaller
+        run: |
+          pyinstaller --noconfirm build/GPT-chat.spec
+
+      - name: Fix Qt6, Update setup.iss
+        run: python build/fix_version.py
+
+      - name: Compile .ISS to .EXE Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: build/setup.iss
+          options: /O+
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: GPT-chat_setup.exe
