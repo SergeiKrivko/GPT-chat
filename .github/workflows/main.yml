@@ -22,20 +22,16 @@ jobs:
         run: |
           cd "D:\a\GPT-chat\GPT-chat\master"
           pyinstaller --noconfirm GPT-chat.spec
-          ls
 
       - name: Fix Qt6, Update setup.iss
         run: |
           cd "D:\a\GPT-chat\GPT-chat\master"
-          python dist/fix_version.py
-          ls
-          ls build
-          ls dist
+          python fix_version.py
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: dist/setup.iss
+          path: setup.iss
           options: /O+
 
       - name: Upload artifacts
