@@ -31,11 +31,11 @@ jobs:
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: setup.iss
+          path: "D:\a\GPT-chat\GPT-chat\master\setup.iss"
           options: /O+
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: package
-          path: GPT-chat_setup.exe
+          name: "GPT-chat_setup.exe"
+          path: "D:\a\GPT-chat\GPT-chat\master\dist\GPT-chat_setup.exe"
