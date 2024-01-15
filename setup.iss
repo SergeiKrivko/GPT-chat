@@ -22,7 +22,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=dist
+OutputDir=D:\a\GPT-chat\GPT-chat\master\dist
 OutputBaseFilename=GPT-chat_setup
 Compression=lzma
 SolidCompression=yes
@@ -35,8 +35,8 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\GPT-chat\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\GPT-chat\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\a\GPT-chat\GPT-chat\master\dist\GPT-chat\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\a\GPT-chat\GPT-chat\master\dist\GPT-chat\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
