@@ -29,7 +29,7 @@ jobs:
           python fix_version.py
 
       - name: Compile .ISS to .EXE Installer
-        run: cd "D:\a\GPT-chat\GPT-chat\master"
+        working-directory: D:\a\GPT-chat\GPT-chat\master
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
           path: D:\a\GPT-chat\GPT-chat\master\setup.iss
