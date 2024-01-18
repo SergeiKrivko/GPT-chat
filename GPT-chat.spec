@@ -25,7 +25,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=False,
+    exclude_binaries=True,
     name='GPT-chat',
     debug=False,
     bootloader_ignore_signals=False,
