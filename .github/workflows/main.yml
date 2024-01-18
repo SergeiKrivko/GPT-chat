@@ -14,6 +14,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          ls
           cd "D:\a\GPT-chat\GPT-chat\master"
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
@@ -31,7 +32,7 @@ jobs:
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: D:\a\GPT-chat\GPT-chat\master\setup.iss
+          path: setup.iss
           options: /O+
 
       - name: Upload artifacts
