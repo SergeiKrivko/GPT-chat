@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
 
-from src import gpt
+from src.gpt import gpt
 from src.chat.reply_widget import ReplyList
 from src.gpt.chat import GPTChat
 from src.chat.chat_bubble import ChatBubble

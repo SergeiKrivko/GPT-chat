@@ -4,7 +4,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMainWindow
 
 from src import config
-from src.chat import ChatPanel
+from src.chat.panel import ChatPanel
 from src.chat.render_latex import rerender_all
 from src.settings_manager import SettingsManager
 from src.ui.themes import ThemeManager
