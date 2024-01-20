@@ -69,12 +69,9 @@ jobs:
       - name: Compress to ZIP
         run: |
           python3.11 fix_version.py
-          cd dist
-          zip GPT-chat.zip -r GPT-chat/*
-          ls
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_linux
-          path: dist/GPT-chat.zip
+          path: dist/GPT-chat

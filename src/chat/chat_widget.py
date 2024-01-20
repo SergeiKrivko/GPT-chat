@@ -260,6 +260,7 @@ class ChatWidget(QWidget):
         }}
         """
         self._button_scroll.setStyleSheet(css)
+        self._progress_marker.setStyleSheet(f"background-color: {self._tm['MainColor']}")
 
         for el in self._bubbles.values():
             el.set_theme()

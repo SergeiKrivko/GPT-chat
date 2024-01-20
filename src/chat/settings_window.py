@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
     QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox
 
-from src import gpt
+from src.gpt.gpt import get_models
 from src.gpt.chat import GPTChat
 from src.ui.custom_dialog import CustomDialog
 
@@ -61,7 +61,7 @@ class ChatSettingsWindow(CustomDialog):
         main_layout.addWidget(label)
 
         self._model_box = QComboBox()
-        self._model_box.addItems(gpt.get_models())
+        self._model_box.addItems(get_models())
         main_layout.addWidget(self._model_box)
 
         layout = QHBoxLayout()
