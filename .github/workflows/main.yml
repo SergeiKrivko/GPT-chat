@@ -69,6 +69,7 @@ jobs:
       - name: Compress to ZIP
         run: |
           python3.11 fix_version.py
+          cd dist
           zip GPT-chat.zip -r GPT-chat/*
 
       - name: Upload artifacts
