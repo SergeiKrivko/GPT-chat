@@ -66,12 +66,13 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
 
-      - name: Fix Qt6, Update setup.iss
+      - name: Compress to ZIP
         run: |
           python3.11 fix_version.py
+          zip GPT-chat.zip -r GPT-chat/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_linux
-          path: dist\GPT-chat
+          path: dist\GPT-chat.zip

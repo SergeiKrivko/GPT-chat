@@ -1,7 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
-
 
 block_cipher = None
 
@@ -27,7 +25,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=sys.platform=='win32',
+    exclude_binaries=True,
     name='GPT-chat',
     debug=False,
     bootloader_ignore_signals=False,
