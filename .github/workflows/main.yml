@@ -65,9 +65,6 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           pyinstaller --noconfirm GPT-chat.spec
-          ls dist
-          zip -r dist/GPT-chat
-          ls dist
 
       - name: Fix Qt6, Update setup.iss
         run: |
@@ -77,4 +74,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_linux
-          path: dist\GPT-chat.zip
+          path: dist\GPT-chat
