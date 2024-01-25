@@ -1,4 +1,5 @@
 import os
+import shutil
 import sqlite3
 from time import time
 
@@ -20,6 +21,11 @@ class Database:
     def update_user(self):
         if isinstance(self._connection, sqlite3.Connection):
             self._connection.close()
+
+        if self._dir.endswith('default_user') and not os.path.isdir(self._sm.user_data_path):
+            os.makedirs(self._sm.user_data_path)
+            shutil.copyfile(f"{self._dir}/database.db", f"{self._sm.user_data_path}/database.db")
+
         self._dir = self._sm.user_data_path
         os.makedirs(self._dir, exist_ok=True)
         self._connection = sqlite3.connect(f"{self._dir}/database.db")
@@ -74,6 +80,12 @@ class Database:
     def chats(self):
         for el in self.chat_ids:
             yield chat.GPTChat(self, self._sm, el)
+
+    async def get_remote_deleted_chats(self):
+        chats = await self.firebase.get_chats()
+        for chat in self.chats:
+            if chat.remote_id and chat.remote_id not in chats:
+                yield chat.id
 
     async def load_remote(self):
         chats = await self.firebase.get_chats()

@@ -269,7 +269,15 @@ class GPTChat:
 
         return self.system_prompts() + [GPTMessage(self._db, self.id, message_id).to_json() for message_id in ids]
 
-    def delete(self):
+    @asyncSlot()
+    async def delete(self):
+        if self.remote_id:
+            try:
+                await self._firebase.delete_chat(self)
+            except FirebaseError:
+                pass
+            except aiohttp.ClientConnectionError:
+                pass
         self._db.cursor.execute(f"""DELETE FROM Chats WHERE id = {self._id}""")
         self._db.cursor.execute(f"""DROP TABLE IF EXISTS Messages{self._id}""")
         self._db.commit()
@@ -290,13 +298,23 @@ class GPTChat:
         if remote == (self.remote_id is not None):
             return
         if remote:
-            self._set_remote_id(uuid4())
-            await self._firebase.upload_chat(self)
-            self._db.commit()
+            try:
+                self._set_remote_id(uuid4())
+                await self._firebase.upload_chat(self)
+                self._db.commit()
+            except aiohttp.ClientConnectionError:
+                self._set_remote_id(None)
+            except FirebaseError:
+                self._set_remote_id(None)
         else:
-            await self._firebase.delete_chat(self)
-            self._set_remote_id(None)
-            self._db.commit()
+            try:
+                await self._firebase.delete_chat(self)
+                self._set_remote_id(None)
+                self._db.commit()
+            except FirebaseError:
+                pass
+            except aiohttp.ClientConnectionError:
+                pass
 
     def _add_event(self, event_type, event_data):
         if not self.remote_id:

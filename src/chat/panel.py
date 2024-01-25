@@ -16,6 +16,7 @@ from src.gpt.firebase import Firebase
 from src.settings_manager import SettingsManager
 from src.ui.authentication_window import AuthenticationWindow
 from src.ui.button import Button
+from src.ui.custom_dialog import CustomDialog, ask
 
 
 class ChatPanel(QWidget):
@@ -122,9 +123,18 @@ class ChatPanel(QWidget):
 
     @asyncSlot()
     async def _load_remote(self):
+        if not self.sm.get('user_id'):
+            return
         while not self.sm.authorized:
-            print(1)
             await asyncio.sleep(1)
+        async for chat_id in self.db.get_remote_deleted_chats():
+            chat = self.chats[chat_id]
+            if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
+                   default='Нет') == 'Да':
+                self._delete_chat(chat_id)
+            else:
+                chat.remote_id = None
+                self.db.commit()
         async for chat in self.db.load_remote():
             self._add_chat(chat)
         for chat in self.chats.values():
@@ -191,7 +201,8 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
-        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget, self._button_user]:
+        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget,
+                   self._button_user]:
             el.setHidden(hidden)
 
     def _resize(self):

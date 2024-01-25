@@ -196,7 +196,7 @@ class _SignUpScreen(QWidget):
         bottom_layout.addWidget(self._button_sign_up)
 
     def sign_up(self):
-        if len(self._password_edit.text() < 6) or self._password_edit.text() != self._password_edit2.text():
+        if len(self._password_edit.text()) < 6 or self._password_edit.text() != self._password_edit2.text():
             return
 
         rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp"
