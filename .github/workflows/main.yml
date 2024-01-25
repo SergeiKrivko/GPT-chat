@@ -66,7 +66,7 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
 
-      - name: Compress to ZIP
+      - name: fix PyQt6
         run: |
           python3.11 fix_version.py
 
@@ -75,3 +75,37 @@ jobs:
         with:
           name: GPT-chat_linux
           path: dist/GPT-chat
+
+  build-macos:
+    name: Build for macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.3
+
+      - name: Install dependencies
+        run: |
+          python3.11 -m pip install -r requirements.txt
+          python3.11 -m pip install --upgrade pyinstaller==6.3.0
+
+      - name: Build by Pyinstaller
+        run: |
+          pyinstaller --noconfirm GPT-chat.spec
+
+      - name: fix PyQt6
+        run: |
+          python3.11 fix_version.py
+          ls
+          ls dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: GPT-chat_macos
+          path: dist/GPT-chat.app
