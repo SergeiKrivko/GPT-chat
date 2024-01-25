@@ -340,7 +340,7 @@ class GPTChat:
 
     async def pull(self):
         if not self.remote_id:
-            return
+            return []
         messages = []
         try:
             messages = await self._firebase.get_events(self)

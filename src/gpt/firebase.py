@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import aiohttp
 
-import src.gpt.message as gpt_message
 import src.gpt.chat as gpt_chat
 
 

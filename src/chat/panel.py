@@ -127,6 +127,7 @@ class ChatPanel(QWidget):
             return
         while not self.sm.authorized:
             await asyncio.sleep(1)
+        self.db.update_user()
         async for chat_id in self.db.get_remote_deleted_chats():
             chat = self.chats[chat_id]
             if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
@@ -189,7 +190,8 @@ class ChatPanel(QWidget):
         self.chat_widgets[chat_id].show()
         self.current = chat_id
         self._resize()
-        self._pull_chat(chat_id)
+        if self.sm.authorized:
+            self._pull_chat(chat_id)
 
     @asyncSlot()
     async def _pull_chat(self, chat_id):
