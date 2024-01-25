@@ -2,9 +2,16 @@ import json
 import struct
 import time
 from typing import Literal
+from uuid import uuid4
 
+import aiohttp
+from qasync import asyncSlot
+
+from src.commands import write_file, read_json
 from src.gpt import database
+from src.gpt.firebase import FirebaseError
 from src.gpt.message import GPTMessage
+from src.settings_manager import SettingsManager
 
 
 class GPTChat:
@@ -12,11 +19,18 @@ class GPTChat:
     TRANSLATE = 1
     SUMMARY = 2
 
-    def __init__(self, db: database.Database, chat_id: int):
+    def __init__(self, db: database.Database, sm: SettingsManager, chat_id: int):
         self._id = chat_id
+
+        self._sm = sm
         self._db = db
+        self._firebase = db.firebase
 
         self._first_message = None
+        self._events = []
+        self._data_path = f"{self._sm.user_data_path}/chats/{self._id}.json"
+        data = read_json(self._data_path, dict)
+        self._events = data.get('events', [])
 
     @property
     def id(self):
@@ -71,6 +85,31 @@ class GPTChat:
     @type.setter
     def type(self, type):
         self._db.cursor.execute(f"""UPDATE Chats SET type = ? WHERE id = {self._id}""", (type,))
+
+    @property
+    def remote_last(self):
+        self._db.cursor.execute(f"""SELECT remote_last from Chats WHERE id = {self._id}""")
+        remote_last = self._db.cursor.fetchone()[0]
+        return remote_last
+
+    @remote_last.setter
+    def remote_last(self, remote_last):
+        self._db.cursor.execute(f"""UPDATE Chats SET remote_last = ? WHERE id = {self._id}""", (remote_last,))
+
+    @property
+    def remote_id(self):
+        self._db.cursor.execute(f"""SELECT remote_id from Chats WHERE id = {self._id}""")
+        remote_id = self._db.cursor.fetchone()[0]
+        return remote_id
+
+    def _set_remote_id(self, remote_id):
+        if remote_id is not None:
+            remote_id = str(remote_id)
+        self._db.cursor.execute(f"""UPDATE Chats SET remote_id = ? WHERE id = {self._id}""", (remote_id,))
+
+    @remote_id.setter
+    def remote_id(self, remote_id):
+        self._set_remote_id(remote_id)
 
     @property
     def type_data(self):
@@ -167,21 +206,37 @@ class GPTChat:
     def model(self, model):
         self._db.cursor.execute(f"""UPDATE Chats SET model = ? WHERE id = {self._id}""", (model,))
 
-    def add_message(self, role: Literal['user', 'assistant', 'system'], content="", reply=tuple()):
+    def add_message(self, role: Literal['user', 'assistant', 'system'], content="", reply=tuple(), skip_event=False):
         t = time.time()
         self._db.cursor.execute(f"""INSERT INTO Messages{self._id} (
                 role, content, replys, replied_count, deleted, ctime) 
                 VALUES (?, ?, ?, 0, 0, {t})""", (role, content, struct.pack(f'{len(reply)}q', *reply)))
         message_id = self._db.cursor.lastrowid
         self.utime = t
+        if not skip_event:
+            self._add_event('add', message_id)
 
-        if self._first_message is None:
-            self._first_message = message_id
+        # if self._first_message is None:
+        #     self._first_message = message_id
 
         self._db.commit()
         return GPTMessage(self._db, self.id, message_id)
 
     def delete_message(self, message_id):
+        message = GPTMessage(self._db, self.id, message_id)
+        for el in message.replys:
+            el.replied_count -= 1
+        self._add_event('delete', message.remote_id)
+        message.deleted = True
+        self._db.commit()
+
+    def delete_by_remote_id(self, remote_id):
+        self._db.cursor.execute(f'''SELECT id from Messages{self._id} WHERE remote_id = "{remote_id}"''')
+        message_id = self._db.cursor.fetchone()
+        if message_id is None:
+            return
+        message_id = message_id[0]
+
         message = GPTMessage(self._db, self.id, message_id)
         for el in message.replys:
             el.replied_count -= 1
@@ -229,3 +284,49 @@ class GPTChat:
             case GPTChat.SUMMARY:
                 return [{'role': 'system', 'content': "You compose a summary of the messages sent to you using"
                                                       " russian language"}]
+
+    @asyncSlot()
+    async def set_remote(self, remote):
+        if remote == (self.remote_id is not None):
+            return
+        if remote:
+            self._set_remote_id(uuid4())
+            await self._firebase.upload_chat(self)
+            self._db.commit()
+        else:
+            await self._firebase.delete_chat(self)
+            self._set_remote_id(None)
+            self._db.commit()
+
+    def _add_event(self, event_type, event_data):
+        if not self.remote_id:
+            return
+        self._events.append([event_type, event_data])
+        write_file(self._data_path, json.dumps({'events': self._events}))
+
+    @asyncSlot()
+    async def push(self):
+        if not self.remote_id:
+            return
+        try:
+            await self._firebase.update_chat(self)
+            await self._firebase.add_events(self, self._events)
+        except aiohttp.ClientConnectionError:
+            pass
+        except FirebaseError:
+            pass
+        else:
+            self._events.clear()
+            write_file(self._data_path, json.dumps({'events': self._events}))
+        self._db.commit()
+
+    async def pull(self):
+        if not self.remote_id:
+            return
+        try:
+            await self._firebase.get_events(self)
+        except aiohttp.ClientConnectionError:
+            pass
+        except FirebaseError:
+            pass
+        self._db.commit()

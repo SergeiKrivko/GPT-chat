@@ -19,6 +19,7 @@ class CustomDialog(QDialog):
         top_layout.setContentsMargins(10, 2, 2, 2)
 
         self.__top_widget = QWidget()
+        self.__top_widget.setFixedHeight(32)
         layout.addWidget(self.__top_widget)
         self.__top_widget.setLayout(top_layout)
 
@@ -28,6 +29,7 @@ class CustomDialog(QDialog):
             top_layout.addWidget(self.__label)
 
         self.__button_close = Button(self.tm, 'button_close', css='Menu' if panel else 'Bg')
+        self.__button_close.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.__button_close.setFixedSize(25, 25)
         if button_close:
             top_layout.addWidget(self.__button_close)

@@ -70,6 +70,7 @@ def read_json(path: str, expected_type: type = dict):
 
 
 def write_file(path: str, text: str):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(text)
 

@@ -135,7 +135,7 @@ class ChatWidget(QWidget):
         self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
         self.looper.exception.connect(self._on_gpt_error)
-        self.looper.finished.connect(self._progress_marker.hide)
+        self.looper.finished.connect(lambda: (self._progress_marker.hide(), self._chat.push()))
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
@@ -171,6 +171,8 @@ class ChatWidget(QWidget):
         bubble.setParent(None)
         bubble.disconnect()
         bubble.delete()
+        if not isinstance(self.looper, Looper) or self.looper.isFinished():
+            self._chat.push()
 
     def add_text(self, text):
         if self._last_message is None:

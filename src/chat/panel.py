@@ -1,22 +1,27 @@
+import asyncio
 import shutil
 from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
+from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.settings_window import ChatSettingsWindow
 from src.gpt.chat import GPTChat
 from src.gpt.database import Database
+from src.gpt.firebase import Firebase
+from src.settings_manager import SettingsManager
+from src.ui.authentication_window import AuthenticationWindow
 from src.ui.button import Button
 
 
 class ChatPanel(QWidget):
     WIDTH = 550
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm: SettingsManager, tm):
         super().__init__()
         self.sm = sm
         self.tm = tm
@@ -56,6 +61,11 @@ class ChatPanel(QWidget):
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
 
+        self._button_user = Button(self.tm, 'user', css='Bg')
+        self._button_user.setFixedSize(36, 36)
+        self._button_user.clicked.connect(self._open_user_window)
+        top_layout.addWidget(self._button_user)
+
         self._list_widget = GPTListWidget(tm)
         main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
@@ -79,6 +89,15 @@ class ChatPanel(QWidget):
         if chat:
             self.db.commit()
 
+    def _open_user_window(self):
+        uid = self.sm.get('user_id')
+        window = AuthenticationWindow(self.sm, self.tm)
+        window.exec()
+        if uid != self.sm.get('user_id'):
+            self._clear_chats()
+            self.db.update_user()
+            self._load_chats()
+
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
         if not self._loading_started:
@@ -89,7 +108,27 @@ class ChatPanel(QWidget):
         self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
         self._loader.addChat.connect(self._on_chat_loaded)
         self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
-        self.sm.run_process(self._loader, 'loading')
+        proc = self.sm.run_process(self._loader, 'loading')
+        proc.finished.connect(self._load_remote)
+
+    def _clear_chats(self):
+        self._close_chat(self.current)
+        for el in self.chats:
+            self._list_widget.delete_item(el)
+        self.chats.clear()
+        for el in self.chat_widgets.values():
+            el.setParent(None)
+        self.chat_widgets.clear()
+
+    @asyncSlot()
+    async def _load_remote(self):
+        while not self.sm.authorized:
+            print(1)
+            await asyncio.sleep(1)
+        async for chat in self.db.load_remote():
+            self._add_chat(chat)
+        for chat in self.chats.values():
+            await chat.pull()
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)
@@ -141,6 +180,8 @@ class ChatPanel(QWidget):
         self._resize()
 
     def _close_chat(self, chat_id):
+        if chat_id not in self.chats:
+            return
         self.chat_widgets[chat_id].hide()
         self.set_list_hidden(False)
         self.current = None
@@ -150,7 +191,7 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
-        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget]:
+        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget, self._button_user]:
             el.setHidden(hidden)
 
     def _resize(self):
@@ -183,6 +224,7 @@ class ChatPanel(QWidget):
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
+        self._button_user.set_theme()
         self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
         self._list_widget.set_theme()
         for el in self.chat_widgets.values():

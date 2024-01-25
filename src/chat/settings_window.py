@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from PyQt6.QtCore import Qt
@@ -97,16 +98,6 @@ class ChatSettingsWindow(CustomDialog):
         self._labels.append(label)
         layout.addWidget(label)
 
-        # self._saved_messages_label = QLabel()
-        # self._saved_messages_label.setFixedWidth(30)
-        # layout.addWidget(self._saved_messages_label)
-        #
-        # self._saved_messages_slider = QSlider(Qt.Orientation.Horizontal)
-        # self._saved_messages_slider.setRange(50, 1000)
-        # self._saved_messages_slider.setSingleStep(50)
-        # self._saved_messages_slider.valueChanged.connect(lambda value: self._saved_messages_label.setText(str(value)))
-        # layout.addWidget(self._saved_messages_slider)
-
         self._saved_messages_box = QSpinBox()
         self._saved_messages_box.setRange(50, 10000)
         layout.addWidget(self._saved_messages_box)
@@ -126,6 +117,9 @@ class ChatSettingsWindow(CustomDialog):
         self._temperature_box.setSingleStep(0.01)
         layout.addWidget(self._temperature_box)
 
+        self._sync_checkbox = QCheckBox("Синхронизировать")
+        main_layout.addWidget(self._sync_checkbox)
+
         if self._chat is not None:
             self._model_box.setCurrentText(self._chat.model)
             self._temperature_box.setValue(self._chat.temperature)
@@ -136,6 +130,7 @@ class ChatSettingsWindow(CustomDialog):
             self._time_label.setText(
                 f"Создан: {datetime.datetime.fromtimestamp(self._chat.ctime).strftime('%D %H:%M')}")
             self._name_label.setText(self._chat.name)
+            self._sync_checkbox.setChecked(self._chat.remote_id is not None)
         else:
             self._temperature_box.hide()
             self._saved_messages_box.hide()
@@ -144,6 +139,7 @@ class ChatSettingsWindow(CustomDialog):
             self._model_box.hide()
             self._time_label.hide()
             self._name_label.hide()
+            self._sync_checkbox.hide()
             for el in self._labels[1:]:
                 el.hide()
 
@@ -157,6 +153,7 @@ class ChatSettingsWindow(CustomDialog):
             # self._chat.saved_messages = self._saved_messages_slider.value()
             self._chat.temperature = self._temperature_box.value()
             self._chat.model = self._model_box.currentText()
+            self._chat.set_remote(self._sync_checkbox.isChecked())
 
     def _on_theme_changed(self):
         self.sm.set('dark_theme', 'dark' if self._theme_checkbox.isChecked() else 'light')
@@ -172,7 +169,7 @@ class ChatSettingsWindow(CustomDialog):
         for el in self._labels:
             self.tm.auto_css(el)
         for el in [self._name_label, self._used_messages_slider, self._used_messages_label, self._saved_messages_box,
-                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox]:
+                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox, self._sync_checkbox]:
             self.tm.auto_css(el)
         self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
 

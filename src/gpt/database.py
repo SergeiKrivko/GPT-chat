@@ -1,21 +1,29 @@
 import os
 import sqlite3
 from time import time
-from uuid import uuid4
 
 from src.commands import read_json
 from src.gpt import chat
+from src.gpt.firebase import Firebase
 from src.settings_manager import SettingsManager
 
 
 class Database:
     def __init__(self, sm: SettingsManager):
         self._sm = sm
-        os.makedirs(self._sm.app_data_dir, exist_ok=True)
-        need_loading = not os.path.isfile(f"{self._sm.app_data_dir}/database.db") and \
-                       os.path.isdir(f"{self._sm.app_data_dir}/dialogs")
-        self._connection = sqlite3.connect(f"{self._sm.app_data_dir}/database.db")
-        # self._connection = sqlite3.connect("database.db")
+        self._dir = ""
+        self.firebase = Firebase('', '')
+        self._connection = None
+        self.cursor: sqlite3.Cursor
+        self.update_user()
+
+    def update_user(self):
+        if isinstance(self._connection, sqlite3.Connection):
+            self._connection.close()
+        self._dir = self._sm.user_data_path
+        os.makedirs(self._dir, exist_ok=True)
+        self._connection = sqlite3.connect(f"{self._dir}/database.db")
+        self.firebase.set_user(self._sm.get('user_id'), self._sm.get('user_token'))
 
         self.cursor = self._connection.cursor()
 
@@ -24,6 +32,8 @@ class Database:
         id INTEGER PRIMARY KEY,
         type INTEGER NOT NULL,
         type_data TEXT,
+        remote_id TEXT,
+        remote_last INTEGER,
         chat_name TEXT,
         ctime REAL NOT NULL,
         utime REAL NOT NULL,
@@ -38,16 +48,13 @@ class Database:
         for chat_id in self.chat_ids:
             self._create_chat_table(chat_id)
 
-        if need_loading:
-            for file in os.listdir(f"{self._sm.app_data_dir}/dialogs"):
-                self.from_json_file(os.path.join(f"{self._sm.app_data_dir}/dialogs", file))
-
         self._connection.commit()
 
     def _create_chat_table(self, chat_id):
         self.cursor.execute(f'''
                             CREATE TABLE IF NOT EXISTS Messages{chat_id} (
                             id INTEGER PRIMARY KEY,
+                            remote_id TEXT,
                             role TEXT,
                             content TEXT,
                             replys BLOB,
@@ -66,16 +73,27 @@ class Database:
     @property
     def chats(self):
         for el in self.chat_ids:
-            yield chat.GPTChat(self, el)
+            yield chat.GPTChat(self, self._sm, el)
+
+    async def load_remote(self):
+        chats = await self.firebase.get_chats()
+        for remote_id in chats:
+            self.cursor.execute(f'SELECT id FROM Chats WHERE remote_id = "{remote_id}"')
+            if not self.cursor.fetchone():
+                res = self.add_chat()
+                res.remote_id = remote_id
+                await self.firebase.download_chat(res)
+                self._connection.commit()
+                yield res
 
     def add_chat(self):
         self.cursor.execute(f"""INSERT INTO Chats (
-        type, ctime, utime, pinned, used_messages, saved_messages, temperature, model, scrolling_pos) 
-        VALUES ({chat.GPTChat.SIMPLE}, {time()}, {time()}, 0, 1, 1000, 0.5, "default", 0)""")
+        type, ctime, utime, pinned, used_messages, saved_messages, temperature, model, scrolling_pos, remote_id) 
+        VALUES ({chat.GPTChat.SIMPLE}, {time()}, {time()}, 0, 1, 1000, 0.5, "default", 0, NULL)""")
         chat_id = self.cursor.lastrowid
         self._create_chat_table(chat_id)
         self._connection.commit()
-        return chat.GPTChat(self, chat_id)
+        return chat.GPTChat(self, self._sm, chat_id)
 
     def from_json_file(self, path):
         data = read_json(path)
@@ -100,15 +118,3 @@ class Database:
     def __del__(self):
         self._connection.commit()
         self._connection.close()
-
-
-if __name__ == '__main__':
-    db = Database(None)
-    # db.add_chat()
-    # db.add_chat()
-    for el in db.chats:
-        print(list(el.messages))
-        # if el.id == 2:
-        #     el.delete_message(3)
-            # el.add_message('user')
-            # el.add_message('assistant')

@@ -1,3 +1,4 @@
+import asyncio
 import sys
 
 from src import config
@@ -66,7 +67,7 @@ def except_hook(cls, exception, traceback):
 
 
 def run_app():
-    from PyQt6.QtWidgets import QApplication
+    from qasync import QEventLoop, QApplication
 
     from src.ui.main_window import MainWindow
 
@@ -76,12 +77,19 @@ def run_app():
     app.setApplicationName(config.APP_NAME)
     app.setApplicationVersion(config.APP_VERSION)
 
-    window = MainWindow(app)
+    event_loop = QEventLoop(app)
+    asyncio.set_event_loop(event_loop)
 
+    app_close_event = asyncio.Event()
+    app.aboutToQuit.connect(app_close_event.set)
+
+    window = MainWindow(app)
     window.show()
     window.set_theme()
     sys.excepthook = except_hook
-    sys.exit(app.exec())
+
+    with event_loop:
+        event_loop.run_until_complete(app_close_event.wait())
 
 
 if __name__ == '__main__':

@@ -1,10 +1,8 @@
 import struct
 
-from src.gpt import database
-
 
 class GPTMessage:
-    def __init__(self, db: database.Database, chat_id, message_id: int):
+    def __init__(self, db, chat_id, message_id: int):
         if not isinstance(message_id, int):
             raise TypeError(f"message_id must be int, not {message_id.__class__.__name__} ({message_id})")
         self._id = message_id
@@ -31,6 +29,17 @@ class GPTMessage:
         content = self._db.cursor.fetchone()[0]
         return content
 
+    @property
+    def remote_id(self):
+        self._db.cursor.execute(f"""SELECT remote_id from Messages{self.chat_id} WHERE id = {self._id}""")
+        remote_id = self._db.cursor.fetchone()[0]
+        return remote_id
+
+    @remote_id.setter
+    def remote_id(self, remote_id):
+        self._db.cursor.execute(f"""UPDATE Messages{self.chat_id} SET remote_id = ? WHERE id = {self._id}""", (remote_id,))
+        self._db.commit()
+
     def add_text(self, text):
         text = self.content + text
         self._db.cursor.execute(f"""UPDATE Messages{self.chat_id} SET content = ? WHERE id = {self._id}""", (text,))
@@ -41,6 +50,11 @@ class GPTMessage:
         self._db.cursor.execute(f"""SELECT ctime from Messages{self.chat_id} WHERE id = {self._id}""")
         ctime = self._db.cursor.fetchone()[0]
         return ctime
+
+    @ctime.setter
+    def ctime(self, ctime):
+        self._db.cursor.execute(f"""UPDATE Messages{self.chat_id} SET ctime = ? WHERE id = {self._id}""", (ctime,))
+        self._db.commit()
 
     @property
     def replys(self):
