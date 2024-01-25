@@ -66,10 +66,6 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
 
-      - name: fix PyQt6
-        run: |
-          python3.11 fix_version.py
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -98,14 +94,8 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
 
-      - name: fix PyQt6
-        run: |
-          python3.11 fix_version.py
-          ls
-          ls dist
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_macos
-          path: dist/GPT-chat.app
+          path: dist/GPT-chat

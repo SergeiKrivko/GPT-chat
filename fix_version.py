@@ -12,10 +12,10 @@ with open(r"setup.iss", encoding='utf-8') as f:
 with open(r"setup.iss", 'w', encoding='utf-8') as f:
     f.write(text)
 
-if os.path.isdir(r"dist\GPT-chat\PyQt6\Qt5"):
-    shutil.rmtree(r"dist\GPT-chat\PyQt6\Qt5")
-    for el in os.listdir(r"venv\Lib\site-packages\PyQt6\Qt6"):
-        if el == 'bin':
-            continue
-        shutil.copytree(fr"venv\Lib\site-packages\PyQt6\Qt6\{el}",
-                        fr"dist\GPT-chat\PyQt6\Qt6\{el}")
+# if os.path.isdir(r"dist\GPT-chat\PyQt6\Qt5"):
+#     shutil.rmtree(r"dist\GPT-chat\PyQt6\Qt5")
+#     for el in os.listdir(r"venv\Lib\site-packages\PyQt6\Qt6"):
+#         if el == 'bin':
+#             continue
+#         shutil.copytree(fr"venv\Lib\site-packages\PyQt6\Qt6\{el}",
+#                         fr"dist\GPT-chat\PyQt6\Qt6\{el}")
