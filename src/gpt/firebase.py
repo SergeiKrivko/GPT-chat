@@ -120,6 +120,7 @@ class Firebase:
         message = chat.add_message(data.get('role'), data.get('content'), skip_event=True)
         message.remote_id = remote_id
         message.ctime = data.get('ctime')
+        return message
 
     async def add_events(self, chat, events: list):
         if not events:
@@ -144,13 +145,16 @@ class Firebase:
         else:
             start = 1
         events = await self._select(f'events/{chat.remote_id}', start=start)
+        messages = []
         for ind in sorted(events, key=int):
             event = events[ind]
             if event and event[0] == 'add':
-                await self.get_message(chat, event[1])
+                message = await self.get_message(chat, event[1])
+                messages.append(message)
             elif event and event[0] == 'delete':
                 chat.delete_by_remote_id(event[1])
         chat.remote_last = start + len(events) - 1
+        return messages
 
     async def upload_chat(self, chat):
         await self.update_chat(chat)

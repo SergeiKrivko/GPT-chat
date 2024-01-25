@@ -66,8 +66,7 @@ class GPTListWidget(QScrollArea):
 
     def _on_item_selected(self, chat_id: int):
         for key, item in self._items.items():
-            if key != chat_id:
-                item.setChecked(False)
+            item.setChecked(key == chat_id)
         self.currentItemChanged.emit(chat_id)
 
     def set_current_id(self, chat_id: int):

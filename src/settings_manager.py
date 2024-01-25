@@ -60,7 +60,7 @@ class SettingsManager(QObject):
     def user_data_path(self):
         if not (uid := self.get('user_id')):
             return f"{self.app_data_dir}/default_user"
-        return f"{self.app_data_dir}/users/{uid}"
+        return f"{self.app_data_dir}/users-2/{uid}"
 
     def get(self, key, default=None):
         return self.q_settings.value(key, default)

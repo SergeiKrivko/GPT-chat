@@ -341,10 +341,12 @@ class GPTChat:
     async def pull(self):
         if not self.remote_id:
             return
+        messages = []
         try:
-            await self._firebase.get_events(self)
+            messages = await self._firebase.get_events(self)
         except aiohttp.ClientConnectionError:
             pass
         except FirebaseError:
             pass
         self._db.commit()
+        return messages

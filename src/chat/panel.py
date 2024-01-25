@@ -138,7 +138,8 @@ class ChatPanel(QWidget):
         async for chat in self.db.load_remote():
             self._add_chat(chat)
         for chat in self.chats.values():
-            await chat.pull()
+            for message in await chat.pull():
+                self.chat_widgets[chat.id].add_bubble(message)
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)
@@ -188,6 +189,13 @@ class ChatPanel(QWidget):
         self.chat_widgets[chat_id].show()
         self.current = chat_id
         self._resize()
+        self._pull_chat(chat_id)
+
+    @asyncSlot()
+    async def _pull_chat(self, chat_id):
+        chat = self.chats[chat_id]
+        for message in await chat.pull():
+            self.chat_widgets[chat.id].add_bubble(message)
 
     def _close_chat(self, chat_id):
         if chat_id not in self.chats:
