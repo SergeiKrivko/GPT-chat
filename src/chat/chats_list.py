@@ -53,6 +53,7 @@ class GPTListWidget(QScrollArea):
         items = sorted(self._items.values(), key=lambda item: item.chat.get_sort_key(), reverse=True)
         for el in items:
             self._layout.addWidget(el)
+            el.update_name()
 
     def move_to_top(self, chat_id):
         self.sort_chats()
@@ -66,15 +67,9 @@ class GPTListWidget(QScrollArea):
 
     def _on_item_selected(self, chat_id: int):
         for key, item in self._items.items():
-            item.setChecked(key == chat_id)
-        self.currentItemChanged.emit(chat_id)
-
-    def set_current_id(self, chat_id: int):
-        for key, item in self._items.items():
             if key != chat_id:
-                item.set_selected(False)
-        if chat_id in self._items:
-            self._items[chat_id].set_selected(True)
+                item.setChecked(False)
+        self.currentItemChanged.emit(chat_id)
 
     def add_item(self, chat: GPTChat):
         item = GPTListWidgetItem(self._tm, chat)
@@ -125,6 +120,7 @@ class Label(QLabel):
 
 class GPTListWidgetItem(QPushButton):
     PALETTE = 'Main'
+    ICON_SIZE = 16
 
     selected = pyqtSignal(int)
     deleteRequested = pyqtSignal(int)
@@ -154,8 +150,25 @@ class GPTListWidgetItem(QPushButton):
 
         self._name_label = Label()
         self._name_label.setWordWrap(True)
-        self.update_name()
         main_layout.addWidget(self._name_label)
+
+        right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addLayout(right_layout)
+
+        self._icon_pinned = Label()
+        self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
+        self._icon_pinned.setPixmap(QPixmap(self._tm.get_image('pin')).scaled(
+            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
+        right_layout.addWidget(self._icon_pinned)
+
+        self._icon_remote = Label()
+        self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
+        self._icon_remote.setPixmap(QPixmap(self._tm.get_image('remote')).scaled(
+            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
+        right_layout.addWidget(self._icon_remote)
+
+        self.update_name()
 
     def __str__(self):
         return f"ChatItem({self.chat.id}, {self.chat.get_sort_key()})"
@@ -168,6 +181,9 @@ class GPTListWidgetItem(QPushButton):
         }
         self._icon_label.setPixmap(QPixmap(self._tm.get_image(
             icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(30))
+
+        self._icon_pinned.setHidden(not self.chat.pinned)
+        self._icon_remote.setHidden(not self.chat.remote_id)
 
         if self.chat.name and self.chat.name.strip():
             self._name_label.setText(self.chat.name)
@@ -193,13 +209,16 @@ class GPTListWidgetItem(QPushButton):
     def _on_clicked(self, flag):
         if not flag:
             self.setChecked(True)
-        self.selected.emit(self.chat.id)
+        else:
+            self.selected.emit(self.chat.id)
 
     def set_theme(self):
         self._tm.auto_css(self, palette=GPTListWidgetItem.PALETTE, border=False)
         self._name_label.setStyleSheet("background: transparent; border: none;")
         self._name_label.setFont(self._tm.font_medium)
         self._icon_label.setStyleSheet("background: transparent; border: none;")
+        self._icon_pinned.setStyleSheet("background: transparent; border: none;")
+        self._icon_remote.setStyleSheet("background: transparent; border: none;")
         self.update_name()
 
 

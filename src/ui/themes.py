@@ -103,23 +103,28 @@ class ThemeManager(QObject):
             'light_blue': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3F76BF, stop:1 #3B97CF)',
                 'MainSelectedColor': '#3B97CF',
+                'BorderSelectedColor': '#3B97CF',
             }, inherit=_LIGHT_THEME),
             'light_red': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F23C18, stop:1 #F26149)',
                 'MainSelectedColor': '#F23C18',
+                'BorderSelectedColor': '#F23C18',
             }, inherit=_LIGHT_THEME),
             'light_green': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #377D2A, stop:1 #72B238)',
                 'MainSelectedColor': '#67A132',
+                'BorderSelectedColor': '#67A132',
             }, inherit=_LIGHT_THEME),
             'light_orange': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C9650C, stop:1 #E38710)',
                 'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
                 'MainSelectedColor': '#E37412',
+                'BorderSelectedColor': '#E37412',
             }, inherit=_LIGHT_THEME),
             'light_pink': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C25EBD, stop:1 #C086C2)',
                 'MainSelectedColor': '#C25EBD',
+                'BorderSelectedColor': '#C25EBD',
             }, inherit=_LIGHT_THEME),
 
             'dark_grey': Theme({
@@ -130,22 +135,27 @@ class ThemeManager(QObject):
             'dark_blue': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #264773, stop:1 #3C72B8)',
                 'MainSelectedColor': '#264773',
+                'BorderSelectedColor': '#264773',
             }, inherit=_DARK_THEME),
             'dark_red': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B81818, stop:1 #B83D25)',
                 'MainSelectedColor': '#B81818',
+                'BorderSelectedColor': '#B81818',
             }, inherit=_DARK_THEME),
             'dark_green': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
                 'MainSelectedColor': '#306E25',
+                'BorderSelectedColor': '#306E25',
             }, inherit=_DARK_THEME),
             'dark_orange': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B25B15, stop:1 #B28F32)',
                 'MainSelectedColor': '#B25B15',
+                'BorderSelectedColor': '#B25B15',
             }, inherit=_DARK_THEME),
             'dark_pink': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #75165F, stop:1 #B32291)',
                 'MainSelectedColor': '#75165F',
+                'BorderSelectedColor': '#75165F',
             }, inherit=_DARK_THEME),
         }
 
@@ -321,7 +331,7 @@ class ThemeManager(QObject):
         elif isinstance(widget, QComboBox):
             widget.setStyleSheet(self.combobox_css(palette))
         elif isinstance(widget, QLineEdit):
-            widget.setStyleSheet(self.base_css(palette, border, border_radius))
+            widget.setStyleSheet(self.line_edit_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
             widget.setStyleSheet(self.text_edit_css(palette, border))
         elif isinstance(widget, QTreeWidget):
@@ -549,6 +559,15 @@ QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
                f"background-color: {self[f'{palette}Color']};\n" \
                f"border: {'1' if border else '0'}px solid {self['BorderColor']};\n" \
                f"border-radius: {'4' if border_radius else '0'}px;"
+
+    def line_edit_css(self, palette='Bg', border=True, border_radius=True):
+        return f"""
+QLineEdit {{
+    {self.base_css(palette, border, border_radius)}
+}}
+QLineEdit:focus {{
+    border: 2px solid {self['BorderSelectedColor']};
+}}"""
 
     def scroll_area_css(self, palette, border=True):
         return f"""
