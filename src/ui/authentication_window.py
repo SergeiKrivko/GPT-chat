@@ -133,6 +133,7 @@ class _SignInScreen(QWidget):
             self._sm.authorized = True
             self.signedIn.emit()
         else:
+            print(r.text)
             self._password_edit.clear()
 
     def set_theme(self):

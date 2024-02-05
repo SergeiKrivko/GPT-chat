@@ -3,9 +3,7 @@ import shutil
 import sqlite3
 from time import time
 
-from src.commands import read_json
 from src.gpt import chat
-from src.gpt.firebase import Firebase
 from src.settings_manager import SettingsManager
 
 
@@ -13,10 +11,11 @@ class Database:
     def __init__(self, sm: SettingsManager):
         self._sm = sm
         self._dir = ""
-        self.firebase = Firebase('', '')
         self._connection = None
         self.cursor: sqlite3.Cursor
         self.update_user()
+
+        self.firebase = None
 
     def update_user(self):
         if isinstance(self._connection, sqlite3.Connection):
@@ -29,7 +28,6 @@ class Database:
         self._dir = self._sm.user_data_path
         os.makedirs(self._dir, exist_ok=True)
         self._connection = sqlite3.connect(f"{self._dir}/database.db")
-        self.firebase.set_user(self._sm.get('user_id'), self._sm.get('user_token'))
 
         self.cursor = self._connection.cursor()
 
@@ -87,17 +85,6 @@ class Database:
             if chat.remote_id and chat.remote_id not in chats:
                 yield chat.id
 
-    async def load_remote(self):
-        chats = await self.firebase.get_chats()
-        for remote_id in chats:
-            self.cursor.execute(f'SELECT id FROM Chats WHERE remote_id = "{remote_id}"')
-            if not self.cursor.fetchone():
-                res = self.add_chat()
-                res.remote_id = remote_id
-                await self.firebase.download_chat(res)
-                self._connection.commit()
-                yield res
-
     def add_chat(self):
         self.cursor.execute(f"""INSERT INTO Chats (
         type, ctime, utime, pinned, used_messages, saved_messages, temperature, model, scrolling_pos, remote_id) 
@@ -107,25 +94,25 @@ class Database:
         self._connection.commit()
         return chat.GPTChat(self, self._sm, chat_id)
 
-    def from_json_file(self, path):
-        data = read_json(path)
-        new_chat = self.add_chat()
+    def get_chat(self, chat_id):
+        self.cursor.execute('SELECT id FROM Chats WHERE id = ?', (chat_id,))
+        res = self.cursor.fetchone()
+        if res is None:
+            return res
+        return chat.GPTChat(self, self._sm, res[0])
 
-        new_chat.name = data.get('name')
-        new_chat.type = data.get('type')
-        new_chat.type_data = data.get('data')
-        new_chat.model = data.get('model', 'default')
-        new_chat.ctime = data.get('time')
-        new_chat.utime = data.get('utime')
-        new_chat.pinned = data.get('pinned', False)
-        new_chat.used_messages = data.get('used_messages')
-        new_chat.saved_messages = data.get('saved_messages')
-        new_chat.temperature = data.get('temperature')
-        for message in data.get('messages'):
-            new_chat.add_message(message['role'], message['content'])
+    def get_by_remote_id(self, remote_id):
+        self.cursor.execute('SELECT id FROM Chats WHERE remote_id = ?', (remote_id,))
+        res = self.cursor.fetchone()
+        if res is None:
+            return res
+        return chat.GPTChat(self, self._sm, res[0])
 
     def commit(self):
         self._connection.commit()
+
+    def rollback(self):
+        self._connection.rollback()
 
     def __del__(self):
         self._connection.commit()

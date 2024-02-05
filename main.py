@@ -12,6 +12,9 @@ def main():
 def parse_args(args: list[str]):
     i = 1
 
+    if '--test' in args:
+        config.APP_NAME += '-test'
+
     messages = []
     model = ''
 
@@ -53,13 +56,13 @@ def parse_args(args: list[str]):
             return
         i += 1
 
-    if messages:
-        import src.gpt as gpt
-        for el in gpt.stream_response(messages):
-            print(el, end='')
-        print()
-    else:
-        run_app()
+    # if messages:
+    #     import src.gpt as gpt
+    #     for el in gpt.stream_response(messages):
+    #         print(el, end='')
+    #     print()
+    # else:
+    run_app()
 
 
 def except_hook(cls, exception, traceback):

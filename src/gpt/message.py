@@ -96,3 +96,12 @@ class GPTMessage:
 
     def to_json(self):
         return {'role': self.role, 'content': self.content}
+
+    def to_dict(self):
+        return {
+            'role': self.role,
+            'content': self.content,
+            'ctime': self.ctime,
+            'id': self.remote_id,
+            'reply': [m.remote_id for m in self.replys],
+        }

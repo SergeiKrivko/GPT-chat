@@ -1,25 +1,26 @@
-import asyncio
 import datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
     QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox
 
-from src.gpt.gpt import get_models
 from src.gpt.chat import GPTChat
+from src.gpt.gpt import get_models
 from src.ui.custom_dialog import CustomDialog
 
 
 class ChatSettingsWindow(CustomDialog):
-    def __init__(self, sm, tm, chat: GPTChat):
+    def __init__(self, sm, tm, cm, chat: GPTChat):
         super().__init__(tm, "Настройки", True, True)
         self._chat = chat
         self.sm = sm
+        self._cm = cm
 
         self._labels = []
-        self.setFixedWidth(350)
+        self.setFixedWidth(400)
 
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(20, 20, 20, 20)
         self.setLayout(main_layout)
 
         self._theme_checkbox = QCheckBox("Темная тема")
@@ -153,7 +154,7 @@ class ChatSettingsWindow(CustomDialog):
             # self._chat.saved_messages = self._saved_messages_slider.value()
             self._chat.temperature = self._temperature_box.value()
             self._chat.model = self._model_box.currentText()
-            self._chat.set_remote(self._sync_checkbox.isChecked())
+            self._cm.make_remote(self._chat, self._sync_checkbox.isChecked())
 
     def _on_theme_changed(self):
         self.sm.set('dark_theme', 'dark' if self._theme_checkbox.isChecked() else 'light')
@@ -172,4 +173,3 @@ class ChatSettingsWindow(CustomDialog):
                    self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox, self._sync_checkbox]:
             self.tm.auto_css(el)
         self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
-

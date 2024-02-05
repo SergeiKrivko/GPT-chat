@@ -4,10 +4,11 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
 
+from src.database import ChatManager
 from src.gpt import gpt
 from src.chat.reply_widget import ReplyList
 from src.gpt.chat import GPTChat
-from src.chat.chat_bubble import ChatBubble
+from src.chat.chat_bubble import ChatBubble, FakeBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.gpt.message import GPTMessage
 from src.ui.button import Button
@@ -18,10 +19,11 @@ class ChatWidget(QWidget):
     buttonBackPressed = pyqtSignal(int)
     updated = pyqtSignal()
 
-    def __init__(self, sm, tm, chat: GPTChat):
+    def __init__(self, sm, tm, cm: ChatManager, chat: GPTChat):
         super().__init__()
         self._sm = sm
         self._tm = tm
+        self._cm = cm
         self._chat = chat
 
         self._bubbles = dict()
@@ -102,6 +104,7 @@ class ChatWidget(QWidget):
         self._want_to_scroll = None
         self._messages_is_loaded = False
         self._loading_messages = False
+        self._sending_message = None
 
     def _load_messages(self, to_message=None):
         self._loading_messages = True
@@ -120,8 +123,28 @@ class ChatWidget(QWidget):
     def send_message(self):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
-        self.add_bubble(self._chat.add_message('user', text, tuple(self._reply_list.messages)))
+        self._sending_message = text
+        self._cm.new_message(self._chat.id, 'user', text, tuple(self._reply_list.messages))
         self._text_edit.setText("")
+
+    def add_message(self, message):
+        self.add_bubble(message)
+        self.run_gpt(message)
+
+    def delete_message(self, message_id):
+        bubble = self._bubbles.pop(message_id)
+        bubble.setParent(None)
+        bubble.disconnect()
+        bubble.delete()
+
+    def run_gpt(self, message):
+        if message.role != 'user' or message.content != self._sending_message:
+            return
+        if self._last_bubble:
+            self._last_bubble.setParent(None)
+            self._bubbles.pop(-1)
+            self._last_bubble = None
+        self._sending_message = None
 
         messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
         for el in self._reply_list.messages:
@@ -135,7 +158,7 @@ class ChatWidget(QWidget):
         self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
         self.looper.exception.connect(self._on_gpt_error)
-        self.looper.finished.connect(lambda: (self._progress_marker.hide(), self._chat.push()))
+        self.looper.finished.connect(self.finish_gpt)
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
@@ -153,7 +176,7 @@ class ChatWidget(QWidget):
             el.setHidden(hidden)
 
     def _add_bubble(self, bubble, index=None):
-        bubble.deleteRequested.connect(lambda: self._delete_message(bubble.message.id))
+        bubble.deleteRequested.connect(lambda: self._cm.delete_message(self._chat.id, bubble.message))
         bubble.replyRequested.connect(lambda: self._reply_list.add_message(bubble.message))
         bubble.scrollRequested.connect(self.scroll_to_message)
         if index is None:
@@ -165,21 +188,19 @@ class ChatWidget(QWidget):
             self._bubbles[bubble.message.id] = bubble
         bubble.set_theme()
 
-    def _delete_message(self, message_id):
-        self._chat.delete_message(message_id)
-        bubble = self._bubbles.pop(message_id)
-        bubble.setParent(None)
-        bubble.disconnect()
-        bubble.delete()
-        if not isinstance(self.looper, Looper) or self.looper.isFinished():
-            self._chat.push()
-
     def add_text(self, text):
-        if self._last_message is None:
-            self._last_message = self._chat.add_message('assistant', text)
-            self._last_bubble = self.add_bubble(self._last_message)
-        else:
-            self._last_bubble.add_text(text)
+        if self._last_bubble is None:
+            self._last_bubble = FakeBubble(self._sm, self._tm, self._chat)
+            self._add_bubble(self._last_bubble)
+        self._last_bubble.add_text(text)
+
+    def finish_gpt(self):
+        if self._last_bubble:
+            self._last_bubble.setParent(None)
+            self._bubbles.pop(-1)
+            self._cm.new_message(self._chat.id, 'assistant', self._last_bubble.message.content)
+            self._last_bubble = None
+        self._progress_marker.hide()
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:

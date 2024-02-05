@@ -206,3 +206,32 @@ class ContextMenu(QMenu):
 
     def set_action(self, action):
         self.action = action
+
+
+class _FakeMessage:
+    def __init__(self):
+        self._content = ''
+
+    @property
+    def content(self):
+        return self._content
+
+    def add_text(self, text):
+        self._content += text
+
+    @property
+    def replys(self):
+        return []
+
+    @property
+    def role(self):
+        return 'assistant'
+
+    @property
+    def id(self):
+        return -1
+
+
+class FakeBubble(ChatBubble):
+    def __init__(self, sm, tm, chat):
+        super().__init__(sm, tm, chat, _FakeMessage())

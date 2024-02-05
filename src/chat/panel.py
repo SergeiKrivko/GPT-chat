@@ -1,4 +1,3 @@
-import asyncio
 import shutil
 from time import sleep
 
@@ -10,24 +9,28 @@ from qasync import asyncSlot
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.settings_window import ChatSettingsWindow
+from src.database import ChatManager
 from src.gpt.chat import GPTChat
-from src.gpt.database import Database
-from src.gpt.firebase import Firebase
 from src.settings_manager import SettingsManager
 from src.ui.authentication_window import AuthenticationWindow
 from src.ui.button import Button
-from src.ui.custom_dialog import CustomDialog, ask
+from src.ui.custom_dialog import ask
 
 
 class ChatPanel(QWidget):
     WIDTH = 550
 
-    def __init__(self, sm: SettingsManager, tm):
+    def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager):
         super().__init__()
         self.sm = sm
         self.tm = tm
-        self.db = Database(self.sm)
-        self._data_path = f"{self.sm.app_data_dir}/dialogs"
+        self._chat_manager = chat_manager
+        self._chat_manager.newChat.connect(self._add_chat)
+        self._chat_manager.deleteChat.connect(self._on_chat_deleted)
+        self._chat_manager.deleteRemoteChat.connect(self._on_remote_chat_deleted)
+        # self._chat_manager.updateChat.connect(self._list_widget.sort_chats)
+        self._chat_manager.newMessage.connect(self._on_new_message)
+        self._chat_manager.deleteMessage.connect(self._on_delete_message)
 
         self._layout = QHBoxLayout()
         self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -80,15 +83,12 @@ class ChatPanel(QWidget):
             self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
             self._last_chat = None
-        self._loading_started = False
 
     def _open_settings(self):
         chat = None if self.current is None else self.chats[self.current]
-        window = ChatSettingsWindow(self.sm, self.tm, chat)
+        window = ChatSettingsWindow(self.sm, self.tm, self._chat_manager, chat)
         window.exec()
         window.save()
-        if chat:
-            self.db.commit()
 
     def _open_user_window(self):
         uid = self.sm.get('user_id')
@@ -96,21 +96,9 @@ class ChatPanel(QWidget):
         window.exec()
         if uid != self.sm.get('user_id'):
             self._clear_chats()
-            self.db.update_user()
-            self._load_chats()
-
-    def showEvent(self, a0) -> None:
-        super().showEvent(a0)
-        if not self._loading_started:
-            self._loading_started = True
-            self._load_chats()
-
-    def _load_chats(self):
-        self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
-        self._loader.addChat.connect(self._on_chat_loaded)
-        self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
-        proc = self.sm.run_process(self._loader, 'loading')
-        proc.finished.connect(self._load_remote)
+            self._clear_chats()
+            print('auth')
+            self._chat_manager.auth()
 
     def _clear_chats(self):
         self._close_chat(self.current)
@@ -121,26 +109,14 @@ class ChatPanel(QWidget):
             el.setParent(None)
         self.chat_widgets.clear()
 
-    @asyncSlot()
-    async def _load_remote(self):
-        if not self.sm.get('user_id'):
+    def _on_remote_chat_deleted(self, chat):
+        if not chat:
             return
-        while not self.sm.authorized:
-            await asyncio.sleep(1)
-        self.db.update_user()
-        async for chat_id in self.db.get_remote_deleted_chats():
-            chat = self.chats[chat_id]
-            if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
-                   default='Нет') == 'Да':
-                self._delete_chat(chat_id)
-            else:
-                chat.remote_id = None
-                self.db.commit()
-        async for chat in self.db.load_remote():
-            self._add_chat(chat)
-        for chat in self.chats.values():
-            for message in await chat.pull():
-                self.chat_widgets[chat.id].add_bubble(message)
+        if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
+               default='Нет') == 'Да':
+            self._delete_chat(chat.id)
+        else:
+            self._chat_manager.make_remote(chat, False)
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)
@@ -148,24 +124,12 @@ class ChatPanel(QWidget):
             self._list_widget.select(chat.id)
 
     def _new_chat(self, chat_type=GPTChat.SIMPLE):
-        chat = self.db.add_chat()
-
-        match chat_type:
-            case GPTChat.TRANSLATE:
-                chat.data['language1'] = 'russian'
-                chat.data['language2'] = 'english'
-                chat.name = f"{chat.data['language1'].capitalize()} ↔ {chat.data['language2'].capitalize()}"
-                chat.used_messages = 1
-            case GPTChat.SUMMARY:
-                chat.name = f"Краткое содержание"
-                chat.used_messages = 1
-
-        self._add_chat(chat)
+        self._chat_manager.new_chat(chat_type)
 
     def _add_chat(self, chat):
         self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self.tm, chat)
+        chat_widget = ChatWidget(self.sm, self.tm, self._chat_manager, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
@@ -178,7 +142,11 @@ class ChatPanel(QWidget):
     def _delete_chat(self, chat_id):
         if chat_id == self.current:
             self._close_chat(chat_id)
-        self.chats[chat_id].delete()
+        self._chat_manager.delete_chat(chat_id)
+
+    def _on_chat_deleted(self, chat_id):
+        if chat_id == self.current:
+            self._close_chat(chat_id)
         self.chat_widgets.pop(chat_id)
         self._list_widget.delete_item(chat_id)
         self.chats.pop(chat_id)
@@ -190,8 +158,14 @@ class ChatPanel(QWidget):
         self.chat_widgets[chat_id].show()
         self.current = chat_id
         self._resize()
-        if self.sm.authorized:
-            self._pull_chat(chat_id)
+        # if self.sm.authorized:
+        #     self._pull_chat(chat_id)
+
+    def _on_new_message(self, chat_id, message):
+        self.chat_widgets[chat_id].add_message(message)
+
+    def _on_delete_message(self, chat_id, message):
+        self.chat_widgets[chat_id].delete_message(message.id)
 
     @asyncSlot()
     async def _pull_chat(self, chat_id):

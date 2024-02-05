@@ -1,3 +1,5 @@
+from time import sleep
+
 import g4f
 
 
