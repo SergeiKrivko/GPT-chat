@@ -28,6 +28,8 @@ class Firebase:
         self._user_token = ""
         self._authorized = False
 
+        self.expires_in = 0
+
     @property
     def authorized(self):
         return self._authorized
@@ -54,10 +56,7 @@ class Firebase:
                         self._user_token = res['access_token']
                         self._sm.set('user_token', res['access_token'])
                         self._sm.set('user_refresh_token', res['refresh_token'])
-
-                        # await asyncio.sleep(float(res['expires_in']) - 10)
-                        # if res['access_token'] != self._user_token:
-                        #     break
+                        self.expires_in = int(res['expires_in'])
 
                     else:
                         self._sm.set('user_token', '')

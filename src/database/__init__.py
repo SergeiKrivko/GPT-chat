@@ -35,6 +35,26 @@ class ChatManager(QObject):
             looper = Looper(self._firebase)
             looper.event.connect(self._on_event)
             self._sm.run_process(looper, 'firebase-events')
+        self.retry_auth()
+
+    def retry_auth(self):
+        if not self._sm.get('user_id'):
+            return
+        self._retry_auth()
+
+    @asyncSlot()
+    async def _retry_auth(self):
+        while True:
+            if self._firebase.authorized:
+                await asyncio.sleep(max(0, self._firebase.expires_in - 20))
+            else:
+                await asyncio.sleep(3)
+            await self._firebase.auth()
+
+            if self._firebase.authorized:
+                looper = Looper(self._firebase)
+                looper.event.connect(self._on_event)
+                self._sm.run_process(looper, 'firebase-events')
 
     async def _load_chats(self):
         for chat in self._database.chats:
@@ -44,13 +64,6 @@ class ChatManager(QObject):
                 flag = await self._firebase.get(f'chats/{chat.remote_id}')
                 if not flag:
                     self.deleteRemoteChat.emit(chat)
-
-        # remote_chats = await self._firebase.get('chats')
-        # if not remote_chats:
-        #     return
-        #
-        # for remote_id, data in remote_chats.items():
-        #     self._add_remote_chat(remote_id, data)
 
         if self._firebase.authorized:
             looper = ChatsLooper(self._firebase)
