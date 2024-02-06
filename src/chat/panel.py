@@ -97,7 +97,6 @@ class ChatPanel(QWidget):
         if uid != self.sm.get('user_id'):
             self._clear_chats()
             self._clear_chats()
-            print('auth')
             self._chat_manager.auth()
 
     def _clear_chats(self):

@@ -22,7 +22,6 @@ class MainWindow(QMainWindow):
         self.tm.themeChanged.connect(self.set_theme)
 
         self.chat_manager = ChatManager(self.sm)
-        self.chat_manager.newChat.connect(print)
         self.chat_manager.auth()
 
         self._chat_widget = ChatPanel(self.sm, self.tm, self.chat_manager)

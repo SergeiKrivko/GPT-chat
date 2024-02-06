@@ -81,6 +81,7 @@ class GPTListWidget(QScrollArea):
         self._items[chat_id] = item
         self._layout.addWidget(item)
         self._set_items_width()
+        self.sort_chats()
 
     def pin_chat(self, chat_id):
         self.sort_chats()
