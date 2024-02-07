@@ -1,20 +1,21 @@
-from time import sleep
-
 import g4f
 
 
 def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
     if model is None or model == 'default':
         model = g4f.models.default
-    response = g4f.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        timeout=120,
-        stream=True,
-        **kwargs
-    )
-    for el in response:
-        yield el
+    try:
+        response = g4f.ChatCompletion.create(
+            model=model,
+            messages=messages,
+            timeout=120,
+            stream=True,
+            **kwargs
+        )
+        for el in response:
+            yield el
+    except g4f.StreamNotSupportedError:
+        yield simple_response(messages, model, **kwargs)
 
 
 def simple_response(messages: list[dict[str: str]], model=None, **kwargs):

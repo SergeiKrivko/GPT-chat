@@ -67,6 +67,7 @@ _LIGHT_THEME = Theme({
 
     'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)',
     'ChatBgColor': '#FAFAFA',
+    'ErrorTextColor': '#F23C18',
 })
 
 _DARK_THEME = Theme({
@@ -85,6 +86,7 @@ _DARK_THEME = Theme({
 
     'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18191C, stop:1 #2A2B30)',
     'ChatBgColor': '#2A2B30',
+    'ErrorTextColor': '#F23C18',
 })
 
 

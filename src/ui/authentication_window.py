@@ -16,7 +16,7 @@ class AuthenticationWindow(CustomDialog):
         super().__init__(tm, "Авторизация", True, True)
         self._sm = sm
 
-        self.setFixedSize(350, 300)
+        self.setFixedSize(350, 320)
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -111,9 +111,16 @@ class _SignInScreen(QWidget):
         top_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         main_layout.addLayout(top_layout)
 
+        # self._button_reset_password = QPushButton("Сбросить пароль")
+        # self._button_reset_password.setFixedSize(160, 35)
+        # self._button_reset_password.clicked.connect(self.reset_password)
+        # self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # top_layout.addWidget(self._button_reset_password)
+
         self._button_sign_up = QPushButton("Регистрация")
         self._button_sign_up.setFixedSize(120, 35)
         self._button_sign_up.clicked.connect(self.signUpPressed.emit)
+        self._button_sign_up.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         top_layout.addWidget(self._button_sign_up)
 
         label = QLabel("Email:")
@@ -131,8 +138,12 @@ class _SignInScreen(QWidget):
         self._password_edit.returnPressed.connect(self.sign_in)
         main_layout.addWidget(self._password_edit)
 
+        self._error_label = QLabel()
+        self._error_label.setWordWrap(True)
+        main_layout.addWidget(self._error_label)
+
         bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0, 20, 0, 0)
+        bottom_layout.setContentsMargins(0, 15, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addLayout(bottom_layout)
 
@@ -144,21 +155,53 @@ class _SignInScreen(QWidget):
     def sign_in(self):
         rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
 
-        r = requests.post(rest_api_url,
-                          params={"key": config.FIREBASE_API_KEY},
-                          data=json.dumps({"email": self._email_edit.text(),
-                                           "password": self._password_edit.text(),
-                                           "returnSecureToken": True}))
-        if r.ok:
+        try:
+            r = requests.post(rest_api_url,
+                              params={"key": config.FIREBASE_API_KEY},
+                              data=json.dumps({"email": self._email_edit.text(),
+                                               "password": self._password_edit.text(),
+                                               "returnSecureToken": True}))
+
             res = json.loads(r.text)
-            self._sm.set('user_email', res['email'])
-            self._sm.set('user_token', res['idToken'])
-            self._sm.set('user_refresh_token', res['refreshToken'])
-            self._sm.set('user_id', res['localId'])
-            self._sm.authorized = True
-            self.signedIn.emit()
-        else:
-            self._password_edit.clear()
+            if r.ok:
+                self._sm.set('user_email', res['email'])
+                self._sm.set('user_token', res['idToken'])
+                self._sm.set('user_refresh_token', res['refreshToken'])
+                self._sm.set('user_id', res['localId'])
+                self._sm.authorized = True
+                self.signedIn.emit()
+            else:
+                match res.get('error', dict()).get('message'):
+                    case 'INVALID_LOGIN_CREDENTIALS':
+                        self.show_error("Неверный логин или пароль")
+                    case _:
+                        self.show_error("Неизвестная ошибка")
+                        print(r.text)
+                self._password_edit.clear()
+        except requests.ConnectionError:
+            self.show_error("Нет подключения к интернету")
+
+    def reset_password(self):
+        self._reset_password()
+
+    @asyncSlot()
+    async def _reset_password(self):
+        request_ref = ""
+        async with aiohttp.ClientSession() as session:
+            async with session.post(request_ref, data={}) as resp:
+                res = await resp.text()
+                if not resp.ok:
+                    raise aiohttp.ClientConnectionError
+
+    def show_error(self, text):
+        self._error_label.setText(text)
+
+    def show(self) -> None:
+        super().show()
+        self.hide_error()
+
+    def hide_error(self):
+        self._error_label.setText("")
 
     def set_theme(self):
         for el in [self._password_edit, self._email_edit, self._button_join, self._button_sign_up]:
@@ -166,6 +209,8 @@ class _SignInScreen(QWidget):
         self._email_edit.setFont(self._tm.font_big)
         self._password_edit.setFont(self._tm.font_big)
         self._button_join.setFont(self._tm.font_big)
+        self._error_label.setStyleSheet(f"color: {self._tm['ErrorTextColor']};")
+        self._error_label.setFont(self._tm.font_big)
 
 
 class _SignUpScreen(QWidget):
@@ -302,6 +347,8 @@ class _VerifyEmailScreen(QWidget):
         headers = {"content-type": "application/json; charset=UTF-8"}
         data = json.dumps({"requestType": "VERIFY_EMAIL", "idToken": id_token})
         resp = requests.post(request_ref, headers=headers, data=data)
+        if not resp.ok:
+            print(resp.text)
 
     @staticmethod
     async def get_account_info(id_token):
