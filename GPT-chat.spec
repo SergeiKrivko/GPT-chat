@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('icon.png', '.')],
-    datas=[],
+    datas=[(os.path.abspath("fonts"), "fonts")],
     hiddenimports=['matplotlib.backends.backend_svg'],
     hookspath=[],
     hooksconfig={},

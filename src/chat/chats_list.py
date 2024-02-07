@@ -35,7 +35,7 @@ class GPTListWidget(QScrollArea):
         self._layout = QVBoxLayout()
         self._layout.setSpacing(5)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._layout.setContentsMargins(5, 5, 5, 5)
+        self._layout.setContentsMargins(15, 10, 10, 10)
         scroll_widget.setLayout(self._layout)
 
         self._items = dict()
@@ -95,7 +95,7 @@ class GPTListWidget(QScrollArea):
         self._set_items_width()
 
     def _set_items_width(self):
-        width = self.width() - 15
+        width = self.width() - 30
         if self.verticalScrollBar().maximum():
             width -= 8
         for el in self._items.values():
@@ -120,7 +120,7 @@ class Label(QLabel):
 
 
 class GPTListWidgetItem(QPushButton):
-    PALETTE = 'Main'
+    PALETTE = 'Bg'
     ICON_SIZE = 16
 
     selected = pyqtSignal(int)
@@ -146,7 +146,7 @@ class GPTListWidgetItem(QPushButton):
         self.setLayout(main_layout)
 
         self._icon_label = Label()
-        self._icon_label.setFixedSize(30, 30)
+        self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
         self._name_label = Label()
@@ -181,7 +181,7 @@ class GPTListWidgetItem(QPushButton):
             GPTChat.SUMMARY: 'summary',
         }
         self._icon_label.setPixmap(QPixmap(self._tm.get_image(
-            icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(30))
+            icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(24))
 
         self._icon_pinned.setHidden(not self.chat.pinned)
         self._icon_remote.setHidden(not self.chat.remote_id)

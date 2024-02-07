@@ -107,7 +107,7 @@ class _ReplyItem(QPushButton):
         self.set_theme()
 
     def set_theme(self):
-        self.setStyleSheet(self._tm.button_css(palette='Main', border=True, padding=True, align='left'))
-        for el in [self._label, self._button]:
-            self._tm.auto_css(el, palette='Main')
-        self._label.setStyleSheet(f"background-color: #00000000; border: none;")
+        self.setStyleSheet(self._tm.button_css(palette='Bg', border=False, padding=True, align='left'))
+        self._tm.auto_css(self._button, palette='Bg')
+        self._label.setFont(self._tm.font_small)
+        self._label.setStyleSheet(f"background-color: transparent; border: none;")

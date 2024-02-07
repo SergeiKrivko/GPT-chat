@@ -29,12 +29,17 @@ class ChatWidget(QWidget):
         self._bubbles = dict()
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 10, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         self.setLayout(layout)
 
+        self._top_widget = QWidget()
+        layout.addWidget(self._top_widget)
+
         top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(top_layout)
+        top_layout.setContentsMargins(8, 8, 8, 8)
+        top_layout.setSpacing(5)
+        self._top_widget.setLayout(top_layout)
 
         self._button_back = Button(self._tm, 'button_back', css='Bg')
         self._button_back.setFixedSize(36, 36)
@@ -72,15 +77,42 @@ class ChatWidget(QWidget):
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
+        self._text_bg = QWidget()
+        layout.addWidget(self._text_bg)
+
+        strange_layout = QVBoxLayout()
+        strange_layout.setContentsMargins(0, 0, 0, 0)
+        self._text_bg.setLayout(strange_layout)
+        strange_widget = QWidget()
+        strange_layout.addWidget(strange_widget)
+
+        text_bg_layout = QHBoxLayout()
+        strange_widget.setLayout(text_bg_layout)
+
+        self._text_bubble = QWidget()
+        text_bg_layout.addWidget(self._text_bubble)
+
+        strange_layout = QVBoxLayout()
+        strange_layout.setContentsMargins(0, 0, 0, 0)
+        self._text_bubble.setLayout(strange_layout)
+        strange_widget = QWidget()
+        strange_layout.addWidget(strange_widget)
+
+        bubble_layout = QVBoxLayout()
+        bubble_layout.setContentsMargins(5, 5, 5, 5)
+        strange_widget.setLayout(bubble_layout)
+
         self._reply_list = ReplyList(self._tm, self._chat)
         self._reply_list.hide()
         self._reply_list.scrollRequested.connect(self.scroll_to_message)
-        layout.addWidget(self._reply_list)
+        bubble_layout.addWidget(self._reply_list)
 
         bottom_layout = QHBoxLayout()
-        layout.addLayout(bottom_layout)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bubble_layout.addLayout(bottom_layout)
 
         self._text_edit = ChatInputArea()
+        self._text_edit.setPlaceholderText("Сообщение...")
         self._text_edit.returnPressed.connect(self.send_message)
         bottom_layout.addWidget(self._text_edit, 1)
 
@@ -172,7 +204,7 @@ class ChatWidget(QWidget):
         return bubble
 
     def set_top_hidden(self, hidden):
-        for el in [self._name_label, self._button_settings, self._button_back]:
+        for el in [self._name_label, self._button_settings, self._button_back, self._top_widget]:
             el.setHidden(hidden)
 
     def _add_bubble(self, bubble, index=None):
@@ -256,7 +288,7 @@ class ChatWidget(QWidget):
                 bubble.disconnect()
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self._sm, self._tm, self._chat)
+        dialog = ChatSettingsWindow(self._sm, self._tm, self._cm, self._chat)
         dialog.exec()
         dialog.save()
         self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')
@@ -266,11 +298,13 @@ class ChatWidget(QWidget):
         MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
 
     def set_theme(self):
-        for el in [self._scroll_area, self._text_edit, self._button, self._button_back, self._name_label,
-                   self._button_settings, self._button_scroll]:
+        self._tm.auto_css(self._text_edit, palette='Bg', border_radius='4', border=False)
+        for el in [self._button, self._button_back, self._name_label, self._button_settings, self._button_scroll]:
             self._tm.auto_css(el)
-        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='ChatBg', border=False))
-        # self._tm.auto_css(self._scroll_area, palette='ChatBg')
+        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
+        self._text_bg.setStyleSheet(self._tm.base_css(palette='Main', border=False, border_radius=False))
+        self._text_bubble.setStyleSheet(self._tm.base_css(palette='Bg', border=False, border_radius='8'))
+        self._tm.auto_css(self._scroll_area, palette='Main', border_radius=False, border=False)
 
         css = f"""
         QPushButton {{

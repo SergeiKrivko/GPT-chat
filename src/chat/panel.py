@@ -34,16 +34,21 @@ class ChatPanel(QWidget):
 
         self._layout = QHBoxLayout()
         self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._layout.setContentsMargins(10, 10, 0, 10)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         self._layout.addLayout(main_layout, 0)
 
+        self._top_widget = QWidget()
+        main_layout.addWidget(self._top_widget)
+
         top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(10, 10, 10, 10)
         top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(top_layout)
+        self._top_widget.setLayout(top_layout)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -185,7 +190,7 @@ class ChatPanel(QWidget):
 
     def set_list_hidden(self, hidden):
         for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget,
-                   self._button_user]:
+                   self._button_user, self._top_widget]:
             el.setHidden(hidden)
 
     def _resize(self):
@@ -193,7 +198,7 @@ class ChatPanel(QWidget):
             self.set_list_hidden(False)
             if self.current is not None:
                 self.chat_widgets[self.current].set_top_hidden(True)
-            self._list_widget.setFixedWidth(max(220, self.width() // 4))
+            self._list_widget.setFixedWidth(max(250, self.width() // 4))
             # else:
             #     self._list_widget.setMaximumWidth(10000)
         elif self.current is not None:

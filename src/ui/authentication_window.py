@@ -16,7 +16,7 @@ class AuthenticationWindow(CustomDialog):
         super().__init__(tm, "Авторизация", True, True)
         self._sm = sm
 
-        self.setFixedSize(350, 320)
+        self.setFixedSize(350, 330)
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -111,11 +111,11 @@ class _SignInScreen(QWidget):
         top_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         main_layout.addLayout(top_layout)
 
-        # self._button_reset_password = QPushButton("Сбросить пароль")
-        # self._button_reset_password.setFixedSize(160, 35)
-        # self._button_reset_password.clicked.connect(self.reset_password)
-        # self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # top_layout.addWidget(self._button_reset_password)
+        self._button_reset_password = QPushButton("Сбросить пароль")
+        self._button_reset_password.setFixedSize(150, 35)
+        self._button_reset_password.clicked.connect(self.reset_password)
+        self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        top_layout.addWidget(self._button_reset_password)
 
         self._button_sign_up = QPushButton("Регистрация")
         self._button_sign_up.setFixedSize(120, 35)
@@ -186,12 +186,14 @@ class _SignInScreen(QWidget):
 
     @asyncSlot()
     async def _reset_password(self):
-        request_ref = ""
+        request_ref = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getOobConfirmationCode?key={0}".format(
+            config.FIREBASE_API_KEY)
+        data = json.dumps({"requestType": "PASSWORD_RESET", "email": self._email_edit.text()})
         async with aiohttp.ClientSession() as session:
-            async with session.post(request_ref, data={}) as resp:
+            async with session.post(request_ref, data=data) as resp:
                 res = await resp.text()
                 if not resp.ok:
-                    raise aiohttp.ClientConnectionError
+                    print(res)
 
     def show_error(self, text):
         self._error_label.setText(text)
@@ -204,11 +206,12 @@ class _SignInScreen(QWidget):
         self._error_label.setText("")
 
     def set_theme(self):
-        for el in [self._password_edit, self._email_edit, self._button_join, self._button_sign_up]:
+        for el in [self._password_edit, self._email_edit, self._button_join, self._button_sign_up,
+                   self._button_reset_password]:
             self._tm.auto_css(el)
-        self._email_edit.setFont(self._tm.font_big)
-        self._password_edit.setFont(self._tm.font_big)
-        self._button_join.setFont(self._tm.font_big)
+            el.setFont(self._tm.font_big)
+        for el in [self._button_sign_up, self._button_reset_password]:
+            el.setFont(self._tm.font_medium)
         self._error_label.setStyleSheet(f"color: {self._tm['ErrorTextColor']};")
         self._error_label.setFont(self._tm.font_big)
 
