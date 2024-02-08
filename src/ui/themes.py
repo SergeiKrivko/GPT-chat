@@ -26,7 +26,7 @@ basic_theme = {
     'TextColor': '#222222',
     'ImageColor': (25, 28, 66),
 
-    'FontFamily': "Nunito Sans 10pt SemiExpanded",
+    'FontFamily': "Nunito Sans 10pt",
     'CodeFontFamily': "Consolas",
 }
 
