@@ -93,7 +93,7 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           pyinstaller --noconfirm GPT-chat.spec
-          rm dist/GPT-chat
+          rm -rf dist/GPT-chat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
