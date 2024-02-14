@@ -93,11 +93,10 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           pyinstaller --noconfirm GPT-chat.spec
-          ls
-          ls dist
+          rm dist/GPT-chat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_macos
-          path: dist/GPT-chat.app
+          path: dist
