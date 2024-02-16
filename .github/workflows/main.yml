@@ -41,7 +41,7 @@ jobs:
       - name: Upload release
         run: |
           venv\Scripts\Activate.ps1
-          python3 upload_release.py
+          python upload_release.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -74,13 +74,15 @@ jobs:
           cd src
           python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
 
-      - run: echo ${{ steps.build.outputs.version }}
+      - name: Prepare DEP package
+        run: |
+          python3 create_debpkg.py
 
       - name: Create DEB package
         uses: jiro4989/build-deb-action@v3
         with:
           package: gptchat
-          package_root: dist/GPT-chat
+          package_root: dist/debpkg
           maintainer: SergeiKrivko
           version: ${{ steps.build.outputs.version }}
           arch: 'amd64'
