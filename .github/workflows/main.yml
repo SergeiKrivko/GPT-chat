@@ -95,8 +95,16 @@ jobs:
           pyinstaller --noconfirm GPT-chat.spec
           rm -rf dist/GPT-chat
 
+      - name: Create installer
+        uses: QQxiaoming/create-dmg-action@v0.0.2
+        with:
+          name: 'GPT-chat'
+          srcdir: 'dist/GPT-chat.app'
+
+      - run: ls
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GPT-chat_macos
-          path: dist
+          name: GPT-chat_macos.dmg
+          path: GPT-chat.dmg
