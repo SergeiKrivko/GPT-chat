@@ -1,5 +1,7 @@
+import json
 import os.path
 import sys
+import zipfile
 from urllib.parse import quote
 
 import requests
@@ -8,6 +10,8 @@ from src import config
 
 
 def upload_file(path, name=''):
+    if name and '.' not in name:
+        name += '.' + path.split('.')[-1]
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
           f"{quote(f'releases/{name or os.path.basename(path)}', safe='')}"
     with open(path, 'br') as f:
@@ -47,17 +51,30 @@ def release_file():
 
 
 def version_file():
-    return f"version_{get_system()}"
+    return f"{get_system()}.json"
 
 
 def upload_version():
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
           f"{quote(f'releases/{version_file()}', safe='')}"
-    resp = requests.post(url, data=config.APP_VERSION.encode('utf-8'))
+    resp = requests.post(url, data=json.dumps({
+        'version': config.APP_VERSION,
+    }, indent=2).encode('utf-8'))
     if not resp.ok:
         raise Exception(resp.text)
 
 
+def compress_to_zip(path):
+    archive = zipfile.ZipFile(path + '.zip', 'w')
+    archive.write(path, get_system() + '.' + path.split('.')[-1])
+    archive.close()
+    return path + '.zip'
+
+
 def main():
-    upload_file(release_file())
+    upload_file(compress_to_zip(release_file()), get_system())
     upload_version()
+
+
+if __name__ == '__main__':
+    main()
