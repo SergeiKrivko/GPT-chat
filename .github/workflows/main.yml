@@ -67,7 +67,7 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
           cd src
-          python3 -m "print('version=', __import__('config').APP_VERSION)" > "$GITHUB_OUTPUT"
+          python3 -c "print('version=', __import__('config').APP_VERSION)" > "$GITHUB_OUTPUT"
 
       - name: Create DEB package
         uses: jiro4989/build-deb-action@v3
