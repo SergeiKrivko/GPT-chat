@@ -98,7 +98,7 @@ jobs:
       - name: Create installer
         uses: QQxiaoming/create-dmg-action@v0.0.2
         with:
-          name: 'GPT-chat'
+          name: 'GPT-chat.dmg'
           srcdir: 'dist/GPT-chat.app'
 
       - run: ls
