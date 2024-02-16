@@ -38,11 +38,16 @@ jobs:
           path: setup.iss
           options: /O+
 
+      - name: Upload release
+        run: |
+          venv\Scripts\Activate.ps1
+          python3 upload_release.py
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GPT-chat_setup.exe
-          path: D:\a\GPT-chat\GPT-chat\dist\GPT-chat_setup.exe
+          name: GPT-chat_windows.exe
+          path: dist\GPT-chat_setup.exe
 
   build-linux:
     name: Build for Linux
@@ -67,7 +72,7 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
           cd src
-          python3 -c "print('version=', __import__('config').APP_VERSION)" >> $GITHUB_OUTPUT
+          python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
 
       - run: echo ${{ steps.build.outputs.version }}
 
@@ -80,6 +85,10 @@ jobs:
           version: ${{ steps.build.outputs.version }}
           arch: 'amd64'
           desc: 'GPT-chat'
+
+      - name: Upload release
+        run: |
+          python3 upload_release.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -116,7 +125,9 @@ jobs:
           name: 'GPT-chat'
           srcdir: 'dist/GPT-chat.app'
 
-      - run: ls
+      - name: Upload release
+        run: |
+          python3 upload_release.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
