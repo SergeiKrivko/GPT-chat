@@ -66,6 +66,20 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
 
+      - name: Create DEB package
+        uses: jiro4989/build-deb-action@v3
+        with:
+          package: gptchat
+          package_root: dist/GPT-chat
+          maintainer: SergeiKrivko
+          version: '3.0.1'
+          arch: 'amd64'
+          desc: 'GPT-chat'
+
+      - run: |
+          ls 
+          ls dist
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -98,7 +112,7 @@ jobs:
       - name: Create installer
         uses: QQxiaoming/create-dmg-action@v0.0.2
         with:
-          name: 'GPT-chat.dmg'
+          name: 'GPT-chat'
           srcdir: 'dist/GPT-chat.app'
 
       - run: ls
