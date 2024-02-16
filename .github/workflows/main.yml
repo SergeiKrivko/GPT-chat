@@ -67,7 +67,9 @@ jobs:
         run: |
           pyinstaller --noconfirm GPT-chat.spec
           cd src
-          python3 -c "print('version=', __import__('config').APP_VERSION)" > "$GITHUB_OUTPUT"
+          python3 -c "print('version=', __import__('config').APP_VERSION)" >> $GITHUB_OUTPUT
+
+      - run: echo ${{ steps.build.outputs.version }}
 
       - name: Create DEB package
         uses: jiro4989/build-deb-action@v3
@@ -75,7 +77,7 @@ jobs:
           package: gptchat
           package_root: dist/GPT-chat
           maintainer: SergeiKrivko
-          version: ${{ steps.runner.outputs.version }}
+          version: ${{ steps.build.outputs.version }}
           arch: 'amd64'
           desc: 'GPT-chat'
 
@@ -83,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: GPT-chat_linux.deb
-          path: gptchat_${{ steps.runner.outputs.version }}_amd64.deb
+          path: gptchat_${{ steps.build.outputs.version }}_amd64.deb
 
   build-macos:
     name: Build for macOS
