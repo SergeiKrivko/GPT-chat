@@ -9,6 +9,7 @@ from src.chat.render_latex import rerender_all
 from src.database import ChatManager
 from src.settings_manager import SettingsManager
 from src.ui.themes import ThemeManager
+from src.ui.update_manager import UpdateManager
 
 
 class MainWindow(QMainWindow):
@@ -30,6 +31,9 @@ class MainWindow(QMainWindow):
         self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))
         if self.sm.get('maximized', False) not in {False, 'False', 'false', 0}:
             self.showMaximized()
+
+        self._update_manager = UpdateManager(self.sm, self.tm)
+        self._update_manager.closeProgramRequested.connect(self.close)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)

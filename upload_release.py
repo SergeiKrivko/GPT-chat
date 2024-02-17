@@ -47,7 +47,7 @@ def release_file():
         case 'linux':
             return f"gptchat_{config.APP_VERSION}_amd64.deb"
         case 'darwin':
-            return "GPT-chat_macos.dmg"
+            return "GPT-chat.dmg"
 
 
 def version_file():
