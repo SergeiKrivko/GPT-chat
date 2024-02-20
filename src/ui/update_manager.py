@@ -24,7 +24,7 @@ class UpdateManager(QObject):
         self._sm = sm
         self._tm = tm
         self._have_update = False
-        self._new_version = None
+        self._new_version = self._sm.get('downloaded_release')
         self.check_release(bool(self._sm.get('auto_update', True)))
         self._askDownload.connect(self._ask_download)
 
@@ -113,6 +113,7 @@ class UpdateManager(QObject):
             downloaded_version = self._sm.get('downloaded_release', '')
             if not os.path.isfile(self.release_exe_path):
                 downloaded_version = ''
+
             if self.compare_version(downloaded_version):
                 self._have_update = True
                 if auto_update:
@@ -142,7 +143,13 @@ class UpdateManager(QObject):
             case 'windows':
                 os.system(f"start {self.release_exe_path}")
             case 'linux':
-                os.system(f"xdg-open {self.release_exe_path}")
+                # os.system(f"xdg-open {self.release_exe_path}")
+                with open(script := f"{os.path.dirname(self.release_exe_path)}/script", 'w', encoding='utf-8') as f:
+                    f.write(f"echo \"Для установки нужны права суперпользователя\"\n"
+                            f"sudo dpkg -r gptchat\nsudo dpkg -i {self.release_exe_path}\n"
+                            f"/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/{config.APP_NAME}\n")
+                os.system(f'chmod 755 {script}')
+                os.system(f"gnome-terminal -- {script}")
             case 'macos':
                 os.system(f"open {self.release_exe_path}")
 
