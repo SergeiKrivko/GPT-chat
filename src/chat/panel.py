@@ -20,10 +20,11 @@ from src.ui.custom_dialog import ask
 class ChatPanel(QWidget):
     WIDTH = 550
 
-    def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager):
+    def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager, um):
         super().__init__()
         self.sm = sm
         self.tm = tm
+        self._um= um
         self._chat_manager = chat_manager
         self._chat_manager.newChat.connect(self._add_chat)
         self._chat_manager.deleteChat.connect(self._on_chat_deleted)
@@ -91,7 +92,7 @@ class ChatPanel(QWidget):
 
     def _open_settings(self):
         chat = None if self.current is None else self.chats[self.current]
-        window = ChatSettingsWindow(self.sm, self.tm, self._chat_manager, chat)
+        window = ChatSettingsWindow(self.sm, self.tm, self._chat_manager, self._um, chat)
         window.exec()
         window.save()
 

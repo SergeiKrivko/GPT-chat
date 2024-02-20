@@ -2,19 +2,21 @@ import datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox
+    QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox, QPushButton
 
 from src.gpt.chat import GPTChat
 from src.gpt.gpt import get_models
 from src.ui.custom_dialog import CustomDialog
+from src.ui.update_manager import UpdateManager
 
 
 class ChatSettingsWindow(CustomDialog):
-    def __init__(self, sm, tm, cm, chat: GPTChat):
+    def __init__(self, sm, tm, cm, um: UpdateManager, chat: GPTChat):
         super().__init__(tm, "Настройки", True, True)
         self._chat = chat
         self.sm = sm
         self._cm = cm
+        self._um = um
 
         self._labels = []
         self.setFixedWidth(400)
@@ -42,6 +44,14 @@ class ChatSettingsWindow(CustomDialog):
         self._theme_box.setCurrentText(self.sm.get('theme', 'blue'))
         self._theme_box.currentTextChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
+
+        self._button_update = QPushButton("Обновить" if self._um.have_update else "Проверить обновление")
+        self._button_update.clicked.connect(lambda: self._um.check_release())
+        main_layout.addWidget(self._button_update)
+
+        self._auto_update_checkbox = QCheckBox("Сообщать об обновлениях")
+        self._auto_update_checkbox.setChecked(bool(self.sm.get('auto_update', True)))
+        main_layout.addWidget(self._auto_update_checkbox)
 
         self._separator = QWidget()
         self._separator.setFixedHeight(1)
@@ -147,6 +157,7 @@ class ChatSettingsWindow(CustomDialog):
         self.tm.themeChanged.connect(self.set_theme)
 
     def save(self):
+        self.sm.set('auto_update', 'true' if self._auto_update_checkbox.isChecked() else '')
         if self._chat is not None:
             self._chat.name = self._name_label.text()
             self._chat.used_messages = self._used_messages_slider.value()
@@ -170,6 +181,7 @@ class ChatSettingsWindow(CustomDialog):
         for el in self._labels:
             self.tm.auto_css(el)
         for el in [self._name_label, self._used_messages_slider, self._used_messages_label, self._saved_messages_box,
-                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox, self._sync_checkbox]:
+                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox, self._sync_checkbox,
+                   self._auto_update_checkbox, self._button_update]:
             self.tm.auto_css(el)
         self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")

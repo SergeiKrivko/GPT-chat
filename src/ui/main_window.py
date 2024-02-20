@@ -25,15 +25,15 @@ class MainWindow(QMainWindow):
         self.chat_manager = ChatManager(self.sm)
         self.chat_manager.auth()
 
-        self._chat_widget = ChatPanel(self.sm, self.tm, self.chat_manager)
+        self._update_manager = UpdateManager(self.sm, self.tm)
+        self._update_manager.closeProgramRequested.connect(self.close)
+
+        self._chat_widget = ChatPanel(self.sm, self.tm, self.chat_manager, self._update_manager)
         self.setCentralWidget(self._chat_widget)
 
         self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))
         if self.sm.get('maximized', False) not in {False, 'False', 'false', 0}:
             self.showMaximized()
-
-        self._update_manager = UpdateManager(self.sm, self.tm)
-        self._update_manager.closeProgramRequested.connect(self.close)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)

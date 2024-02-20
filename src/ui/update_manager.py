@@ -1,5 +1,6 @@
 import json
 import os.path
+import shutil
 import sys
 import zipfile
 from time import sleep
@@ -23,6 +24,7 @@ class UpdateManager(QObject):
         self._sm = sm
         self._tm = tm
         self._have_update = False
+        self._new_version = None
         self.check_release(bool(self._sm.get('auto_update', True)))
         self._askDownload.connect(self._ask_download)
 
@@ -48,14 +50,14 @@ class UpdateManager(QObject):
     def release_exe_path(self):
         match self.system:
             case 'windows':
-                ext = 'exe'
+                filename = 'GPT-chat_setup.exe'
             case 'linux':
-                ext = 'deb'
+                filename = f'gptchat_{self._new_version}_amd64.deb'
             case 'macos':
-                ext = 'dmg'
+                filename = 'GPT-chat.dmg'
             case _:
                 raise ValueError
-        return f"{self._sm.app_data_dir}/releases/{self.system}.{ext}"
+        return f"{self._sm.app_data_dir}/releases/{filename}"
 
     async def get_release_info(self):
         url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
@@ -65,7 +67,9 @@ class UpdateManager(QObject):
                 res = await resp.text()
                 if not resp.ok:
                     raise aiohttp.ClientConnectionError(res)
-        return json.loads(res)
+        res = json.loads(res)
+        self._new_version = res.get('version', None)
+        return res
 
     async def download_release(self):
         url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
@@ -106,12 +110,17 @@ class UpdateManager(QObject):
     @asyncSlot()
     async def check_release(self, auto_update=True):
         downloaded_version = self._sm.get('downloaded_release', '')
+        if not os.path.isfile(self.release_exe_path):
+            downloaded_version = ''
         if self.compare_version(downloaded_version):
             self._have_update = True
             if auto_update:
                 looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
                 looper.finished.connect(lambda: self._install_release())
         else:
+            self._sm.set('downloaded_release', '')
+            if os.path.isdir(os.path.dirname(self.release_exe_path)):
+                shutil.rmtree(os.path.dirname(self.release_exe_path))
             info = await self.get_release_info()
             if self.compare_version(info.get('version', '')):
                 self._have_update = True
