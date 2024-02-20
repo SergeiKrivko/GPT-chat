@@ -109,25 +109,28 @@ class UpdateManager(QObject):
 
     @asyncSlot()
     async def check_release(self, auto_update=True):
-        downloaded_version = self._sm.get('downloaded_release', '')
-        if not os.path.isfile(self.release_exe_path):
-            downloaded_version = ''
-        if self.compare_version(downloaded_version):
-            self._have_update = True
-            if auto_update:
-                looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
-                looper.finished.connect(lambda: self._install_release())
-        else:
-            self._sm.set('downloaded_release', '')
-            if os.path.isdir(os.path.dirname(self.release_exe_path)):
-                shutil.rmtree(os.path.dirname(self.release_exe_path))
-            info = await self.get_release_info()
-            if self.compare_version(info.get('version', '')):
+        try:
+            downloaded_version = self._sm.get('downloaded_release', '')
+            if not os.path.isfile(self.release_exe_path):
+                downloaded_version = ''
+            if self.compare_version(downloaded_version):
                 self._have_update = True
                 if auto_update:
-                    ver = info.get('version', '')
                     looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
-                    looper.finished.connect(lambda: self._ask_download(ver))
+                    looper.finished.connect(lambda: self._install_release())
+            else:
+                self._sm.set('downloaded_release', '')
+                if os.path.isdir(os.path.dirname(self.release_exe_path)):
+                    shutil.rmtree(os.path.dirname(self.release_exe_path))
+                info = await self.get_release_info()
+                if self.compare_version(info.get('version', '')):
+                    self._have_update = True
+                    if auto_update:
+                        ver = info.get('version', '')
+                        looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
+                        looper.finished.connect(lambda: self._ask_download(ver))
+        except aiohttp.ClientConnectionError:
+            pass
 
     def _ask_download(self, version):
         if ask(self._tm, f"Доступна новая версия программы: {version}. "

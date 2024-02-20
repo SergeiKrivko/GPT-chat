@@ -107,7 +107,19 @@ class _ReplyItem(QPushButton):
         self.set_theme()
 
     def set_theme(self):
-        self.setStyleSheet(self._tm.button_css(palette='Bg', border=False, padding=True, align='left'))
+        # self.setStyleSheet(self._tm.button_css(palette='Bg', border=False, padding=True, align='left'))
+        self.setStyleSheet(f"""
+QPushButton {{
+    color: {self._tm['TextColor']};
+    background-color: transparent;
+    border: 0px solid black;
+    border-radius: 5px;
+    padding: 3px 8px 3px 8px;
+    text-align: left;
+}}
+QPushButton::hover {{
+    background-color: #50FFFFFF;
+}}""")
         self._tm.auto_css(self._button, palette='Bg')
         self._label.setFont(self._tm.font_small)
         self._label.setStyleSheet(f"background-color: transparent; border: none;")
