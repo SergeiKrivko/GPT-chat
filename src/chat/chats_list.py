@@ -159,14 +159,10 @@ class GPTListWidgetItem(QPushButton):
 
         self._icon_pinned = Label()
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
-        self._icon_pinned.setPixmap(QPixmap(self._tm.get_image('pin')).scaled(
-            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
         right_layout.addWidget(self._icon_pinned)
 
         self._icon_remote = Label()
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
-        self._icon_remote.setPixmap(QPixmap(self._tm.get_image('remote')).scaled(
-            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
         right_layout.addWidget(self._icon_remote)
 
         self.update_name()
@@ -221,6 +217,10 @@ class GPTListWidgetItem(QPushButton):
         self._icon_pinned.setStyleSheet("background: transparent; border: none;")
         self._icon_remote.setStyleSheet("background: transparent; border: none;")
         self.update_name()
+        self._icon_pinned.setPixmap(QPixmap(self._tm.get_image('pin')).scaled(
+            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
+        self._icon_remote.setPixmap(QPixmap(self._tm.get_image('remote')).scaled(
+            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
 
 
 class ContextMenu(QMenu):
