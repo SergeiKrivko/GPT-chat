@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFontMetrics, QIcon
+from PyQt6.QtGui import QFontMetrics, QIcon, QTextCursor
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy
 
 from src.chat.render_latex import render_latex, delete_image
@@ -16,6 +16,7 @@ class ChatBubble(QWidget):
     deleteRequested = pyqtSignal()
     replyRequested = pyqtSignal()
     scrollRequested = pyqtSignal(int)
+    textSelectionChanged = pyqtSignal()
 
     def __init__(self, sm, tm, chat, message: GPTMessage):
         super().__init__()
@@ -63,6 +64,7 @@ class ChatBubble(QWidget):
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self._text_edit.selectionChanged.connect(self._on_text_selection_changed)
         self._set_html()
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
@@ -149,6 +151,22 @@ class ChatBubble(QWidget):
     @property
     def message(self):
         return self._message
+
+    def _on_text_selection_changed(self):
+        if self._text_edit.textCursor().hasSelection():
+            self.textSelectionChanged.emit()
+
+    def deselect_text(self):
+        cursor = self._text_edit.textCursor()
+        if cursor.hasSelection():
+            cursor.clearSelection()
+            self._text_edit.setTextCursor(cursor)
+
+    def select_text(self, offset, length):
+        cursor = self._text_edit.textCursor()
+        cursor.setPosition(offset)
+        cursor.setPosition(offset + length, QTextCursor.MoveMode.KeepAnchor)
+        self._text_edit.setTextCursor(cursor)
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 

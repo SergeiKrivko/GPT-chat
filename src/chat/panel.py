@@ -76,6 +76,12 @@ class ChatPanel(QWidget):
         self._button_user.clicked.connect(self._open_user_window)
         top_layout.addWidget(self._button_user)
 
+        self._button_search = Button(self.tm, 'search', css='Bg')
+        self._button_search.setFixedSize(36, 36)
+        self._button_search.clicked.connect(self._show_search)
+        self._button_search.setCheckable(True)
+        top_layout.addWidget(self._button_search)
+
         self._list_widget = GPTListWidget(tm)
         main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
@@ -162,6 +168,8 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', str(chat_id))
         self.chat_widgets[chat_id].show()
         self.current = chat_id
+        print(not self.chat_widgets[chat_id].search_active)
+        self._button_search.setChecked(self.chat_widgets[chat_id].search_active)
         self._resize()
         # if self.sm.authorized:
         #     self._pull_chat(chat_id)
@@ -200,14 +208,18 @@ class ChatPanel(QWidget):
             if self.current is not None:
                 self.chat_widgets[self.current].set_top_hidden(True)
             self._list_widget.setFixedWidth(max(250, self.width() // 4))
-            # else:
-            #     self._list_widget.setMaximumWidth(10000)
+            self._button_search.show()
         elif self.current is not None:
             self.set_list_hidden(True)
             self.chat_widgets[self.current].set_top_hidden(False)
         else:
             self.set_list_hidden(False)
+            self._button_search.hide()
             self._list_widget.setMaximumWidth(10000)
+
+    def _show_search(self):
+        if self.current is not None:
+            self.chat_widgets[self.current].show_search(self._button_search.isChecked())
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -224,6 +236,7 @@ class ChatPanel(QWidget):
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
+        self._button_search.set_theme()
         self._button_user.set_theme()
         self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
         self._list_widget.set_theme()

@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
 
+from src.chat.search_widget import SearchWidget
 from src.database import ChatManager
 from src.gpt import gpt
 from src.chat.reply_widget import ReplyList
@@ -49,10 +50,21 @@ class ChatWidget(QWidget):
         self._name_label = QLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
         top_layout.addWidget(self._name_label)
 
+        self._button_search = Button(self._tm, 'search', css='Bg')
+        self._button_search.setFixedSize(36, 36)
+        self._button_search.clicked.connect(self._show_search)
+        self._button_search.setCheckable(True)
+        top_layout.addWidget(self._button_search)
+
         self._button_settings = Button(self._tm, 'generate', css='Bg')
         self._button_settings.setFixedSize(36, 36)
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
+
+        self._search_widget = SearchWidget(self._tm, self._chat)
+        self._search_widget.selectionRequested.connect(self._select_text)
+        self._search_widget.hide()
+        layout.addWidget(self._search_widget)
 
         self._scroll_area = ScrollArea()
         layout.addWidget(self._scroll_area, 1)
@@ -137,6 +149,7 @@ class ChatWidget(QWidget):
         self._messages_is_loaded = False
         self._loading_messages = False
         self._sending_message = None
+        self._bubble_with_selected_text = None
 
     def _load_messages(self, to_message=None):
         self._loading_messages = True
@@ -207,10 +220,34 @@ class ChatWidget(QWidget):
         for el in [self._name_label, self._button_settings, self._button_back, self._top_widget]:
             el.setHidden(hidden)
 
+    def _select_text(self, message_id, offset, length):
+        if message_id in self._bubbles:
+            self._bubbles[message_id].select_text(offset, length)
+            self.scroll_to_message(message_id)
+
+    def _on_text_selected(self, bubble):
+        if self._bubble_with_selected_text == bubble:
+            return
+        if self._bubble_with_selected_text:
+            self._bubble_with_selected_text.deselect_text()
+        self._bubble_with_selected_text = bubble
+
+    @property
+    def search_active(self):
+        return self._button_search.isChecked()
+
+    def show_search(self, flag):
+        self._button_search.setChecked(flag)
+        self._show_search()
+
+    def _show_search(self):
+        self._search_widget.setHidden(not self.search_active)
+
     def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._cm.delete_message(self._chat.id, bubble.message))
         bubble.replyRequested.connect(lambda: self._reply_list.add_message(bubble.message))
         bubble.scrollRequested.connect(self.scroll_to_message)
+        bubble.textSelectionChanged.connect(lambda: self._on_text_selected(bubble))
         if index is None:
             self.updated.emit()
             self._scroll_layout.addWidget(bubble)
@@ -299,8 +336,10 @@ class ChatWidget(QWidget):
 
     def set_theme(self):
         self._tm.auto_css(self._text_edit, palette='Bg', border_radius='4', border=False)
-        for el in [self._button, self._button_back, self._name_label, self._button_settings, self._button_scroll]:
+        for el in [self._button, self._button_back, self._name_label, self._button_settings, self._button_scroll,
+                   self._button_search]:
             self._tm.auto_css(el)
+        self._search_widget.set_theme()
         self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
         self._text_bg.setStyleSheet(self._tm.base_css(palette='Main', border=False, border_radius=False))
         self._text_bubble.setStyleSheet(self._tm.base_css(palette='Bg', border=False, border_radius='8'))
