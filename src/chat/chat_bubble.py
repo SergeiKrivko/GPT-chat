@@ -253,3 +253,7 @@ class _FakeMessage:
 class FakeBubble(ChatBubble):
     def __init__(self, sm, tm, chat):
         super().__init__(sm, tm, chat, _FakeMessage())
+
+    def set_theme(self):
+        super().set_theme()
+        self.setStyleSheet('background-color: red;')

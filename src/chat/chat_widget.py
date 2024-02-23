@@ -173,6 +173,8 @@ class ChatWidget(QWidget):
         self._text_edit.setText("")
 
     def add_message(self, message):
+        if message.id in self._bubbles:
+            return
         self.add_bubble(message)
         self.run_gpt(message)
 
@@ -186,8 +188,8 @@ class ChatWidget(QWidget):
         if message.role != 'user' or message.content != self._sending_message:
             return
         if self._last_bubble:
+            self._bubbles.pop(self._last_bubble.message.id)
             self._last_bubble.setParent(None)
-            self._bubbles.pop(-1)
             self._last_bubble = None
         self._sending_message = None
 
@@ -207,11 +209,15 @@ class ChatWidget(QWidget):
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
+        if message.id in self._bubbles:
+            return
         bubble = ChatBubble(self._sm, self._tm, self._chat, message)
         self._add_bubble(bubble)
         return bubble
 
     def insert_bubble(self, message: GPTMessage):
+        if message.id in self._bubbles:
+            return
         bubble = ChatBubble(self._sm, self._tm, self._chat, message)
         self._add_bubble(bubble, 0)
         return bubble
@@ -265,10 +271,11 @@ class ChatWidget(QWidget):
 
     def finish_gpt(self):
         if self._last_bubble:
-            self._last_bubble.setParent(None)
-            self._bubbles.pop(-1)
-            self._cm.new_message(self._chat.id, 'assistant', self._last_bubble.message.content)
+            bubble = self._last_bubble
             self._last_bubble = None
+            bubble.setParent(None)
+            self._bubbles.pop(bubble.message.id)
+            self._cm.new_message(self._chat.id, 'assistant', bubble.message.content)
         self._progress_marker.hide()
 
     def scroll_to_message(self, message_id):
@@ -376,6 +383,7 @@ class Looper(QThread):
         try:
             for el in gpt.stream_response(self.text, **self.kwargs):
                 self.sendMessage.emit(el)
+            sleep(0.1)
         except Exception as ex:
             self.exception.emit(ex)
 

@@ -168,11 +168,8 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', str(chat_id))
         self.chat_widgets[chat_id].show()
         self.current = chat_id
-        print(not self.chat_widgets[chat_id].search_active)
         self._button_search.setChecked(self.chat_widgets[chat_id].search_active)
         self._resize()
-        # if self.sm.authorized:
-        #     self._pull_chat(chat_id)
 
     def _on_new_message(self, chat_id, message):
         self.chat_widgets[chat_id].add_message(message)
