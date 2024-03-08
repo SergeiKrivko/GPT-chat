@@ -2,12 +2,13 @@ import os
 import shutil
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor, QFont, QFontDatabase
 from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu, \
     QSlider
 import PIL.Image as Image
 
+from src import config
 from src.ui.button import Button
 from src.ui.resources import resources
 
@@ -25,7 +26,7 @@ basic_theme = {
     'TextColor': '#222222',
     'ImageColor': (25, 28, 66),
 
-    'FontFamily': "Calibri",
+    'FontFamily': "Nunito Sans 10pt",
     'CodeFontFamily': "Consolas",
 }
 
@@ -55,8 +56,8 @@ _LIGHT_THEME = Theme({
     'MainColor': '#FFFFFF',
     'MainHoverColor': '#C9CBCF',
     'MainSelectedColor': '#4BA4FC',
-    'BgColor': '#DFE1E3',
-    'BgHoverColor': '#CBCDCF',
+    'BgColor': '#CDCFD1',
+    'BgHoverColor': '#A8A9AB',
     'BgSelectedColor': '#5283C9',
     'MenuColor': '#F7F8FA',
     'MenuHoverColor': '#DFE1E5',
@@ -67,6 +68,7 @@ _LIGHT_THEME = Theme({
 
     'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)',
     'ChatBgColor': '#FAFAFA',
+    'ErrorTextColor': '#F23C18',
 })
 
 _DARK_THEME = Theme({
@@ -76,7 +78,7 @@ _DARK_THEME = Theme({
     'BgColor': '#18191C',
     'BgHoverColor': '#4E5157',
     'BgSelectedColor': '#3574F0',
-    'MenuColor': '#141517',
+    'MenuColor': '#2A2B30',
     'MenuHoverColor': '#222345',
     'MenuSelectedColor': '#323466',
     'BorderColor': '#474747',
@@ -85,6 +87,7 @@ _DARK_THEME = Theme({
 
     'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18191C, stop:1 #2A2B30)',
     'ChatBgColor': '#2A2B30',
+    'ErrorTextColor': '#F23C18',
 })
 
 
@@ -96,30 +99,38 @@ class ThemeManager(QObject):
         super().__init__()
         self.sm = sm
 
+        for el in os.listdir(f"{config.ASSETS_DIR}/fonts"):
+            QFontDatabase.addApplicationFont(f"{config.ASSETS_DIR}/fonts/{el}")
+
         self.themes = {
             'light_grey': Theme({
 
             }, inherit=_LIGHT_THEME),
             'light_blue': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3F76BF, stop:1 #3B97CF)',
-                'MainSelectedColor': '#3B97CF',
+                'BgSelectedColor': '#3B97CF',
+                'BorderSelectedColor': '#3B97CF',
             }, inherit=_LIGHT_THEME),
             'light_red': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F23C18, stop:1 #F26149)',
-                'MainSelectedColor': '#F23C18',
+                'BgSelectedColor': '#F23C18',
+                'BorderSelectedColor': '#F23C18',
             }, inherit=_LIGHT_THEME),
             'light_green': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #377D2A, stop:1 #72B238)',
-                'MainSelectedColor': '#67A132',
+                'BgSelectedColor': '#67A132',
+                'BorderSelectedColor': '#67A132',
             }, inherit=_LIGHT_THEME),
             'light_orange': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C9650C, stop:1 #E38710)',
                 'GptMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
-                'MainSelectedColor': '#E37412',
+                'BgSelectedColor': '#E37412',
+                'BorderSelectedColor': '#E37412',
             }, inherit=_LIGHT_THEME),
             'light_pink': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C25EBD, stop:1 #C086C2)',
-                'MainSelectedColor': '#C25EBD',
+                'BgSelectedColor': '#C25EBD',
+                'BorderSelectedColor': '#C25EBD',
             }, inherit=_LIGHT_THEME),
 
             'dark_grey': Theme({
@@ -129,163 +140,29 @@ class ThemeManager(QObject):
             }, inherit=_DARK_THEME),
             'dark_blue': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #264773, stop:1 #3C72B8)',
-                'MainSelectedColor': '#264773',
+                'BgSelectedColor': '#264773',
+                'BorderSelectedColor': '#264773',
             }, inherit=_DARK_THEME),
             'dark_red': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B81818, stop:1 #B83D25)',
-                'MainSelectedColor': '#B81818',
+                'BgSelectedColor': '#B81818',
+                'BorderSelectedColor': '#B81818',
             }, inherit=_DARK_THEME),
             'dark_green': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #306E25, stop:1 #48A638)',
-                'MainSelectedColor': '#306E25',
+                'BgSelectedColor': '#306E25',
+                'BorderSelectedColor': '#306E25',
             }, inherit=_DARK_THEME),
             'dark_orange': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B25B15, stop:1 #B28F32)',
-                'MainSelectedColor': '#B25B15',
+                'BgSelectedColor': '#B25B15',
+                'BorderSelectedColor': '#B25B15',
             }, inherit=_DARK_THEME),
             'dark_pink': Theme({
                 'UserMessageColor': 'qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #75165F, stop:1 #B32291)',
-                'MainSelectedColor': '#75165F',
+                'BgSelectedColor': '#75165F',
+                'BorderSelectedColor': '#75165F',
             }, inherit=_DARK_THEME),
-        }
-
-        themes = {
-            ThemeManager.BASIC_THEME: Theme(basic_theme),
-            'dark':
-                Theme({
-                    'MainColor': '#2B2D30',
-                    'MainHoverColor': '#3E4145',
-                    'MainSelectedColor': '#2E436E',
-                    'BgColor': '#141517',
-                    'BgHoverColor': '#222345',
-                    'BgSelectedColor': '#323466',
-                    'MenuColor': '#1F2024',
-                    'MenuHoverColor': '#4E5157',
-                    'MenuSelectedColor': '#3574F0',
-                    'BorderColor': '#474747',
-                    'TextColor': '#F0F0F0',
-                    'ImageColor': (250, 250, 250),
-                }),
-            'fresh':
-                Theme({
-                    'MainColor': '#D2D79F',
-                    'MainHoverColor': '#BAD78C',
-                    'MainSelectedColor': '#A3CF63',
-                    'BgColor': '#90B77D',
-                    'BgHoverColor': '#9FC98A',
-                    'BgSelectedColor': '#73C978',
-                    'MenuColor': '#539667',
-                    'MenuHoverColor': '#4C8A5F',
-                    'MenuSelectedColor': '#4D8A51',
-                    'BorderColor': '#39703A',
-                    'TextColor': '#403232',
-                    'ImageColor': (64, 50, 50),
-                }),
-            'coffee':
-                Theme({
-                    'MenuColor': '#D9B28D',
-                    'MenuHoverColor': '#E0BB9D',
-                    'MenuSelectedColor': '#E8C3B0',
-                    'BgColor': '#D7B19D',
-                    'BgHoverColor': '#CCA895',
-                    'BgSelectedColor': '#BD9A8A',
-                    'MainColor': '#946949',
-                    'MainHoverColor': '#9C6242',
-                    'MainSelectedColor': '#AB6B49',
-                    'BorderColor': '#6B432E',
-                    'TextColor': '#402218',
-                    'ImageColor': (64, 34, 24),
-                }),
-            'night':
-                Theme({
-                    'MainColor': '#634378',
-                    'MainHoverColor': '#4E4378',
-                    'MainSelectedColor': '#703673',
-                    'BgColor': '#250230',
-                    'BgHoverColor': '#330342',
-                    'BgSelectedColor': '#47045C',
-                    'MenuColor': '#470246',
-                    'MenuHoverColor': '#570355',
-                    'MenuSelectedColor': '#70046E',
-                    'BorderColor': '#9C0499',
-                    'TextColor': '#EDBFF2',
-                    'ImageColor': (237, 191, 242),
-                }),
-            'orange':
-                Theme({
-                    'MainColor': '#F2D7AD',
-                    'MainHoverColor': '#F2CE9C',
-                    'MainSelectedColor': '#FFCB99',
-                    'BgColor': '#F0F0F0',
-                    'BgHoverColor': '#E3D2C8',
-                    'BgSelectedColor': '#E3C3AE',
-                    'MenuColor': '#F28B41',
-                    'MenuHoverColor': '#E3823D',
-                    'MenuSelectedColor': '#E0651B',
-                    'BorderColor': '#F26510',
-                    'TextColor': '#000000',
-                    'ImageColor': (217, 126, 29),
-                }),
-            'flamingo':
-                Theme({
-                    'MainColor': '#F0C6F2',
-                    'MainHoverColor': '#E6ACE5',
-                    'MainSelectedColor': '#D6A0D5',
-                    'BgColor': '#FFFFFF',
-                    'BgHoverColor': '#F3DEF7',
-                    'BgSelectedColor': '#F3C6F7',
-                    'MenuColor': '#DEA7F2',
-                    'MenuHoverColor': '#DC9CF2',
-                    'MenuSelectedColor': '#D67CF2',
-                    'BorderColor': '#93699E',
-                    'TextColor': '#2F1233',
-                    'ImageColor': (47, 18, 51),
-                }),
-            'space':
-                Theme({
-                    'MainColor': '#292E3D',
-                    'MainHoverColor': '#23233D',
-                    'MainSelectedColor': '#20204D',
-                    'BgColor': '#111129',
-                    'BgHoverColor': '#1C1C42',
-                    'BgSelectedColor': '#2E2E6B',
-                    'MenuColor': '#191B4D',
-                    'MenuHoverColor': '#212463',
-                    'MenuSelectedColor': '#303491',
-                    'BorderColor': '#07093B',
-                    'TextColor': '#F0F0F0',
-                    'ImageColor': (240, 240, 240),
-                }),
-            'christmas':
-                Theme({
-                    'MainColor': '#FFDBD7',
-                    'MainHoverColor': '#E8C7C4',
-                    'MainSelectedColor': '#E88C8C',
-                    'BgColor': '#FFF5E0',
-                    'BgHoverColor': '#FFD6C8',
-                    'BgSelectedColor': '#E3968A',
-                    'MenuColor': '#E6726C',
-                    'MenuHoverColor': '#B84643',
-                    'MenuSelectedColor': '#BA0F0F',
-                    'BorderColor': '#A62121',
-                    'TextColor': '#101838',
-                    'ImageColor': (16, 24, 56),
-                }),
-            'winter':
-                Theme({
-                    'MainColor': '#B4D2FA',
-                    'MainHoverColor': '#93BBFA',
-                    'MainSelectedColor': '#4BA7FA',
-                    'BgColor': '#EEEEEE',
-                    'BgHoverColor': '#D1D1D1',
-                    'BgSelectedColor': '#7798C7',
-                    'MenuColor': '#7798C7',
-                    'MenuHoverColor': '#5787C7',
-                    'MenuSelectedColor': '#2971C7',
-                    'BorderColor': '#3E5875',
-                    'TextColor': '#191C42',
-                    'ImageColor': (25, 28, 66),
-                }),
         }
 
         self.theme_name = ''
@@ -321,13 +198,13 @@ class ThemeManager(QObject):
         elif isinstance(widget, QComboBox):
             widget.setStyleSheet(self.combobox_css(palette))
         elif isinstance(widget, QLineEdit):
-            widget.setStyleSheet(self.base_css(palette, border, border_radius))
+            widget.setStyleSheet(self.line_edit_css(palette, border, border_radius))
+        elif isinstance(widget, QScrollArea):
+            widget.setStyleSheet(self.scroll_area_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
-            widget.setStyleSheet(self.text_edit_css(palette, border))
+            widget.setStyleSheet(self.text_edit_css(palette, border, border_radius))
         elif isinstance(widget, QTreeWidget):
             widget.setStyleSheet(self.tree_widget_css(palette, border, border_radius))
-        elif isinstance(widget, QScrollArea):
-            widget.setStyleSheet(self.scroll_area_css(palette, border))
         elif isinstance(widget, Button):
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
@@ -548,12 +425,22 @@ QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
         return f"color: {self['TextColor']};\n" \
                f"background-color: {self[f'{palette}Color']};\n" \
                f"border: {'1' if border else '0'}px solid {self['BorderColor']};\n" \
-               f"border-radius: {'4' if border_radius else '0'}px;"
+               f"border-radius: {border_radius if isinstance(border_radius, str) else '4' if border_radius else '0'}px;"
 
-    def scroll_area_css(self, palette, border=True):
+    def line_edit_css(self, palette='Bg', border=True, border_radius=True):
+        return f"""
+QLineEdit {{
+    {self.base_css(palette, border, border_radius)}
+    padding: 2px;
+}}
+QLineEdit:focus {{
+    border: 2px solid {self['BorderSelectedColor']};
+}}"""
+
+    def scroll_area_css(self, palette, border=True, border_radius=True):
         return f"""
 QScrollArea {{
-    {self.base_css(palette, border)}
+    {self.base_css(palette, border, border_radius)}
 }}
 QScrollArea QScrollBar:vertical {{
     background: {self[f'{palette}Color']};
@@ -600,10 +487,10 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
 }}
 """
 
-    def text_edit_css(self, palette, border=True):
+    def text_edit_css(self, palette, border=True, border_radius=False):
         return f"""
 QTextEdit {{
-    {self.base_css(palette, border)}
+    {self.base_css(palette, border, border_radius)}
 }}
 QTextEdit QScrollBar:vertical {{
     background: {self[f'{palette}Color']};

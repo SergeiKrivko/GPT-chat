@@ -1,15 +1,19 @@
 from time import sleep
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
+from PyQt6.QtGui import QKeyEvent, QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication, QMenu
+from googletrans import LANGUAGES
 
+from src.chat.search_widget import SearchWidget
+from src.database import ChatManager
 from src.gpt import gpt
 from src.chat.reply_widget import ReplyList
 from src.gpt.chat import GPTChat
-from src.chat.chat_bubble import ChatBubble
+from src.chat.chat_bubble import ChatBubble, FakeBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.gpt.message import GPTMessage
+from src.gpt.translate import translate, detect
 from src.ui.button import Button
 from src.ui.message_box import MessageBox
 
@@ -18,21 +22,27 @@ class ChatWidget(QWidget):
     buttonBackPressed = pyqtSignal(int)
     updated = pyqtSignal()
 
-    def __init__(self, sm, tm, chat: GPTChat):
+    def __init__(self, sm, tm, cm: ChatManager, chat: GPTChat):
         super().__init__()
         self._sm = sm
         self._tm = tm
+        self._cm = cm
         self._chat = chat
 
         self._bubbles = dict()
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 10, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         self.setLayout(layout)
 
+        self._top_widget = QWidget()
+        layout.addWidget(self._top_widget)
+
         top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(top_layout)
+        top_layout.setContentsMargins(8, 8, 8, 8)
+        top_layout.setSpacing(5)
+        self._top_widget.setLayout(top_layout)
 
         self._button_back = Button(self._tm, 'button_back', css='Bg')
         self._button_back.setFixedSize(36, 36)
@@ -42,10 +52,21 @@ class ChatWidget(QWidget):
         self._name_label = QLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
         top_layout.addWidget(self._name_label)
 
+        self._button_search = Button(self._tm, 'search', css='Bg')
+        self._button_search.setFixedSize(36, 36)
+        self._button_search.clicked.connect(self._show_search)
+        self._button_search.setCheckable(True)
+        top_layout.addWidget(self._button_search)
+
         self._button_settings = Button(self._tm, 'generate', css='Bg')
         self._button_settings.setFixedSize(36, 36)
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
+
+        self._search_widget = SearchWidget(self._tm, self._chat)
+        self._search_widget.selectionRequested.connect(self._select_text)
+        self._search_widget.hide()
+        layout.addWidget(self._search_widget)
 
         self._scroll_area = ScrollArea()
         layout.addWidget(self._scroll_area, 1)
@@ -70,21 +91,50 @@ class ChatWidget(QWidget):
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
+        self._text_bg = QWidget()
+        layout.addWidget(self._text_bg)
+
+        strange_layout = QVBoxLayout()
+        strange_layout.setContentsMargins(0, 0, 0, 0)
+        self._text_bg.setLayout(strange_layout)
+        strange_widget = QWidget()
+        strange_layout.addWidget(strange_widget)
+
+        text_bg_layout = QHBoxLayout()
+        strange_widget.setLayout(text_bg_layout)
+
+        self._text_bubble = QWidget()
+        text_bg_layout.addWidget(self._text_bubble)
+
+        strange_layout = QVBoxLayout()
+        strange_layout.setContentsMargins(0, 0, 0, 0)
+        self._text_bubble.setLayout(strange_layout)
+        strange_widget = QWidget()
+        strange_layout.addWidget(strange_widget)
+
+        bubble_layout = QVBoxLayout()
+        bubble_layout.setContentsMargins(5, 5, 5, 5)
+        strange_widget.setLayout(bubble_layout)
+
         self._reply_list = ReplyList(self._tm, self._chat)
         self._reply_list.hide()
         self._reply_list.scrollRequested.connect(self.scroll_to_message)
-        layout.addWidget(self._reply_list)
+        bubble_layout.addWidget(self._reply_list)
 
         bottom_layout = QHBoxLayout()
-        layout.addLayout(bottom_layout)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bubble_layout.addLayout(bottom_layout)
 
         self._text_edit = ChatInputArea()
-        self._text_edit.returnPressed.connect(self.send_message)
+        self._text_edit.setPlaceholderText("Сообщение...")
+        self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
         self._button = Button(self._tm, "button_send", css='Bg')
         self._button.setFixedSize(30, 30)
-        self._button.clicked.connect(self.send_message)
+        self._button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._button.customContextMenuRequested.connect(self._run_context_menu)
+        self._button.clicked.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._button)
 
         self._button_scroll = Button(self._tm, 'down_arrow', css='Bg')
@@ -102,6 +152,8 @@ class ChatWidget(QWidget):
         self._want_to_scroll = None
         self._messages_is_loaded = False
         self._loading_messages = False
+        self._sending_message = None
+        self._bubble_with_selected_text = None
 
     def _load_messages(self, to_message=None):
         self._loading_messages = True
@@ -117,11 +169,33 @@ class ChatWidget(QWidget):
             self.scroll_to_message(self._want_to_scroll)
             self._want_to_scroll = None
 
-    def send_message(self):
+    def send_message(self, run_gpt=True):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
-        self.add_bubble(self._chat.add_message('user', text, tuple(self._reply_list.messages)))
+        self._sending_message = text if run_gpt else ''
+        self._cm.new_message(self._chat.id, 'user', text, tuple(self._reply_list.messages))
         self._text_edit.setText("")
+
+    def add_message(self, message):
+        if message.id in self._bubbles:
+            return
+        self.add_bubble(message)
+        self.run_gpt(message)
+
+    def delete_message(self, message_id):
+        bubble = self._bubbles.pop(message_id)
+        bubble.setParent(None)
+        bubble.disconnect()
+        bubble.delete()
+
+    def run_gpt(self, message):
+        if message.role != 'user' or message.content != self._sending_message:
+            return
+        if self._last_bubble:
+            self._bubbles.pop(self._last_bubble.message.id)
+            self._last_bubble.setParent(None)
+            self._last_bubble = None
+        self._sending_message = None
 
         messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
         for el in self._reply_list.messages:
@@ -135,27 +209,55 @@ class ChatWidget(QWidget):
         self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
         self.looper.exception.connect(self._on_gpt_error)
-        self.looper.finished.connect(self._progress_marker.hide)
+        self.looper.finished.connect(self.finish_gpt)
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
+        if message.id in self._bubbles:
+            return
         bubble = ChatBubble(self._sm, self._tm, self._chat, message)
         self._add_bubble(bubble)
         return bubble
 
     def insert_bubble(self, message: GPTMessage):
+        if message.id in self._bubbles:
+            return
         bubble = ChatBubble(self._sm, self._tm, self._chat, message)
         self._add_bubble(bubble, 0)
         return bubble
 
     def set_top_hidden(self, hidden):
-        for el in [self._name_label, self._button_settings, self._button_back]:
+        for el in [self._name_label, self._button_settings, self._button_back, self._top_widget]:
             el.setHidden(hidden)
 
+    def _select_text(self, message_id, offset, length):
+        if message_id in self._bubbles:
+            self._bubbles[message_id].select_text(offset, length)
+            self.scroll_to_message(message_id)
+
+    def _on_text_selected(self, bubble):
+        if self._bubble_with_selected_text == bubble:
+            return
+        if self._bubble_with_selected_text:
+            self._bubble_with_selected_text.deselect_text()
+        self._bubble_with_selected_text = bubble
+
+    @property
+    def search_active(self):
+        return self._button_search.isChecked()
+
+    def show_search(self, flag):
+        self._button_search.setChecked(flag)
+        self._show_search()
+
+    def _show_search(self):
+        self._search_widget.setHidden(not self.search_active)
+
     def _add_bubble(self, bubble, index=None):
-        bubble.deleteRequested.connect(lambda: self._delete_message(bubble.message.id))
+        bubble.deleteRequested.connect(lambda: self._cm.delete_message(self._chat.id, bubble.message))
         bubble.replyRequested.connect(lambda: self._reply_list.add_message(bubble.message))
         bubble.scrollRequested.connect(self.scroll_to_message)
+        bubble.textSelectionChanged.connect(lambda: self._on_text_selected(bubble))
         if index is None:
             self.updated.emit()
             self._scroll_layout.addWidget(bubble)
@@ -165,19 +267,35 @@ class ChatWidget(QWidget):
             self._bubbles[bubble.message.id] = bubble
         bubble.set_theme()
 
-    def _delete_message(self, message_id):
-        self._chat.delete_message(message_id)
-        bubble = self._bubbles.pop(message_id)
-        bubble.setParent(None)
-        bubble.disconnect()
-        bubble.delete()
-
     def add_text(self, text):
-        if self._last_message is None:
-            self._last_message = self._chat.add_message('assistant', text)
-            self._last_bubble = self.add_bubble(self._last_message)
-        else:
-            self._last_bubble.add_text(text)
+        if self._last_bubble is None:
+            self._last_bubble = FakeBubble(self._sm, self._tm, self._chat)
+            self._add_bubble(self._last_bubble)
+        self._last_bubble.add_text(text)
+
+    def finish_gpt(self):
+        if self._last_bubble:
+            bubble = self._last_bubble
+            self._last_bubble = None
+            bubble.setParent(None)
+            self._bubbles.pop(bubble.message.id)
+            self._cm.new_message(self._chat.id, 'assistant', bubble.message.content)
+        self._progress_marker.hide()
+
+    def _run_context_menu(self, pos):
+        if not self._text_edit.toMarkdown():
+            return
+        menu = _SendMessageContextMenu(self._tm, self._text_edit.toMarkdown())
+        pos = self._button.mapToGlobal(pos)
+        menu.move(pos - QPoint(206, menu.get_height()))
+        menu.exec()
+        match menu.action:
+            case _SendMessageContextMenu.SEND:
+                self.send_message()
+            case _SendMessageContextMenu.SEND_WITHOUT_REQUEST:
+                self.send_message(False)
+            case _SendMessageContextMenu.TRANSLATE:
+                self._text_edit.setText(translate(self._text_edit.toPlainText(), menu.data).text)
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:
@@ -233,7 +351,7 @@ class ChatWidget(QWidget):
                 bubble.disconnect()
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self._sm, self._tm, self._chat)
+        dialog = ChatSettingsWindow(self._sm, self._tm, self._cm, self._chat)
         dialog.exec()
         dialog.save()
         self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')
@@ -243,11 +361,15 @@ class ChatWidget(QWidget):
         MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
 
     def set_theme(self):
-        for el in [self._scroll_area, self._text_edit, self._button, self._button_back, self._name_label,
-                   self._button_settings, self._button_scroll]:
+        self._tm.auto_css(self._text_edit, palette='Bg', border_radius='4', border=False)
+        for el in [self._button, self._button_back, self._name_label, self._button_settings, self._button_scroll,
+                   self._button_search]:
             self._tm.auto_css(el)
-        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='ChatBg', border=False))
-        # self._tm.auto_css(self._scroll_area, palette='ChatBg')
+        self._search_widget.set_theme()
+        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
+        self._text_bg.setStyleSheet(self._tm.base_css(palette='Main', border=False, border_radius=False))
+        self._text_bubble.setStyleSheet(self._tm.base_css(palette='Bg', border=False, border_radius='8'))
+        self._tm.auto_css(self._scroll_area, palette='Main', border_radius=False, border=False)
 
         css = f"""
         QPushButton {{
@@ -280,6 +402,7 @@ class Looper(QThread):
         try:
             for el in gpt.stream_response(self.text, **self.kwargs):
                 self.sendMessage.emit(el)
+            sleep(0.1)
         except Exception as ex:
             self.exception.emit(ex)
 
@@ -338,3 +461,55 @@ class ScrollArea(QScrollArea):
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
         self.resized.emit()
+
+
+class _SendMessageContextMenu(QMenu):
+    SEND = 1
+    SEND_WITHOUT_REQUEST = 2
+    TRANSLATE = 3
+
+    def __init__(self, tm, text=''):
+        super().__init__()
+        self.action = None
+        self.data = None
+        self.__height = 56
+        try:
+            message_lang = detect(text).lang
+        except Exception:
+            message_lang = None
+
+        action = self.addAction(QIcon(tm.get_image('button_send')), 'Отправить')
+        action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
+
+        action = self.addAction(QIcon(tm.get_image('send2')), 'Отправить без запроса')
+        action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
+
+        self.addSeparator()
+
+        if message_lang:
+            self.__height += 33
+
+            if message_lang != 'ru':
+                self.__height += 24
+                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на русский')
+                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'ru'))
+
+            if message_lang != 'en':
+                self.__height += 24
+                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на английский')
+                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
+
+            menu = self.addMenu(QIcon(tm.get_image('translate')), 'Перевести на ...')
+            for key, item in LANGUAGES.items():
+                action = menu.addAction(item)
+                action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
+
+        self.setStyleSheet(tm.menu_css(palette='Menu'))
+
+    def get_height(self):
+        return self.__height
+
+    def set_action(self, action, data=None):
+        print(self.height())
+        self.action = action
+        self.data = data

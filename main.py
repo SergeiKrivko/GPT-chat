@@ -1,3 +1,4 @@
+import asyncio
 import sys
 
 from src import config
@@ -10,6 +11,9 @@ def main():
 
 def parse_args(args: list[str]):
     i = 1
+
+    if '--test' in args:
+        config.APP_NAME += '-test'
 
     messages = []
     model = ''
@@ -52,13 +56,13 @@ def parse_args(args: list[str]):
             return
         i += 1
 
-    if messages:
-        import src.gpt as gpt
-        for el in gpt.stream_response(messages):
-            print(el, end='')
-        print()
-    else:
-        run_app()
+    # if messages:
+    #     import src.gpt as gpt
+    #     for el in gpt.stream_response(messages):
+    #         print(el, end='')
+    #     print()
+    # else:
+    run_app()
 
 
 def except_hook(cls, exception, traceback):
@@ -66,7 +70,7 @@ def except_hook(cls, exception, traceback):
 
 
 def run_app():
-    from PyQt6.QtWidgets import QApplication
+    from qasync import QEventLoop, QApplication
 
     from src.ui.main_window import MainWindow
 
@@ -76,12 +80,19 @@ def run_app():
     app.setApplicationName(config.APP_NAME)
     app.setApplicationVersion(config.APP_VERSION)
 
-    window = MainWindow(app)
+    event_loop = QEventLoop(app)
+    asyncio.set_event_loop(event_loop)
 
+    app_close_event = asyncio.Event()
+    app.aboutToQuit.connect(app_close_event.set)
+
+    window = MainWindow(app)
     window.show()
     window.set_theme()
     sys.excepthook = except_hook
-    sys.exit(app.exec())
+
+    with event_loop:
+        event_loop.run_until_complete(app_close_event.wait())
 
 
 if __name__ == '__main__':

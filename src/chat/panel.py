@@ -4,37 +4,52 @@ from time import sleep
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
+from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.settings_window import ChatSettingsWindow
+from src.database import ChatManager
 from src.gpt.chat import GPTChat
-from src.gpt.database import Database
+from src.settings_manager import SettingsManager
+from src.ui.authentication_window import AuthenticationWindow
 from src.ui.button import Button
+from src.ui.custom_dialog import ask
 
 
 class ChatPanel(QWidget):
     WIDTH = 550
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager, um):
         super().__init__()
         self.sm = sm
         self.tm = tm
-        self.db = Database(self.sm)
-        self._data_path = f"{self.sm.app_data_dir}/dialogs"
+        self._um= um
+        self._chat_manager = chat_manager
+        self._chat_manager.newChat.connect(self._add_chat)
+        self._chat_manager.deleteChat.connect(self._on_chat_deleted)
+        self._chat_manager.deleteRemoteChat.connect(self._on_remote_chat_deleted)
+        # self._chat_manager.updateChat.connect(self._list_widget.sort_chats)
+        self._chat_manager.newMessage.connect(self._on_new_message)
+        self._chat_manager.deleteMessage.connect(self._on_delete_message)
 
         self._layout = QHBoxLayout()
         self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._layout.setContentsMargins(10, 10, 0, 10)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         self._layout.addLayout(main_layout, 0)
 
+        self._top_widget = QWidget()
+        main_layout.addWidget(self._top_widget)
+
         top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(10, 10, 10, 10)
         top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(top_layout)
+        self._top_widget.setLayout(top_layout)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -56,6 +71,17 @@ class ChatPanel(QWidget):
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
 
+        self._button_user = Button(self.tm, 'user', css='Bg')
+        self._button_user.setFixedSize(36, 36)
+        self._button_user.clicked.connect(self._open_user_window)
+        top_layout.addWidget(self._button_user)
+
+        self._button_search = Button(self.tm, 'search', css='Bg')
+        self._button_search.setFixedSize(36, 36)
+        self._button_search.clicked.connect(self._show_search)
+        self._button_search.setCheckable(True)
+        top_layout.addWidget(self._button_search)
+
         self._list_widget = GPTListWidget(tm)
         main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
@@ -69,27 +95,39 @@ class ChatPanel(QWidget):
             self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
             self._last_chat = None
-        self._loading_started = False
 
     def _open_settings(self):
         chat = None if self.current is None else self.chats[self.current]
-        window = ChatSettingsWindow(self.sm, self.tm, chat)
+        window = ChatSettingsWindow(self.sm, self.tm, self._chat_manager, self._um, chat)
         window.exec()
         window.save()
-        if chat:
-            self.db.commit()
 
-    def showEvent(self, a0) -> None:
-        super().showEvent(a0)
-        if not self._loading_started:
-            self._loading_started = True
-            self._load_chats()
+    def _open_user_window(self):
+        uid = self.sm.get('user_id')
+        window = AuthenticationWindow(self.sm, self.tm)
+        window.exec()
+        if uid != self.sm.get('user_id'):
+            self._clear_chats()
+            self._clear_chats()
+            self._chat_manager.auth()
 
-    def _load_chats(self):
-        self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
-        self._loader.addChat.connect(self._on_chat_loaded)
-        self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
-        self.sm.run_process(self._loader, 'loading')
+    def _clear_chats(self):
+        self._close_chat(self.current)
+        for el in self.chats:
+            self._list_widget.delete_item(el)
+        self.chats.clear()
+        for el in self.chat_widgets.values():
+            el.setParent(None)
+        self.chat_widgets.clear()
+
+    def _on_remote_chat_deleted(self, chat):
+        if not chat:
+            return
+        if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
+               default='Нет') == 'Да':
+            self._delete_chat(chat.id)
+        else:
+            self._chat_manager.make_remote(chat, False)
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)
@@ -97,24 +135,12 @@ class ChatPanel(QWidget):
             self._list_widget.select(chat.id)
 
     def _new_chat(self, chat_type=GPTChat.SIMPLE):
-        chat = self.db.add_chat()
-
-        match chat_type:
-            case GPTChat.TRANSLATE:
-                chat.data['language1'] = 'russian'
-                chat.data['language2'] = 'english'
-                chat.name = f"{chat.data['language1'].capitalize()} ↔ {chat.data['language2'].capitalize()}"
-                chat.used_messages = 1
-            case GPTChat.SUMMARY:
-                chat.name = f"Краткое содержание"
-                chat.used_messages = 1
-
-        self._add_chat(chat)
+        self._chat_manager.new_chat(chat_type)
 
     def _add_chat(self, chat):
         self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self.tm, chat)
+        chat_widget = ChatWidget(self.sm, self.tm, self._chat_manager, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
@@ -127,7 +153,11 @@ class ChatPanel(QWidget):
     def _delete_chat(self, chat_id):
         if chat_id == self.current:
             self._close_chat(chat_id)
-        self.chats[chat_id].delete()
+        self._chat_manager.delete_chat(chat_id)
+
+    def _on_chat_deleted(self, chat_id):
+        if chat_id == self.current:
+            self._close_chat(chat_id)
         self.chat_widgets.pop(chat_id)
         self._list_widget.delete_item(chat_id)
         self.chats.pop(chat_id)
@@ -138,9 +168,24 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', str(chat_id))
         self.chat_widgets[chat_id].show()
         self.current = chat_id
+        self._button_search.setChecked(self.chat_widgets[chat_id].search_active)
         self._resize()
 
+    def _on_new_message(self, chat_id, message):
+        self.chat_widgets[chat_id].add_message(message)
+
+    def _on_delete_message(self, chat_id, message):
+        self.chat_widgets[chat_id].delete_message(message.id)
+
+    @asyncSlot()
+    async def _pull_chat(self, chat_id):
+        chat = self.chats[chat_id]
+        for message in await chat.pull():
+            self.chat_widgets[chat.id].add_bubble(message)
+
     def _close_chat(self, chat_id):
+        if chat_id not in self.chats:
+            return
         self.chat_widgets[chat_id].hide()
         self.set_list_hidden(False)
         self.current = None
@@ -150,7 +195,8 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
-        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget]:
+        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget,
+                   self._button_user, self._top_widget]:
             el.setHidden(hidden)
 
     def _resize(self):
@@ -158,15 +204,19 @@ class ChatPanel(QWidget):
             self.set_list_hidden(False)
             if self.current is not None:
                 self.chat_widgets[self.current].set_top_hidden(True)
-            self._list_widget.setFixedWidth(max(220, self.width() // 4))
-            # else:
-            #     self._list_widget.setMaximumWidth(10000)
+            self._list_widget.setFixedWidth(max(250, self.width() // 4))
+            self._button_search.show()
         elif self.current is not None:
             self.set_list_hidden(True)
             self.chat_widgets[self.current].set_top_hidden(False)
         else:
             self.set_list_hidden(False)
+            self._button_search.hide()
             self._list_widget.setMaximumWidth(10000)
+
+    def _show_search(self):
+        if self.current is not None:
+            self.chat_widgets[self.current].show_search(self._button_search.isChecked())
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -183,6 +233,8 @@ class ChatPanel(QWidget):
     def set_theme(self):
         self._button_add.set_theme()
         self._button_settings.set_theme()
+        self._button_search.set_theme()
+        self._button_user.set_theme()
         self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
         self._list_widget.set_theme()
         for el in self.chat_widgets.values():

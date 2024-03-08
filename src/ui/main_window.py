@@ -6,8 +6,10 @@ from PyQt6.QtWidgets import QMainWindow
 from src import config
 from src.chat.panel import ChatPanel
 from src.chat.render_latex import rerender_all
+from src.database import ChatManager
 from src.settings_manager import SettingsManager
 from src.ui.themes import ThemeManager
+from src.ui.update_manager import UpdateManager
 
 
 class MainWindow(QMainWindow):
@@ -20,7 +22,13 @@ class MainWindow(QMainWindow):
         self.tm = ThemeManager(self.sm, f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
         self.tm.themeChanged.connect(self.set_theme)
 
-        self._chat_widget = ChatPanel(self.sm, self.tm)
+        self.chat_manager = ChatManager(self.sm)
+        self.chat_manager.auth()
+
+        self._update_manager = UpdateManager(self.sm, self.tm)
+        self._update_manager.closeProgramRequested.connect(self.close)
+
+        self._chat_widget = ChatPanel(self.sm, self.tm, self.chat_manager, self._update_manager)
         self.setCentralWidget(self._chat_widget)
 
         self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))

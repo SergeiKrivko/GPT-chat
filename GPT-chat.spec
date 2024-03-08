@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('icon.png', '.')],
-    datas=[],
+    datas=[(os.path.abspath("fonts"), "fonts")],
     hiddenimports=['matplotlib.backends.backend_svg'],
     hookspath=[],
     hooksconfig={},
@@ -49,3 +49,8 @@ coll = COLLECT(
     upx_exclude=[],
     name='GPT-chat',
 )
+
+app = BUNDLE(coll,
+             name='GPT-chat.app',
+             icon='icon.png',
+             bundle_identifier=None)

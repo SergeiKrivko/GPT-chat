@@ -38,11 +38,16 @@ jobs:
           path: setup.iss
           options: /O+
 
+      - name: Upload release
+        run: |
+          venv\Scripts\Activate.ps1
+          python upload_release.py
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GPT-chat_setup.exe
-          path: D:\a\GPT-chat\GPT-chat\dist\GPT-chat_setup.exe
+          name: GPT-chat_windows.exe
+          path: dist\GPT-chat_setup.exe
 
   build-linux:
     name: Build for Linux
@@ -63,15 +68,71 @@ jobs:
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Build by Pyinstaller
+        id: build
         run: |
           pyinstaller --noconfirm GPT-chat.spec
+          cd src
+          python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
 
-      - name: Compress to ZIP
+      - name: Prepare DEP package
         run: |
-          python3.11 fix_version.py
+          python3 create_debpkg.py
+
+      - name: Create DEB package
+        uses: jiro4989/build-deb-action@v3
+        with:
+          package: gptchat
+          package_root: dist/debpkg
+          maintainer: SergeiKrivko
+          version: ${{ steps.build.outputs.version }}
+          arch: 'amd64'
+          desc: 'GPT-chat'
+
+      - name: Upload release
+        run: |
+          python3 upload_release.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GPT-chat_linux
-          path: dist/GPT-chat
+          name: GPT-chat_linux.deb
+          path: gptchat_${{ steps.build.outputs.version }}_amd64.deb
+
+  build-macos:
+    name: Build for macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.3
+
+      - name: Install dependencies
+        run: |
+          python3.11 -m pip install -r requirements.txt
+          python3.11 -m pip install --upgrade pyinstaller==6.3.0
+
+      - name: Build by Pyinstaller
+        run: |
+          pyinstaller --noconfirm GPT-chat.spec
+          rm -rf dist/GPT-chat
+
+      - name: Create installer
+        uses: QQxiaoming/create-dmg-action@v0.0.2
+        with:
+          name: 'GPT-chat'
+          srcdir: 'dist/GPT-chat.app'
+
+      - name: Upload release
+        run: |
+          python3 upload_release.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: GPT-chat_macos.dmg
+          path: GPT-chat.dmg

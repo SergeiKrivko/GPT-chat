@@ -1,10 +1,12 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFontMetrics, QIcon
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy
+from PyQt6.QtGui import QFontMetrics, QIcon, QTextCursor
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy, QLabel, QPushButton
+from googletrans import LANGUAGES
 
 from src.chat.render_latex import render_latex, delete_image
 from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
+from src.gpt.translate import translate, detect
 
 
 class ChatBubble(QWidget):
@@ -16,6 +18,7 @@ class ChatBubble(QWidget):
     deleteRequested = pyqtSignal()
     replyRequested = pyqtSignal()
     scrollRequested = pyqtSignal(int)
+    textSelectionChanged = pyqtSignal()
 
     def __init__(self, sm, tm, chat, message: GPTMessage):
         super().__init__()
@@ -53,6 +56,11 @@ class ChatBubble(QWidget):
         for el in self._message.replys:
             self._reply_widget.add_message(el)
 
+        self._translated_widget = TranslatedWidget(self._tm)
+        self._translated_widget.hide()
+        self._translated_widget.showOriginal.connect(self._show_original_message)
+        bubble_layout.addWidget(self._translated_widget)
+
         self._font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
@@ -63,6 +71,7 @@ class ChatBubble(QWidget):
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self._text_edit.selectionChanged.connect(self._on_text_selection_changed)
         self._set_html()
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
@@ -106,7 +115,7 @@ class ChatBubble(QWidget):
             delete_image(el)
 
     def run_context_menu(self, pos):
-        menu = ContextMenu(self._tm)
+        menu = ContextMenu(self._tm, self)
         menu.move(pos)
         menu.exec()
         match menu.action:
@@ -121,8 +130,20 @@ class ChatBubble(QWidget):
             case ContextMenu.SELECT_ALL:
                 self._text_edit.selectAll()
                 self._text_edit.setFocus()
-            case ContextMenu.SEND_TO_TELEGRAM:
-                self._bm.side_tab_command('telegram', self._message.content)
+            case ContextMenu.TRANSLATE:
+                self._translate_message(menu.data)
+            case ContextMenu.SHOW_ORIGINAL:
+                self._show_original_message()
+
+    def _translate_message(self, dest='ru'):
+        res = translate(self._text_edit.toMarkdown(), dest)
+        self._translated_widget.set_src(res.src)
+        self._translated_widget.show()
+        self._text_edit.setMarkdown(res.text)
+
+    def _show_original_message(self):
+        self._translated_widget.hide()
+        self._text_edit.setMarkdown(self.message.content)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -150,6 +171,26 @@ class ChatBubble(QWidget):
     def message(self):
         return self._message
 
+    @property
+    def translated(self):
+        return not self._translated_widget.isHidden()
+
+    def _on_text_selection_changed(self):
+        if self._text_edit.textCursor().hasSelection():
+            self.textSelectionChanged.emit()
+
+    def deselect_text(self):
+        cursor = self._text_edit.textCursor()
+        if cursor.hasSelection():
+            cursor.clearSelection()
+            self._text_edit.setTextCursor(cursor)
+
+    def select_text(self, offset, length):
+        cursor = self._text_edit.textCursor()
+        cursor.setPosition(offset)
+        cursor.setPosition(offset + length, QTextCursor.MoveMode.KeepAnchor)
+        self._text_edit.setTextCursor(cursor)
+
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
             background-color: {self._tm['UserMessageColor' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessageColor']};
@@ -163,6 +204,7 @@ class ChatBubble(QWidget):
         self._tm.auto_css(self._text_edit, palette='Menu', border=False)
         self._text_edit.setStyleSheet("background-color: transparent; border: none;")
         self._widget.setStyleSheet("background-color: transparent; border: none;")
+        self._translated_widget.set_theme()
         self._set_html()
 
 
@@ -173,10 +215,17 @@ class ContextMenu(QMenu):
     SEND_TO_TELEGRAM = 4
     COPY_AS_MARKDOWN = 5
     REPLY = 6
+    TRANSLATE = 7
+    SHOW_ORIGINAL = 8
 
-    def __init__(self, tm):
+    def __init__(self, tm, bubble: ChatBubble):
         super().__init__()
         self.action = None
+        self.data = None
+        try:
+            message_lang = detect(bubble.message.content).lang
+        except Exception:
+            message_lang = None
 
         action = self.addAction(QIcon(tm.get_image('reply')), 'Ответить')
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
@@ -197,12 +246,85 @@ class ContextMenu(QMenu):
         action = self.addAction(QIcon(tm.get_image('button_delete')), 'Удалить')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
-        # self.addSeparator()
-        #
-        # action = self.addAction('Переслать в Telegram')
-        # action.triggered.connect(lambda: self.set_action(ContextMenu.SEND_TO_TELEGRAM))
+        self.addSeparator()
+
+        if message_lang:
+            if message_lang != 'ru':
+                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на русский')
+                action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, 'ru'))
+
+            menu = self.addMenu(QIcon(tm.get_image('translate')), 'Перевести на ...')
+            for key, item in LANGUAGES.items():
+                action = menu.addAction(item)
+                action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
+
+            if bubble.translated:
+                action = self.addAction('Показать оригинал')
+                action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
         self.setStyleSheet(tm.menu_css(palette='Menu'))
 
-    def set_action(self, action):
+    def set_action(self, action, data=None):
         self.action = action
+        self.data = data
+
+
+class _FakeMessage:
+    def __init__(self):
+        self._content = ''
+
+    @property
+    def content(self):
+        return self._content
+
+    def add_text(self, text):
+        self._content += text
+
+    @property
+    def replys(self):
+        return []
+
+    @property
+    def role(self):
+        return 'assistant'
+
+    @property
+    def id(self):
+        return -1
+
+
+class FakeBubble(ChatBubble):
+    def __init__(self, sm, tm, chat):
+        super().__init__(sm, tm, chat, _FakeMessage())
+
+    def set_theme(self):
+        super().set_theme()
+        self.setStyleSheet('background-color: red;')
+
+
+class TranslatedWidget(QWidget):
+    showOriginal = pyqtSignal()
+
+    def __init__(self, tm):
+        super().__init__()
+        self._tm = tm
+
+        main_layout = QHBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(main_layout)
+
+        self._label = QLabel("Переведено с _")
+        main_layout.addWidget(self._label, 10)
+
+        self._button = QPushButton("Показать оригинал")
+        self._button.clicked.connect(self.showOriginal.emit)
+        main_layout.addWidget(self._button)
+
+    def set_src(self, src):
+        self._label.setText(f"Переведено с {LANGUAGES[src]}")
+
+    def set_theme(self):
+        self._tm.auto_css(self._button, padding=True)
+        self._label.setStyleSheet(f"color: {self._tm['TextColor']}; background-color: transparent; border: none;"
+                                  f"padding: 8px 2px 2px 2px")
+        self._label.setFont(self._tm.font_medium)
