@@ -106,6 +106,8 @@ class ChatManager(QObject):
             self.updateChat.emit(chat)
 
     def _on_event(self, chat_id, events):
+        if not chat_id or chat_id == 'None':
+            return
         chat = self._database.get_by_remote_id(chat_id)
         to_add = []
 

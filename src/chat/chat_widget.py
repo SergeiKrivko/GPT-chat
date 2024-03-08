@@ -1,8 +1,9 @@
 from time import sleep
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
+from PyQt6.QtGui import QKeyEvent, QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication, QMenu
+from googletrans import LANGUAGES
 
 from src.chat.search_widget import SearchWidget
 from src.database import ChatManager
@@ -12,6 +13,7 @@ from src.gpt.chat import GPTChat
 from src.chat.chat_bubble import ChatBubble, FakeBubble
 from src.chat.settings_window import ChatSettingsWindow
 from src.gpt.message import GPTMessage
+from src.gpt.translate import translate, detect
 from src.ui.button import Button
 from src.ui.message_box import MessageBox
 
@@ -125,12 +127,14 @@ class ChatWidget(QWidget):
 
         self._text_edit = ChatInputArea()
         self._text_edit.setPlaceholderText("Сообщение...")
-        self._text_edit.returnPressed.connect(self.send_message)
+        self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
         self._button = Button(self._tm, "button_send", css='Bg')
         self._button.setFixedSize(30, 30)
-        self._button.clicked.connect(self.send_message)
+        self._button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._button.customContextMenuRequested.connect(self._run_context_menu)
+        self._button.clicked.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._button)
 
         self._button_scroll = Button(self._tm, 'down_arrow', css='Bg')
@@ -165,10 +169,10 @@ class ChatWidget(QWidget):
             self.scroll_to_message(self._want_to_scroll)
             self._want_to_scroll = None
 
-    def send_message(self):
+    def send_message(self, run_gpt=True):
         if not ((text := self._text_edit.toPlainText()).strip()):
             return
-        self._sending_message = text
+        self._sending_message = text if run_gpt else ''
         self._cm.new_message(self._chat.id, 'user', text, tuple(self._reply_list.messages))
         self._text_edit.setText("")
 
@@ -277,6 +281,21 @@ class ChatWidget(QWidget):
             self._bubbles.pop(bubble.message.id)
             self._cm.new_message(self._chat.id, 'assistant', bubble.message.content)
         self._progress_marker.hide()
+
+    def _run_context_menu(self, pos):
+        if not self._text_edit.toMarkdown():
+            return
+        menu = _SendMessageContextMenu(self._tm, self._text_edit.toMarkdown())
+        pos = self._button.mapToGlobal(pos)
+        menu.move(pos - QPoint(206, menu.get_height()))
+        menu.exec()
+        match menu.action:
+            case _SendMessageContextMenu.SEND:
+                self.send_message()
+            case _SendMessageContextMenu.SEND_WITHOUT_REQUEST:
+                self.send_message(False)
+            case _SendMessageContextMenu.TRANSLATE:
+                self._text_edit.setText(translate(self._text_edit.toPlainText(), menu.data).text)
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:
@@ -442,3 +461,55 @@ class ScrollArea(QScrollArea):
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
         self.resized.emit()
+
+
+class _SendMessageContextMenu(QMenu):
+    SEND = 1
+    SEND_WITHOUT_REQUEST = 2
+    TRANSLATE = 3
+
+    def __init__(self, tm, text=''):
+        super().__init__()
+        self.action = None
+        self.data = None
+        self.__height = 56
+        try:
+            message_lang = detect(text).lang
+        except Exception:
+            message_lang = None
+
+        action = self.addAction(QIcon(tm.get_image('button_send')), 'Отправить')
+        action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
+
+        action = self.addAction(QIcon(tm.get_image('send2')), 'Отправить без запроса')
+        action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
+
+        self.addSeparator()
+
+        if message_lang:
+            self.__height += 33
+
+            if message_lang != 'ru':
+                self.__height += 24
+                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на русский')
+                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'ru'))
+
+            if message_lang != 'en':
+                self.__height += 24
+                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на английский')
+                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
+
+            menu = self.addMenu(QIcon(tm.get_image('translate')), 'Перевести на ...')
+            for key, item in LANGUAGES.items():
+                action = menu.addAction(item)
+                action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
+
+        self.setStyleSheet(tm.menu_css(palette='Menu'))
+
+    def get_height(self):
+        return self.__height
+
+    def set_action(self, action, data=None):
+        print(self.height())
+        self.action = action
+        self.data = data
