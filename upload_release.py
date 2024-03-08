@@ -30,7 +30,7 @@ def upload_file(path, name=''):
     if name and '.' not in name:
         name += '.' + path.split('.')[-1]
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{name or os.path.basename(path)}?auth={token}', safe='')}"
+          f"{quote(f'releases/{name or os.path.basename(path)}', safe='')}{f'?auth={token}' if token else ''}"
     with open(path, 'br') as f:
         resp = requests.post(url, data=f.read())
         if not resp.ok:
@@ -39,7 +39,7 @@ def upload_file(path, name=''):
 
 def download_file(name):
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{name}', safe='')}?alt=media?auth={token}"
+          f"{quote(f'releases/{name}', safe='')}?alt=media{f'?auth={token}' if token else ''}"
     resp = requests.get(url, stream=True)
     if resp.ok:
         return b''.join(resp).decode('utf-8')
@@ -73,8 +73,7 @@ def version_file():
 
 def upload_version():
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{version_file()}?auth={token}', safe='')}"
-    print(url)
+          f"{quote(f'releases/{version_file()}', safe='')}{f'?auth={token}' if token else ''}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
     }, indent=2).encode('utf-8'))
@@ -90,7 +89,7 @@ def compress_to_zip(path):
 
 
 def main():
-    auth()
+    # auth()
     upload_file(compress_to_zip(release_file()), get_system())
     upload_version()
 
