@@ -212,7 +212,9 @@ class ChatManager(QObject):
             except FirebaseError:
                 self._database.rollback()
                 return
-            self._database.commit()
+        else:
+            chat.delete_message(message.id)
+        self._database.commit()
 
         self.deleteMessage.emit(chat_id, message)
 
