@@ -142,7 +142,8 @@ class ChatManager(QObject):
             if data is None:
                 continue
 
-            message = chat.add_message(data['role'], data['content'])
+            message = chat.add_message(data['role'], data['content'], data.get('reply', []))
+            message.replied_count = data.get('links') - 1
             message.remote_id = message_remote_id
             self.newMessage.emit(chat.id, message)
 
@@ -164,6 +165,8 @@ class ChatManager(QObject):
     @asyncSlot()
     async def delete_chat(self, chat_id):
         chat = self._database.get_chat(chat_id)
+        if chat is None:
+            return
 
         if chat.remote_id:
             try:
@@ -189,6 +192,9 @@ class ChatManager(QObject):
                 await self._firebase.set(f'messages/{chat.remote_id}/{message.remote_id}', message.to_dict())
                 await self._firebase.set(f'events/{chat.remote_id}/{chat.remote_last}', ['add', message.remote_id])
                 await self._firebase.set(f'events/{chat.remote_id}-last', chat.remote_last)
+                for r_m in message.replys:
+                    await self._firebase.set(f'messages/{chat.remote_id}/{r_m.remote_id}/links',
+                                             r_m.replied_count + 1)
             except FirebaseError:
                 self._database.rollback()
                 return
@@ -204,10 +210,15 @@ class ChatManager(QObject):
 
         if chat.remote_id:
             try:
-                chat.remote_last += 1
-                await self._firebase.delete(f'messages/{chat.remote_id}/{message.remote_id}')
-                await self._firebase.set(f'events/{chat.remote_id}/{chat.remote_last}', ['delete', message.remote_id])
-                await self._firebase.set(f'events/{chat.remote_id}-last', chat.remote_last)
+                flag = await self._decrease_message_links(chat.remote_id, message.remote_id)
+                if flag:
+                    chat.remote_last += 1
+                    await self._firebase.set(f'events/{chat.remote_id}/{chat.remote_last}', ['delete', message.remote_id])
+                    await self._firebase.set(f'events/{chat.remote_id}-last', chat.remote_last)
+
+                for mes in message.replys:
+                    await self._decrease_message_links(chat.remote_id, mes.remote_id)
+
                 chat.delete_message(message.id)
             except FirebaseError:
                 self._database.rollback()
@@ -217,6 +228,15 @@ class ChatManager(QObject):
         self._database.commit()
 
         self.deleteMessage.emit(chat_id, message)
+
+    async def _decrease_message_links(self, chat_id, message_id):
+        links = await self._firebase.get(f'messages/{chat_id}/{message_id}/links') - 1
+        if links:
+            await self._firebase.set(f'messages/{chat_id}/{message_id}/links', links)
+            return False
+        else:
+            await self._firebase.delete(f'messages/{chat_id}/{message_id}')
+            return True
 
     async def _update_chat_info(self, chat: GPTChat):
         await self._firebase.set(f'chats/{chat.remote_id}', {

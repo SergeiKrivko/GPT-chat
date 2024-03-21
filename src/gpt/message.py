@@ -103,5 +103,6 @@ class GPTMessage:
             'content': self.content,
             'ctime': self.ctime,
             'id': self.remote_id,
+            'links': self.replied_count + 1,
             'reply': [m.remote_id for m in self.replys],
         }

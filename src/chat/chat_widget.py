@@ -510,6 +510,5 @@ class _SendMessageContextMenu(QMenu):
         return self.__height
 
     def set_action(self, action, data=None):
-        print(self.height())
         self.action = action
         self.data = data

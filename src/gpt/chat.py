@@ -215,6 +215,10 @@ class GPTChat:
         message_id = self._db.cursor.lastrowid
         self.utime = t
 
+        for mid in reply:
+            mes = self.get_message(mid)
+            mes.replied_count += 1
+
         # if self._first_message is None:
         #     self._first_message = message_id
 
