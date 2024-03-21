@@ -155,7 +155,6 @@ class SSEClient(object):
 
         self.resp_iterator = self.resp.iter_content(decode_unicode=True)
 
-        # TODO: Ensure we're handling redirects.  Might also stick the 'origin'
         # attribute on Events like the Javascript spec requires.
         self.resp.raise_for_status()
 

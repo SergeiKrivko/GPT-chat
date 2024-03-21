@@ -235,6 +235,7 @@ class ChatManager(QObject):
     @asyncSlot()
     async def make_remote(self, chat: GPTChat, remote: bool):
         if remote == bool(chat.remote_id):
+            await self._update_chat_info(chat)
             self._database.commit()
             return
         if not self._firebase.authorized:

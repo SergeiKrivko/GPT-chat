@@ -180,6 +180,8 @@ class _SignInScreen(QWidget):
                 self._password_edit.clear()
         except requests.ConnectionError:
             self.show_error("Нет подключения к интернету")
+        except Exception as ex:
+            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
 
     def reset_password(self):
         self._reset_password()
