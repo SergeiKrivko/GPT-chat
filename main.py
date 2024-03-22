@@ -88,7 +88,7 @@ def run_app():
 
     window = MainWindow(app)
     window.show()
-    window.set_theme()
+    # window.set_theme()
     sys.excepthook = except_hook
 
     with event_loop:

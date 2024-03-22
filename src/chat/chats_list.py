@@ -2,6 +2,7 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu, QPushButton
+from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu
 
 from src.gpt.chat import GPTChat
 
@@ -18,25 +19,21 @@ class Widget(QWidget):
         self.mouseMove.emit(a0.pos())
 
 
-class GPTListWidget(QScrollArea):
+class GPTListWidget(KitScrollArea):
     currentItemChanged = pyqtSignal(int)
     deleteItem = pyqtSignal(int)
 
-    def __init__(self, tm):
+    def __init__(self):
         super().__init__()
-        self._tm = tm
         self.setMinimumWidth(240)
+        self.main_palette = 'Bg'
         # self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        scroll_widget = Widget()
-        self.setWidget(scroll_widget)
-        self.setWidgetResizable(True)
-
-        self._layout = QVBoxLayout()
+        self._layout = KitVBoxLayout()
         self._layout.setSpacing(5)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._layout.setContentsMargins(15, 10, 10, 10)
-        scroll_widget.setLayout(self._layout)
+        self.setWidget(self._layout)
 
         self._items = dict()
 
@@ -77,7 +74,6 @@ class GPTListWidget(QScrollArea):
         item.deleteRequested.connect(self.deleteItem)
         item.pinRequested.connect(self.pin_chat)
         chat_id = chat.id
-        item.set_theme()
         self._items[chat_id] = item
         self._layout.addWidget(item)
         self._set_items_width()
@@ -103,8 +99,6 @@ class GPTListWidget(QScrollArea):
 
     def set_theme(self):
         self._tm.auto_css(self, palette='Bg', border=False)
-        for item in self._items.values():
-            item.set_theme()
 
 
 class Label(QLabel):
@@ -119,7 +113,7 @@ class Label(QLabel):
         super().mouseMoveEvent(ev)
 
 
-class GPTListWidgetItem(QPushButton):
+class GPTListWidgetItem(KitButton):
     PALETTE = 'Bg'
     ICON_SIZE = 16
 
@@ -132,7 +126,9 @@ class GPTListWidgetItem(QPushButton):
         self._tm = tm
         self.chat = chat
         self._chat_id = chat.id
-        # self.setMouseTracking(True)
+        self.main_palette = 'Bg'
+        self.border = 0
+        self.radius = 6
         self.setCheckable(True)
         self.clicked.connect(self._on_clicked)
 
@@ -145,25 +141,25 @@ class GPTListWidgetItem(QPushButton):
         main_layout.setContentsMargins(7, 7, 7, 7)
         self.setLayout(main_layout)
 
-        self._icon_label = Label()
+        self._icon_label = KitIconWidget()
         self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
-        self._name_label = Label()
+        self._name_label = KitLabel()
         self._name_label.setWordWrap(True)
-        main_layout.addWidget(self._name_label)
+        main_layout.addWidget(self._name_label, 100)
 
-        right_layout = QVBoxLayout()
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addLayout(right_layout)
+        self._right_layout = KitVBoxLayout()
+        self._right_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self._right_layout)
 
-        self._icon_pinned = Label()
+        self._icon_pinned = KitIconWidget("solid-thumbtack")
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
-        right_layout.addWidget(self._icon_pinned)
+        self._right_layout.addWidget(self._icon_pinned)
 
-        self._icon_remote = Label()
+        self._icon_remote = KitIconWidget("solid-globe")
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
-        right_layout.addWidget(self._icon_remote)
+        self._right_layout.addWidget(self._icon_remote)
 
         self.update_name()
 
@@ -172,12 +168,11 @@ class GPTListWidgetItem(QPushButton):
 
     def update_name(self):
         icons = {
-            GPTChat.SIMPLE: 'simple_chat',
-            GPTChat.TRANSLATE: 'translate',
-            GPTChat.SUMMARY: 'summary',
+            GPTChat.SIMPLE: 'regular-message',
+            GPTChat.TRANSLATE: 'solid-language',
+            GPTChat.SUMMARY: 'solid-language',
         }
-        self._icon_label.setPixmap(QPixmap(self._tm.get_image(
-            icons.get(self.chat.type, 'simple_chat'))).scaledToWidth(24))
+        self._icon_label.icon = icons.get(self.chat.type, 'regular-message')
 
         self._icon_pinned.setHidden(not self.chat.pinned)
         self._icon_remote.setHidden(not self.chat.remote_id)
@@ -190,7 +185,7 @@ class GPTListWidgetItem(QPushButton):
             self._name_label.setText('<Новый диалог>')
 
     def run_context_menu(self, pos):
-        menu = ContextMenu(self._tm, self.chat)
+        menu = ContextMenu(self, self.chat)
         menu.move(self.mapToGlobal(pos))
         menu.exec()
         match menu.action:
@@ -209,42 +204,38 @@ class GPTListWidgetItem(QPushButton):
         else:
             self.selected.emit(self.chat.id)
 
-    def set_theme(self):
-        self._tm.auto_css(self, palette=GPTListWidgetItem.PALETTE, border=False)
-        self._name_label.setStyleSheet("background: transparent; border: none;")
-        self._name_label.setFont(self._tm.font_medium)
-        self._icon_label.setStyleSheet("background: transparent; border: none;")
-        self._icon_pinned.setStyleSheet("background: transparent; border: none;")
-        self._icon_remote.setStyleSheet("background: transparent; border: none;")
-        self.update_name()
-        self._icon_pinned.setPixmap(QPixmap(self._tm.get_image('pin')).scaled(
-            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
-        self._icon_remote.setPixmap(QPixmap(self._tm.get_image('remote')).scaled(
-            GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE))
+    def _set_tm(self, tm):
+        super()._set_tm(tm)
+        self._icon_label._set_tm(tm)
+        self._name_label._set_tm(tm)
+        self._right_layout._set_tm(tm)
+
+    def _apply_theme(self):
+        super()._apply_theme()
+        self._icon_label._apply_theme()
+        self._name_label._apply_theme()
+        self._right_layout._apply_theme()
 
 
-class ContextMenu(QMenu):
+class ContextMenu(KitMenu):
     DELETE = 0
     PIN = 1
     UNPIN = 2
 
-    def __init__(self, tm, chat):
-        super().__init__()
-        self.tm = tm
+    def __init__(self, parent, chat):
+        super().__init__(parent)
         self._chat = chat
         self.action = None
 
-        action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить")
+        action = self.addAction("Удалить", 'solid-trash')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
 
         if self._chat.pinned:
-            action = self.addAction(QIcon(self.tm.get_image('unpin')), "Открепить")
+            action = self.addAction("Открепить", 'solid-thumbtack')
             action.triggered.connect(lambda: self.set_action(ContextMenu.UNPIN))
         else:
-            action = self.addAction(QIcon(self.tm.get_image('pin')), "Закрепить")
+            action = self.addAction("Закрепить", 'solid-thumbtack')
             action.triggered.connect(lambda: self.set_action(ContextMenu.PIN))
-
-        self.tm.auto_css(self)
 
     def set_action(self, action):
         self.action = action

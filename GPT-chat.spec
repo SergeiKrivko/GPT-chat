@@ -1,14 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
+import sys
+
+
 block_cipher = None
+lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/python3.11"
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('icon.png', '.')],
-    datas=[(os.path.abspath("fonts"), "fonts")],
+    datas=[(os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts")],
     hiddenimports=['matplotlib.backends.backend_svg'],
     hookspath=[],
     hooksconfig={},
@@ -52,5 +56,5 @@ coll = COLLECT(
 
 app = BUNDLE(coll,
              name='GPT-chat.app',
-             icon='icon.png',
+             icon='icon_mac.png',
              bundle_identifier=None)

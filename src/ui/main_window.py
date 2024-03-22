@@ -2,23 +2,28 @@ import shutil
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMainWindow
+from PyQtUIkit.widgets import KitMainWindow
 
 from src import config
 from src.chat.panel import ChatPanel
 from src.chat.render_latex import rerender_all
 from src.database import ChatManager
 from src.settings_manager import SettingsManager
+from src.ui.custom_themes import THEMES
 from src.ui.themes import ThemeManager
 from src.ui.update_manager import UpdateManager
 
 
-class MainWindow(QMainWindow):
+class MainWindow(KitMainWindow):
     def __init__(self, app):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
         self.setWindowIcon(QIcon('icon.png'))
 
         self.sm = SettingsManager(app)
+        for key, item in THEMES.items():
+            self.theme_manager.add_theme(key, item)
+        self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
         self.tm = ThemeManager(self.sm, f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
         self.tm.themeChanged.connect(self.set_theme)
 
@@ -49,7 +54,7 @@ class MainWindow(QMainWindow):
             pass
         super().closeEvent(a0)
 
-    def set_theme(self):
-        rerender_all(self.tm)
-        self.setStyleSheet(self.tm.bg_style_sheet)
-        self._chat_widget.set_theme()
+    # def set_theme(self):
+    #     rerender_all(self.tm)
+    #     self.setStyleSheet(self.tm.bg_style_sheet)
+    #     self._chat_widget.set_theme()

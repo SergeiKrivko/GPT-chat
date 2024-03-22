@@ -1,152 +1,157 @@
 import datetime
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QWidget, QSlider, QCheckBox, QPushButton
+from PyQtUIkit.widgets import *
 
 from src.gpt.chat import GPTChat
 from src.gpt.gpt import get_models
-from src.ui.custom_dialog import CustomDialog
 from src.ui.update_manager import UpdateManager
 
 
-class ChatSettingsWindow(CustomDialog):
-    def __init__(self, sm, tm, cm, um: UpdateManager, chat: GPTChat):
-        super().__init__(tm, "Настройки", True, True)
+class ChatSettingsWindow(KitDialog):
+    def __init__(self, parent, sm, cm, um: UpdateManager, chat: GPTChat):
+        super().__init__(parent)
         self._chat = chat
         self.sm = sm
         self._cm = cm
         self._um = um
+        self.name = "Настройки"
+        self.main_palette = 'Bg'
 
         self._labels = []
         self.setFixedWidth(400)
 
-        main_layout = QVBoxLayout()
+        main_layout = KitVBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
-        self.setLayout(main_layout)
+        self.setWidget(main_layout)
 
-        self._theme_checkbox = QCheckBox("Темная тема")
-        self._theme_checkbox.setChecked(self.sm.get('dark_theme', 'light') == 'dark')
+        self._theme_checkbox = KitCheckBox("Темная тема")
+        self._theme_checkbox.main_palette = 'Bg'
+        self._theme_checkbox.setState(self.sm.get('dark_theme', 'light') == 'dark')
         self._theme_checkbox.stateChanged.connect(self._on_theme_changed)
         main_layout.addWidget(self._theme_checkbox)
 
-        layout = QHBoxLayout()
+        layout = KitHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        main_layout.addWidget(layout)
 
-        label = QLabel("Оформление:")
+        label = KitLabel("Оформление:")
         self._labels.append(label)
         layout.addWidget(label)
 
-        self._theme_box = QComboBox()
-        self._theme_box.addItems(['blue', 'green', 'red', 'orange', 'pink'])
-        self._theme_box.setCurrentText(self.sm.get('theme', 'blue'))
-        self._theme_box.currentTextChanged.connect(self._on_theme_changed)
+        self._theme_box = KitComboBox('blue', 'green', 'red', 'orange', 'pink')
+        self._theme_box.setCurrentIndex(['blue', 'green', 'red', 'orange', 'pink'].index(self.sm.get('theme', 'blue')))
+        self._theme_box.currentValueChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
 
-        self._button_update = QPushButton("Обновить" if self._um.have_update else "Проверить обновление")
+        self._button_update = KitButton("Обновить" if self._um.have_update else "Проверить обновление")
         self._button_update.clicked.connect(lambda: self._um.check_release())
         main_layout.addWidget(self._button_update)
 
-        self._auto_update_checkbox = QCheckBox("Сообщать об обновлениях")
-        self._auto_update_checkbox.setChecked(bool(self.sm.get('auto_update', True)))
+        self._auto_update_checkbox = KitCheckBox("Сообщать об обновлениях")
+        self._auto_update_checkbox.main_palette = 'Bg'
+        self._auto_update_checkbox.setState(bool(self.sm.get('auto_update', True)))
         main_layout.addWidget(self._auto_update_checkbox)
 
-        self._separator = QWidget()
+        self._separator = KitHBoxLayout()
+        self._separator.main_palette = 'Border'
         self._separator.setFixedHeight(1)
         main_layout.addWidget(self._separator)
 
-        label = QLabel("Название диалога")
+        label = KitLabel("Название диалога")
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._name_label = QLineEdit()
+        self._name_label = KitLineEdit()
+        self._name_label.setFixedHeight(24)
         main_layout.addWidget(self._name_label)
 
-        self._time_label = QLabel()
+        self._time_label = KitLabel()
         self._labels.append(self._time_label)
         main_layout.addWidget(self._time_label)
 
-        label = QLabel("Модель")
+        label = KitLabel("Модель")
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._model_box = QComboBox()
-        self._model_box.addItems(get_models())
+        self._model_box = KitComboBox()
+        for el in get_models():
+            self._model_box.addItem(el)
         main_layout.addWidget(self._model_box)
 
-        layout = QHBoxLayout()
+        layout = KitHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        main_layout.addWidget(layout)
 
-        label = QLabel("Используемые сообщения:")
+        label = KitLabel("Используемые сообщения:")
         self._labels.append(label)
         layout.addWidget(label)
 
-        self._used_messages_label = QLabel()
-        self._used_messages_label.setFixedWidth(16)
-        layout.addWidget(self._used_messages_label)
+        # self._used_messages_label = KitLabel()
+        # self._used_messages_label.setFixedWidth(16)
+        # layout.addWidget(self._used_messages_label)
 
-        self._used_messages_slider = QSlider(Qt.Orientation.Horizontal)
-        self._used_messages_slider.setRange(1, 10)
-        self._used_messages_slider.setSingleStep(50)
-        self._used_messages_slider.valueChanged.connect(lambda value: self._used_messages_label.setText(str(value)))
-        layout.addWidget(self._used_messages_slider)
+        # self._used_messages_slider = QSlider(Qt.Orientation.Horizontal)
+        # self._used_messages_slider.setRange(1, 10)
+        # self._used_messages_slider.setSingleStep(50)
+        # self._used_messages_slider.valueChanged.connect(lambda value: self._used_messages_label.setText(str(value)))
+        # layout.addWidget(self._used_messages_slider)
 
-        # self._used_messages_box = QSpinBox()
-        # self._used_messages_box.setMinimum(0)
-        # self._used_messages_box.setMaximum(20)
-        # layout.addWidget(self._used_messages_box)
+        self._used_messages_box = KitSpinBox()
+        self._used_messages_box.setFixedWidth(100)
+        self._used_messages_box.setRange(1, 10)
+        layout.addWidget(self._used_messages_box)
 
-        layout = QHBoxLayout()
+        layout = KitHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        main_layout.addWidget(layout)
 
-        label = QLabel("Максимум сообщений:")
+        label = KitLabel("Максимум сообщений:")
         self._labels.append(label)
         layout.addWidget(label)
 
-        self._saved_messages_box = QSpinBox()
+        self._saved_messages_box = KitSpinBox()
+        self._saved_messages_box.setFixedWidth(100)
         self._saved_messages_box.setRange(50, 10000)
         layout.addWidget(self._saved_messages_box)
 
-        layout = QHBoxLayout()
+        layout = KitHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        main_layout.addWidget(layout)
 
-        label = QLabel("Temperature:")
+        label = KitLabel("Temperature:")
         self._labels.append(label)
         layout.addWidget(label)
 
-        self._temperature_box = QDoubleSpinBox()
+        self._temperature_box = KitSpinBox(float)
+        self._temperature_box.setFixedWidth(100)
         self._temperature_box.setMinimum(0)
         self._temperature_box.setMaximum(1)
-        self._temperature_box.setSingleStep(0.01)
+        self._temperature_box._step = 0.01
         layout.addWidget(self._temperature_box)
 
-        self._sync_checkbox = QCheckBox("Синхронизировать")
+        self._sync_checkbox = KitCheckBox("Синхронизировать")
+        self._sync_checkbox.main_palette = 'Bg'
         main_layout.addWidget(self._sync_checkbox)
 
         if self._chat is not None:
-            self._model_box.setCurrentText(self._chat.model)
+            self._model_box.setCurrentIndex(get_models().index(self._chat.model))
             self._temperature_box.setValue(self._chat.temperature)
             self._saved_messages_box.setValue(self._chat.saved_messages)
-            # self._saved_messages_slider.setValue(self._chat.saved_messages)
-            self._used_messages_slider.setValue(self._chat.used_messages)
-            self._used_messages_label.setText(str(self._chat.used_messages))
+            self._used_messages_box.setValue(self._chat.used_messages)
+            # self._used_messages_label.setText(str(self._chat.used_messages))
             self._time_label.setText(
                 f"Создан: {datetime.datetime.fromtimestamp(self._chat.ctime).strftime('%D %H:%M')}")
             self._name_label.setText(self._chat.name)
-            self._sync_checkbox.setChecked(self._chat.remote_id is not None)
+            self._sync_checkbox.setState(self._chat.remote_id is not None)
         else:
             self._temperature_box.hide()
             self._saved_messages_box.hide()
-            # self._saved_messages_slider.hide()
-            self._used_messages_slider.hide()
+            self._used_messages_box.hide()
             self._model_box.hide()
             self._time_label.hide()
             self._name_label.hide()
@@ -154,34 +159,18 @@ class ChatSettingsWindow(CustomDialog):
             for el in self._labels[1:]:
                 el.hide()
 
-        self.tm.themeChanged.connect(self.set_theme)
-
     def save(self):
-        self.sm.set('auto_update', 'true' if self._auto_update_checkbox.isChecked() else '')
+        self.sm.set('auto_update', 'true' if self._auto_update_checkbox.state() else '')
         if self._chat is not None:
             self._chat.name = self._name_label.text()
-            self._chat.used_messages = self._used_messages_slider.value()
+            self._chat.used_messages = self._used_messages_box.value()
             self._chat.saved_messages = self._saved_messages_box.value()
-            # self._chat.saved_messages = self._saved_messages_slider.value()
             self._chat.temperature = self._temperature_box.value()
-            self._chat.model = self._model_box.currentText()
-            self._cm.make_remote(self._chat, self._sync_checkbox.isChecked())
+            self._chat.model = self._model_box.currentValue()
+            self._cm.make_remote(self._chat, self._sync_checkbox.state())
 
     def _on_theme_changed(self):
-        self.sm.set('dark_theme', 'dark' if self._theme_checkbox.isChecked() else 'light')
-        self.sm.set('theme', self._theme_box.currentText())
-        self.tm.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
-
-    def showEvent(self, a0) -> None:
-        super().showEvent(a0)
-        self.set_theme()
-
-    def set_theme(self):
-        super().set_theme()
-        for el in self._labels:
-            self.tm.auto_css(el)
-        for el in [self._name_label, self._used_messages_slider, self._used_messages_label, self._saved_messages_box,
-                   self._temperature_box, self._theme_box, self._model_box, self._theme_checkbox, self._sync_checkbox,
-                   self._auto_update_checkbox, self._button_update]:
-            self.tm.auto_css(el)
-        self._separator.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
+        self.sm.set('dark_theme', 'dark' if self._theme_checkbox.state() else 'light')
+        self.sm.set('theme', self._theme_box.currentValue())
+        self.theme_manager.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
+        self._apply_theme()

@@ -1,147 +1,144 @@
 from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
-from PyQt6.QtGui import QKeyEvent, QIcon
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QLabel, QApplication, QMenu
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QApplication
+from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, KitMenu
 from googletrans import LANGUAGES
 
+from src.chat.chat_bubble import ChatBubble, FakeBubble
+from src.chat.reply_widget import ReplyList
 from src.chat.search_widget import SearchWidget
+from src.chat.settings_window import ChatSettingsWindow
 from src.database import ChatManager
 from src.gpt import gpt
-from src.chat.reply_widget import ReplyList
 from src.gpt.chat import GPTChat
-from src.chat.chat_bubble import ChatBubble, FakeBubble
-from src.chat.settings_window import ChatSettingsWindow
 from src.gpt.message import GPTMessage
 from src.gpt.translate import translate, detect
-from src.ui.button import Button
 from src.ui.message_box import MessageBox
 
 
-class ChatWidget(QWidget):
+class ChatWidget(KitVBoxLayout):
     buttonBackPressed = pyqtSignal(int)
     updated = pyqtSignal()
 
-    def __init__(self, sm, tm, cm: ChatManager, chat: GPTChat):
+    def __init__(self, sm, tm, cm: ChatManager, um, chat: GPTChat):
         super().__init__()
         self._sm = sm
-        self._tm = tm
+        self.tm = tm
         self._cm = cm
+        self._um = um
         self._chat = chat
 
         self._bubbles = dict()
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        self.setLayout(layout)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setSpacing(0)
 
-        self._top_widget = QWidget()
-        layout.addWidget(self._top_widget)
+        self._top_layout = KitHBoxLayout()
+        self._top_layout.main_palette = 'Bg'
+        self._top_layout.radius = 0
+        self._top_layout.setContentsMargins(8, 8, 8, 8)
+        self._top_layout.setSpacing(5)
+        self.addWidget(self._top_layout)
 
-        top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(8, 8, 8, 8)
-        top_layout.setSpacing(5)
-        self._top_widget.setLayout(top_layout)
-
-        self._button_back = Button(self._tm, 'button_back', css='Bg')
-        self._button_back.setFixedSize(36, 36)
+        self._button_back = KitIconButton('solid-arrow-left')
+        self._button_back.size = 36
+        self._button_back.main_palette = 'Bg'
+        self._button_back.border = 0
+        self._button_back.setContentsMargins(3, 3, 3, 3)
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
-        top_layout.addWidget(self._button_back)
+        self._top_layout.addWidget(self._button_back)
 
-        self._name_label = QLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
-        top_layout.addWidget(self._name_label)
+        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
+        self._top_layout.addWidget(self._name_label)
 
-        self._button_search = Button(self._tm, 'search', css='Bg')
-        self._button_search.setFixedSize(36, 36)
+        self._button_search = KitIconButton('solid-magnifying-glass')
+        self._button_search.size = 36
+        self._button_search.main_palette = 'Bg'
+        self._button_search.border = 0
+        self._button_search.setContentsMargins(3, 3, 3, 3)
         self._button_search.clicked.connect(self._show_search)
         self._button_search.setCheckable(True)
-        top_layout.addWidget(self._button_search)
+        self._top_layout.addWidget(self._button_search)
 
-        self._button_settings = Button(self._tm, 'generate', css='Bg')
-        self._button_settings.setFixedSize(36, 36)
+        self._button_settings = KitIconButton('solid-gear')
+        self._button_settings.size = 36
+        self._button_settings.main_palette = 'Bg'
+        self._button_settings.border = 0
+        self._button_settings.setContentsMargins(3, 3, 3, 3)
         self._button_settings.clicked.connect(self._open_settings)
-        top_layout.addWidget(self._button_settings)
+        self._top_layout.addWidget(self._button_settings)
 
-        self._search_widget = SearchWidget(self._tm, self._chat)
+        self._search_widget = SearchWidget(self.tm, self._chat)
         self._search_widget.selectionRequested.connect(self._select_text)
         self._search_widget.hide()
-        layout.addWidget(self._search_widget)
+        self.addWidget(self._search_widget)
 
         self._scroll_area = ScrollArea()
-        layout.addWidget(self._scroll_area, 1)
-
-        self._scroll_widget = _ScrollWidget()
-        self._scroll_widget.resized.connect(self._scroll)
-        self._scroll_area.setWidget(self._scroll_widget)
+        self._scroll_area.radius = 0
+        self.addWidget(self._scroll_area, 1)
         self._scroll_area.verticalScrollBar().valueChanged.connect(self._on_scrolled)
-        self._scroll_area.setWidgetResizable(True)
 
-        scroll_layout = QVBoxLayout()
-        self._scroll_area.setLayout(scroll_layout)
+        scroll_layout = _ScrollWidget()
+        scroll_layout.radius = 0
+        scroll_layout.resized.connect(self._scroll)
+        self._scroll_area.setWidget(scroll_layout)
         scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self._scroll_layout = QVBoxLayout()
+        self._scroll_layout = KitVBoxLayout()
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self._scroll_widget.setLayout(scroll_layout)
-        scroll_layout.addLayout(self._scroll_layout)
+        scroll_layout.addWidget(self._scroll_layout)
 
-        self._progress_marker = QLabel("GPT печатает...")
+        self._progress_marker = KitLabel("GPT печатает...")
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
-        self._text_bg = QWidget()
-        layout.addWidget(self._text_bg)
+        text_bg_layout = KitVBoxLayout()
+        text_bg_layout.main_palette = 'Main'
+        text_bg_layout.radius = 0
+        text_bg_layout.setContentsMargins(5, 5, 5, 5)
+        self.addWidget(text_bg_layout)
 
-        strange_layout = QVBoxLayout()
-        strange_layout.setContentsMargins(0, 0, 0, 0)
-        self._text_bg.setLayout(strange_layout)
-        strange_widget = QWidget()
-        strange_layout.addWidget(strange_widget)
-
-        text_bg_layout = QHBoxLayout()
-        strange_widget.setLayout(text_bg_layout)
-
-        self._text_bubble = QWidget()
+        self._text_bubble = KitVBoxLayout()
+        self._text_bubble.main_palette = 'Bg'
+        self._text_bubble.radius = 8
+        self._text_bubble.setContentsMargins(5, 5, 5, 5)
         text_bg_layout.addWidget(self._text_bubble)
 
-        strange_layout = QVBoxLayout()
-        strange_layout.setContentsMargins(0, 0, 0, 0)
-        self._text_bubble.setLayout(strange_layout)
-        strange_widget = QWidget()
-        strange_layout.addWidget(strange_widget)
-
-        bubble_layout = QVBoxLayout()
-        bubble_layout.setContentsMargins(5, 5, 5, 5)
-        strange_widget.setLayout(bubble_layout)
-
-        self._reply_list = ReplyList(self._tm, self._chat)
+        self._reply_list = ReplyList(self.tm, self._chat)
         self._reply_list.hide()
         self._reply_list.scrollRequested.connect(self.scroll_to_message)
-        bubble_layout.addWidget(self._reply_list)
+        self._text_bubble.addWidget(self._reply_list)
 
-        bottom_layout = QHBoxLayout()
+        bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bubble_layout.addLayout(bottom_layout)
+        self._text_bubble.addWidget(bottom_layout)
 
         self._text_edit = ChatInputArea()
         self._text_edit.setPlaceholderText("Сообщение...")
         self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
-        self._button = Button(self._tm, "button_send", css='Bg')
-        self._button.setFixedSize(30, 30)
+        self._button = KitIconButton("solid-paper-plane")
+        self._button.main_palette = 'Bg'
+        self._button.size = 30
+        self._button.border = 0
+        self._button.radius = 5
         self._button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._button.customContextMenuRequested.connect(self._run_context_menu)
         self._button.clicked.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._button)
 
-        self._button_scroll = Button(self._tm, 'down_arrow', css='Bg')
-        self._button_scroll.setFixedSize(36, 36)
+        self._button_scroll = KitIconButton('solid-chevron-down')
+        self._button_scroll.size = 36
+        self._button_scroll.main_palette = 'Bg'
+        self._button_scroll.setContentsMargins(7, 7, 7, 7)
+        self._button_scroll.radius = self._button_scroll.size // 2
         self._scroll_area.resized.connect(
             lambda: self._button_scroll.move(self._scroll_area.width() - 51, self._scroll_area.height() - 46))
-        self._button_scroll.clicked.connect(lambda: self._scroll(True))
+        self._button_scroll.clicked.connect(lambda: self._scroll(True, True))
         self._button_scroll.setParent(self._scroll_area)
 
         self.looper = None
@@ -215,19 +212,19 @@ class ChatWidget(QWidget):
     def add_bubble(self, message: GPTMessage):
         if message.id in self._bubbles:
             return
-        bubble = ChatBubble(self._sm, self._tm, self._chat, message)
+        bubble = ChatBubble(self._sm, self._chat, message)
         self._add_bubble(bubble)
         return bubble
 
     def insert_bubble(self, message: GPTMessage):
         if message.id in self._bubbles:
             return
-        bubble = ChatBubble(self._sm, self._tm, self._chat, message)
+        bubble = ChatBubble(self._sm, self._chat, message)
         self._add_bubble(bubble, 0)
         return bubble
 
     def set_top_hidden(self, hidden):
-        for el in [self._name_label, self._button_settings, self._button_back, self._top_widget]:
+        for el in [self._name_label, self._button_settings, self._button_back, self._top_layout]:
             el.setHidden(hidden)
 
     def _select_text(self, message_id, offset, length):
@@ -269,7 +266,7 @@ class ChatWidget(QWidget):
 
     def add_text(self, text):
         if self._last_bubble is None:
-            self._last_bubble = FakeBubble(self._sm, self._tm, self._chat)
+            self._last_bubble = FakeBubble(self._sm, self.tm, self._chat)
             self._add_bubble(self._last_bubble)
         self._last_bubble.add_text(text)
 
@@ -285,7 +282,7 @@ class ChatWidget(QWidget):
     def _run_context_menu(self, pos):
         if not self._text_edit.toMarkdown():
             return
-        menu = _SendMessageContextMenu(self._tm, self._text_edit.toMarkdown())
+        menu = _SendMessageContextMenu(self, self._text_edit.toMarkdown())
         pos = self._button.mapToGlobal(pos)
         menu.move(pos - QPoint(206, menu.get_height()))
         menu.exec()
@@ -303,7 +300,7 @@ class ChatWidget(QWidget):
                 self._want_to_scroll = message_id
                 self._load_messages(to_message=message_id)
             return
-        self._scroll_area.verticalScrollBar().setValue(self._bubbles[message_id].pos().y() - 5)
+        self._scroll_area.scrollTo(y=self._bubbles[message_id].pos().y() - 5, animation=True)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
@@ -314,18 +311,18 @@ class ChatWidget(QWidget):
         if self._scroll_area.verticalScrollBar().value() <= 100 and not self._loading_messages:
             self._load_messages()
 
-    def _scroll(self, to_bottom=False):
+    def _scroll(self, to_bottom=False, anim=False):
         self._button_scroll.setHidden(self._to_bottom)
         if to_bottom or self._to_bottom:
             self._to_bottom = True
-            self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+            self._scroll_area.scrollTo(y=self._scroll_area.verticalScrollBar().maximum(), animation=anim)
             if self._scroll_area.verticalScrollBar().value() < self._scroll_area.verticalScrollBar().maximum():
-                self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+                self._scroll_area.scrollTo(y=self._scroll_area.verticalScrollBar().maximum(), animation=anim)
             self._button_scroll.setHidden(True)
         elif self._loading_messages:
-            self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().value() +
-                                                           self._scroll_area.verticalScrollBar().maximum() -
-                                                           self._last_maximum)
+            self._scroll_area.scrollTo(y=self._scroll_area.verticalScrollBar().value() +
+                                         self._scroll_area.verticalScrollBar().maximum() - self._last_maximum,
+                                       animation=anim)
         self._last_maximum = self._scroll_area.verticalScrollBar().maximum()
 
     def showEvent(self, a0) -> None:
@@ -351,41 +348,22 @@ class ChatWidget(QWidget):
                 bubble.disconnect()
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self._sm, self._tm, self._cm, self._chat)
+        dialog = ChatSettingsWindow(self, self._sm, self._cm, self._um, self._chat)
         dialog.exec()
         dialog.save()
         self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')
         self._chat._db.commit()
 
     def _on_gpt_error(self, ex):
-        MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self._tm)
+        MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self.tm)
 
-    def set_theme(self):
-        self._tm.auto_css(self._text_edit, palette='Bg', border_radius='4', border=False)
-        for el in [self._button, self._button_back, self._name_label, self._button_settings, self._button_scroll,
-                   self._button_search]:
-            self._tm.auto_css(el)
-        self._search_widget.set_theme()
-        self._scroll_widget.setStyleSheet(self._tm.base_css(palette='Main', border=False))
-        self._text_bg.setStyleSheet(self._tm.base_css(palette='Main', border=False, border_radius=False))
-        self._text_bubble.setStyleSheet(self._tm.base_css(palette='Bg', border=False, border_radius='8'))
-        self._tm.auto_css(self._scroll_area, palette='Main', border_radius=False, border=False)
+    def _set_tm(self, tm):
+        super()._set_tm(tm)
+        self._button_scroll._set_tm(tm)
 
-        css = f"""
-        QPushButton {{
-            background-color: {self._tm['BgColor']};  
-            border: 1px solid {self._tm['BorderColor']}; 
-            border-radius: {self._button_scroll.width() // 2}px; 
-        }}
-        QPushButton:hover {{
-            background-color: {self._tm['BgHoverColor']};
-        }}
-        """
-        self._button_scroll.setStyleSheet(css)
-        self._progress_marker.setStyleSheet(f"background-color: {self._tm['MainColor']}")
-
-        for el in self._bubbles.values():
-            el.set_theme()
+    def _apply_theme(self):
+        super()._apply_theme()
+        self._button_scroll._apply_theme()
 
 
 class Looper(QThread):
@@ -407,21 +385,23 @@ class Looper(QThread):
             self.exception.emit(ex)
 
 
-class ChatInputArea(QTextEdit):
+class ChatInputArea(KitTextEdit):
     returnPressed = pyqtSignal()
     resize = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
-        self.setFixedHeight(30)
+        self.setFixedHeight(26)
         self.textChanged.connect(self._on_text_changed)
+        self.main_palette = 'Bg'
+        self.border = 0
 
         self._shift_pressed = False
 
     def _on_text_changed(self):
         height = self.verticalScrollBar().maximum()
         if not height:
-            self.setFixedHeight(30)
+            self.setFixedHeight(26)
             height = self.verticalScrollBar().maximum()
         self.setFixedHeight(min(300, self.height() + height))
 
@@ -434,7 +414,7 @@ class ChatInputArea(QTextEdit):
             super().keyPressEvent(e)
 
 
-class _ScrollWidget(QWidget):
+class _ScrollWidget(KitVBoxLayout):
     resized = pyqtSignal()
 
     def resizeEvent(self, a0) -> None:
@@ -455,7 +435,7 @@ class MessageLoader(QThread):
             sleep(0.1)
 
 
-class ScrollArea(QScrollArea):
+class ScrollArea(KitScrollArea):
     resized = pyqtSignal()
 
     def resizeEvent(self, a0) -> None:
@@ -463,13 +443,13 @@ class ScrollArea(QScrollArea):
         self.resized.emit()
 
 
-class _SendMessageContextMenu(QMenu):
+class _SendMessageContextMenu(KitMenu):
     SEND = 1
     SEND_WITHOUT_REQUEST = 2
     TRANSLATE = 3
 
-    def __init__(self, tm, text=''):
-        super().__init__()
+    def __init__(self, parent, text=''):
+        super().__init__(parent)
         self.action = None
         self.data = None
         self.__height = 56
@@ -478,10 +458,10 @@ class _SendMessageContextMenu(QMenu):
         except Exception:
             message_lang = None
 
-        action = self.addAction(QIcon(tm.get_image('button_send')), 'Отправить')
+        action = self.addAction('Отправить', 'solid-paper-plane')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
 
-        action = self.addAction(QIcon(tm.get_image('send2')), 'Отправить без запроса')
+        action = self.addAction('Отправить без запроса', 'regular-paper-plane')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
 
         self.addSeparator()
@@ -491,20 +471,18 @@ class _SendMessageContextMenu(QMenu):
 
             if message_lang != 'ru':
                 self.__height += 24
-                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на русский')
+                action = self.addAction('Перевести на русский', 'solid-language')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'ru'))
 
             if message_lang != 'en':
                 self.__height += 24
-                action = self.addAction(QIcon(tm.get_image('translate')), 'Перевести на английский')
+                action = self.addAction('Перевести на английский', 'solid-language')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
 
-            menu = self.addMenu(QIcon(tm.get_image('translate')), 'Перевести на ...')
+            menu = self.addMenu('Перевести на ...', 'solid-language')
             for key, item in LANGUAGES.items():
                 action = menu.addAction(item)
                 action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
-
-        self.setStyleSheet(tm.menu_css(palette='Menu'))
 
     def get_height(self):
         return self.__height

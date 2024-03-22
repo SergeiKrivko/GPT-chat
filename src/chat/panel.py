@@ -4,6 +4,7 @@ from time import sleep
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
+from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitButton, KitHGroup
 from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
@@ -17,14 +18,14 @@ from src.ui.button import Button
 from src.ui.custom_dialog import ask
 
 
-class ChatPanel(QWidget):
+class ChatPanel(KitHBoxLayout):
     WIDTH = 550
 
     def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager, um):
         super().__init__()
         self.sm = sm
         self.tm = tm
-        self._um= um
+        self._um = um
         self._chat_manager = chat_manager
         self._chat_manager.newChat.connect(self._add_chat)
         self._chat_manager.deleteChat.connect(self._on_chat_deleted)
@@ -33,57 +34,65 @@ class ChatPanel(QWidget):
         self._chat_manager.newMessage.connect(self._on_new_message)
         self._chat_manager.deleteMessage.connect(self._on_delete_message)
 
-        self._layout = QHBoxLayout()
-        self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self._layout)
+        self.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.setContentsMargins(0, 0, 0, 0)
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-        self._layout.addLayout(main_layout, 0)
+        self._main_layout = KitVBoxLayout()
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self._main_layout.setSpacing(0)
+        self.addWidget(self._main_layout, 0)
 
-        self._top_widget = QWidget()
-        main_layout.addWidget(self._top_widget)
+        self._top_layout = KitHBoxLayout()
+        self._top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self._top_layout.setContentsMargins(8, 8, 8, 8)
+        self._main_layout.addWidget(self._top_layout)
 
-        top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(10, 10, 10, 10)
-        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._top_widget.setLayout(top_layout)
+        group = KitHGroup()
+        group.border = 0
+        group.height = 36
+        self._top_layout.addWidget(group)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        top_layout.addLayout(layout)
-
-        self._button_add = Button(self.tm, 'plus', css='Bg')
-        self._button_add.setFixedSize(36, 36)
+        self._button_add = KitIconButton('solid-plus')
+        self._button_add.size = 36
+        self._button_add.setContentsMargins(3, 3, 3, 3)
+        self._button_add.main_palette = 'Bg'
         self._button_add.clicked.connect(lambda: self._new_chat())
-        layout.addWidget(self._button_add)
+        group.addItem(self._button_add)
 
-        self._button_add_special = QPushButton()
-        self._button_add_special.setFixedSize(20, 36)
+        self._button_add_special = KitIconButton(icon='solid-chevron-down')
+        self._button_add_special.main_palette = 'Bg'
         self._button_add_special.setMenu(NewChatMenu(self.tm, self._new_chat))
-        layout.addWidget(self._button_add_special)
+        group.addItem(self._button_add_special)
 
-        self._button_settings = Button(self.tm, 'generate', css='Bg')
-        self._button_settings.setFixedSize(36, 36)
+        self._button_settings = KitIconButton('solid-gear')
+        self._button_settings.size = 36
+        self._button_settings.setContentsMargins(3, 3, 3, 3)
+        self._button_settings.main_palette = 'Bg'
+        self._button_settings.border = 0
         self._button_settings.clicked.connect(self._open_settings)
-        top_layout.addWidget(self._button_settings)
+        self._top_layout.addWidget(self._button_settings)
 
-        self._button_user = Button(self.tm, 'user', css='Bg')
-        self._button_user.setFixedSize(36, 36)
+        self._button_user = KitIconButton('solid-user')
+        self._button_user.size = 36
+        self._button_user.setContentsMargins(3, 3, 3, 3)
+        self._button_user.main_palette = 'Bg'
+        self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
-        top_layout.addWidget(self._button_user)
+        self._top_layout.addWidget(self._button_user)
 
-        self._button_search = Button(self.tm, 'search', css='Bg')
-        self._button_search.setFixedSize(36, 36)
+        self._button_search = KitIconButton('solid-magnifying-glass')
+        self._button_search.size = 36
+        self._button_search.setContentsMargins(3, 3, 3, 3)
+        self._button_search.main_palette = 'Bg'
+        self._button_search.border = 0
         self._button_search.clicked.connect(self._show_search)
         self._button_search.setCheckable(True)
-        top_layout.addWidget(self._button_search)
+        self._top_layout.addWidget(self._button_search)
 
-        self._list_widget = GPTListWidget(tm)
-        main_layout.addWidget(self._list_widget)
+        self._top_layout.addWidget(KitHBoxLayout(), 1000)
+
+        self._list_widget = GPTListWidget()
+        self._main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
         self._list_widget.currentItemChanged.connect(self._select_chat)
 
@@ -98,13 +107,13 @@ class ChatPanel(QWidget):
 
     def _open_settings(self):
         chat = None if self.current is None else self.chats[self.current]
-        window = ChatSettingsWindow(self.sm, self.tm, self._chat_manager, self._um, chat)
+        window = ChatSettingsWindow(self, self.sm, self._chat_manager, self._um, chat)
         window.exec()
         window.save()
 
     def _open_user_window(self):
         uid = self.sm.get('user_id')
-        window = AuthenticationWindow(self.sm, self.tm)
+        window = AuthenticationWindow(self, self.sm)
         window.exec()
         if uid != self.sm.get('user_id'):
             self._clear_chats()
@@ -140,13 +149,12 @@ class ChatPanel(QWidget):
     def _add_chat(self, chat):
         self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self.tm, self._chat_manager, chat)
+        chat_widget = ChatWidget(self.sm, self.tm, self._chat_manager, self._um, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
-        self._layout.addWidget(chat_widget, 2)
+        self.addWidget(chat_widget, 2)
         self.chat_widgets[chat.id] = chat_widget
-        chat_widget.set_theme()
 
         self._list_widget.add_item(chat)
 
@@ -195,9 +203,7 @@ class ChatPanel(QWidget):
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
-        for el in [self._button_add, self._button_add_special, self._button_settings, self._list_widget,
-                   self._button_user, self._top_widget]:
-            el.setHidden(hidden)
+        self._main_layout.setHidden(hidden)
 
     def _resize(self):
         if self.width() > 550:
@@ -230,15 +236,9 @@ class ChatPanel(QWidget):
         except Exception:
             pass
 
-    def set_theme(self):
-        self._button_add.set_theme()
-        self._button_settings.set_theme()
-        self._button_search.set_theme()
-        self._button_user.set_theme()
-        self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
-        self._list_widget.set_theme()
-        for el in self.chat_widgets.values():
-            el.set_theme()
+    def _apply_theme(self):
+        super()._apply_theme()
+        self._button_add_special.setFixedSize(20, 36)
 
 
 class NewChatMenu(QMenu):

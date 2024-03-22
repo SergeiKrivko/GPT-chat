@@ -4,52 +4,50 @@ import json
 import aiohttp
 import requests
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QVBoxLayout, QLineEdit, QLabel, QPushButton, QHBoxLayout, QWidget
+from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
 from src import config
-from src.ui.custom_dialog import CustomDialog
 
 
-class AuthenticationWindow(CustomDialog):
-    def __init__(self, sm, tm):
-        super().__init__(tm, "Авторизация", True, True)
+class AuthenticationWindow(KitDialog):
+    def __init__(self, parent, sm):
+        super().__init__(parent)
         self._sm = sm
+        self.name = "Авторизация"
 
         self.setFixedSize(350, 330)
 
-        main_layout = QHBoxLayout()
+        main_layout = KitHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(main_layout)
+        self.setWidget(main_layout)
 
         authorized = self._sm.get('user_id') and self._sm.get('user_email') and self._sm.get('user_token')
 
-        self._sign_in_screen = _SignInScreen(self._sm, self.tm)
+        self._sign_in_screen = _SignInScreen(self._sm)
         self._sign_in_screen.signedIn.connect(self._on_signed_in)
         self._sign_in_screen.signUpPressed.connect(self._on_sign_up_pressed)
         if authorized:
             self._sign_in_screen.hide()
         main_layout.addWidget(self._sign_in_screen)
 
-        self._sign_up_screen = _SignUpScreen(self._sm, self.tm)
+        self._sign_up_screen = _SignUpScreen(self._sm)
         self._sign_up_screen.signedUp.connect(self._on_signed_in)
         self._sign_up_screen.backPressed.connect(self._on_sign_up_stopped)
         self._sign_up_screen.hide()
         main_layout.addWidget(self._sign_up_screen)
 
-        self._verify_email_screen = _VerifyEmailScreen(self._sm, self.tm)
+        self._verify_email_screen = _VerifyEmailScreen(self._sm)
         self._verify_email_screen.emailVerified.connect(self._on_email_verified)
         self._verify_email_screen.backPressed.connect(self._on_sign_up_stopped)
         self._verify_email_screen.hide()
         main_layout.addWidget(self._verify_email_screen)
 
-        self._signed_screen = _SignedScreen(self._sm, self.tm)
+        self._signed_screen = _SignedScreen(self._sm)
         self._signed_screen.exitAccount.connect(self._on_exit_account)
         if not authorized:
             self._signed_screen.hide()
         main_layout.addWidget(self._signed_screen)
-
-        self.set_theme()
 
     def _on_exit_account(self):
         self._signed_screen.hide()
@@ -84,70 +82,65 @@ class AuthenticationWindow(CustomDialog):
         self._sign_in_screen.hide()
         self._sign_up_screen.show()
 
-    def set_theme(self):
-        super().set_theme()
-        self._sign_in_screen.set_theme()
-        self._sign_up_screen.set_theme()
-        self._signed_screen.set_theme()
-        self._verify_email_screen.set_theme()
 
-
-class _SignInScreen(QWidget):
+class _SignInScreen(KitVBoxLayout):
     signedIn = pyqtSignal()
     signUpPressed = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm):
         super().__init__()
         self._sm = sm
-        self._tm = tm
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(5)
-        self.setLayout(main_layout)
+        self.setContentsMargins(20, 20, 20, 20)
+        self.setSpacing(5)
 
-        top_layout = QHBoxLayout()
+        top_layout = KitHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        main_layout.addLayout(top_layout)
+        self.addWidget(top_layout)
 
-        self._button_reset_password = QPushButton("Сбросить пароль")
+        self._button_reset_password = KitButton("Сбросить пароль")
         self._button_reset_password.setFixedSize(150, 35)
         self._button_reset_password.clicked.connect(self.reset_password)
         self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         top_layout.addWidget(self._button_reset_password)
 
-        self._button_sign_up = QPushButton("Регистрация")
+        self._button_sign_up = KitButton("Регистрация")
         self._button_sign_up.setFixedSize(120, 35)
         self._button_sign_up.clicked.connect(self.signUpPressed.emit)
         self._button_sign_up.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         top_layout.addWidget(self._button_sign_up)
 
-        label = QLabel("Email:")
-        main_layout.addWidget(label)
+        label = KitLabel("Email:")
+        self.addWidget(label)
 
-        self._email_edit = QLineEdit(self._sm.get('user_email', ''))
+        self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
+        self._email_edit.font_size = 'big'
         self._email_edit.returnPressed.connect(self.sign_in)
-        main_layout.addWidget(self._email_edit)
+        self.addWidget(self._email_edit)
 
-        label = QLabel("Пароль:")
-        main_layout.addWidget(label)
+        label = KitLabel("Пароль:")
+        self.addWidget(label)
 
-        self._password_edit = QLineEdit()
-        self._password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self._password_edit = KitLineEdit()
+        self._password_edit.font_size = 'big'
+        self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_in)
-        main_layout.addWidget(self._password_edit)
+        self.addWidget(self._password_edit)
 
-        self._error_label = QLabel()
+        self._error_label = KitLabel()
+        self._error_label.main_palette = 'DangerText'
         self._error_label.setWordWrap(True)
-        main_layout.addWidget(self._error_label)
+        self.addWidget(self._error_label)
 
-        bottom_layout = QHBoxLayout()
+        bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 15, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addLayout(bottom_layout)
+        self.addWidget(bottom_layout)
 
-        self._button_join = QPushButton("Войти")
+        self._button_join = KitButton("Войти")
+        self._button_join.radius = 8
+        self._button_join.font_size = 'big'
         self._button_join.setFixedSize(150, 50)
         self._button_join.clicked.connect(self.sign_in)
         bottom_layout.addWidget(self._button_join)
@@ -207,65 +200,57 @@ class _SignInScreen(QWidget):
     def hide_error(self):
         self._error_label.setText("")
 
-    def set_theme(self):
-        for el in [self._password_edit, self._email_edit, self._button_join, self._button_sign_up,
-                   self._button_reset_password]:
-            self._tm.auto_css(el)
-            el.setFont(self._tm.font_big)
-        for el in [self._button_sign_up, self._button_reset_password]:
-            el.setFont(self._tm.font_medium)
-        self._error_label.setStyleSheet(f"color: {self._tm['ErrorTextColor']};")
-        self._error_label.setFont(self._tm.font_big)
 
-
-class _SignUpScreen(QWidget):
+class _SignUpScreen(KitVBoxLayout):
     signedUp = pyqtSignal()
     backPressed = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm):
         super().__init__()
         self._sm = sm
-        self._tm = tm
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(5)
-        self.setLayout(main_layout)
+        self.setContentsMargins(20, 20, 20, 20)
+        self.setSpacing(5)
 
-        label = QLabel("Email:")
-        main_layout.addWidget(label)
+        label = KitLabel("Email:")
+        self.addWidget(label)
 
-        self._email_edit = QLineEdit(self._sm.get('user_email', ''))
+        self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
+        self._email_edit.font_size = 'big'
         self._email_edit.returnPressed.connect(self.sign_up)
-        main_layout.addWidget(self._email_edit)
+        self.addWidget(self._email_edit)
 
-        label = QLabel("Пароль:")
-        main_layout.addWidget(label)
+        label = KitLabel("Пароль:")
+        self.addWidget(label)
 
-        self._password_edit = QLineEdit()
-        self._password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self._password_edit = KitLineEdit()
+        self._password_edit.font_size = 'big'
+        self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_up)
-        main_layout.addWidget(self._password_edit)
+        self.addWidget(self._password_edit)
 
-        label = QLabel("Пароль еще раз:")
-        main_layout.addWidget(label)
+        label = KitLabel("Пароль еще раз:")
+        self.addWidget(label)
 
-        self._password_edit2 = QLineEdit()
-        self._password_edit2.setEchoMode(QLineEdit.EchoMode.Password)
+        self._password_edit2 = KitLineEdit()
+        self._password_edit2.font_size = 'big'
+        self._password_edit2.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit2.returnPressed.connect(self.sign_up)
-        main_layout.addWidget(self._password_edit2)
+        self.addWidget(self._password_edit2)
 
-        bottom_layout = QHBoxLayout()
+        bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 20, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addLayout(bottom_layout)
+        self.addWidget(bottom_layout)
 
-        self._button_back = QPushButton("Назад")
+        self._button_back = KitButton("Назад")
         self._button_back.setFixedSize(150, 50)
         self._button_back.clicked.connect(self.backPressed.emit)
         bottom_layout.addWidget(self._button_back)
 
-        self._button_sign_up = QPushButton("Создать аккаунт")
+        self._button_sign_up = KitButton("Создать аккаунт")
+        self._button_sign_up.radius = 8
+        self._button_sign_up.font_size = 'big'
         self._button_sign_up.setFixedSize(150, 50)
         self._button_sign_up.clicked.connect(self.sign_up)
         bottom_layout.addWidget(self._button_sign_up)
@@ -296,42 +281,33 @@ class _SignUpScreen(QWidget):
             print(r.text)
             self._password_edit.clear()
 
-    def set_theme(self):
-        for el in [self._password_edit, self._password_edit2, self._email_edit,
-                   self._button_back, self._button_sign_up]:
-            self._tm.auto_css(el)
-            el.setFont(self._tm.font_big)
 
-
-class _VerifyEmailScreen(QWidget):
+class _VerifyEmailScreen(KitVBoxLayout):
     emailVerified = pyqtSignal()
     backPressed = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm):
         super().__init__()
         self._sm = sm
-        self._tm = tm
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(5)
-        self.setLayout(main_layout)
+        self.setContentsMargins(20, 20, 20, 20)
+        self.setSpacing(5)
 
-        self._label = QLabel()
+        self._label = KitLabel()
         self._label.setWordWrap(True)
-        main_layout.addWidget(self._label)
+        self.addWidget(self._label)
 
-        bottom_layout = QHBoxLayout()
+        bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 20, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addLayout(bottom_layout)
+        self.addWidget(bottom_layout)
 
-        self._button_back = QPushButton("Назад")
+        self._button_back = KitButton("Назад")
         self._button_back.setFixedSize(150, 50)
         self._button_back.clicked.connect(self._exit)
         bottom_layout.addWidget(self._button_back)
 
-        self._button_send_again = QPushButton("Отправить еще раз")
+        self._button_send_again = KitButton("Отправить еще раз")
         self._button_send_again.setFixedSize(150, 50)
         self._button_send_again.clicked.connect(lambda: self.send_email_verification(self._sm.get('user_token')))
         bottom_layout.addWidget(self._button_send_again)
@@ -357,7 +333,8 @@ class _VerifyEmailScreen(QWidget):
 
     @staticmethod
     async def get_account_info(id_token):
-        request_ref = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key={0}".format(config.FIREBASE_API_KEY)
+        request_ref = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key={0}".format(
+            config.FIREBASE_API_KEY)
         data = json.dumps({"idToken": id_token})
         async with aiohttp.ClientSession() as session:
             async with session.post(request_ref, data=data) as resp:
@@ -385,35 +362,31 @@ class _VerifyEmailScreen(QWidget):
                 return True
         return False
 
-    def set_theme(self):
-        for el in [self._label, self._button_back, self._button_send_again]:
-            self._tm.auto_css(el)
-            el.setFont(self._tm.font_big)
 
-class _SignedScreen(QWidget):
+class _SignedScreen(KitVBoxLayout):
     exitAccount = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm):
         super().__init__()
         self._sm = sm
-        self._tm = tm
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(5)
-        self.setLayout(main_layout)
+        self.setContentsMargins(20, 20, 20, 20)
+        self.setSpacing(5)
 
-        self._label = QLabel()
+        self._label = KitLabel()
+        self._label.font_size = 'big'
         self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_account()
-        main_layout.addWidget(self._label)
+        self.addWidget(self._label)
 
-        bottom_layout = QHBoxLayout()
+        bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 20, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addLayout(bottom_layout)
+        self.addWidget(bottom_layout)
 
-        self._button_exit = QPushButton("Выйти")
+        self._button_exit = KitButton("Выйти")
+        self._button_exit.radius = 8
+        self._button_exit.font_size = 'big'
         self._button_exit.setFixedSize(150, 50)
         self._button_exit.clicked.connect(self.exit_account)
         bottom_layout.addWidget(self._button_exit)
@@ -426,9 +399,3 @@ class _SignedScreen(QWidget):
 
     def update_account(self):
         self._label.setText(self._sm.get('user_email', ''))
-
-    def set_theme(self):
-        for el in [self._label, self._button_exit]:
-            self._tm.auto_css(el)
-        self._label.setFont(self._tm.font_big)
-        self._button_exit.setFont(self._tm.font_big)

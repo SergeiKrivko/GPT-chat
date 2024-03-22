@@ -92,6 +92,7 @@ class ChatManager(QObject):
             new_chat = True
         else:
             new_chat = False
+        print(chat.id)
 
         chat.model = data.get('model')
         chat.name = data.get('name')
