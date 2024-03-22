@@ -8,21 +8,21 @@ from urllib.parse import quote
 
 import aiohttp
 from PyQt6.QtCore import QObject, pyqtSignal
+from PyQtUIkit.widgets import KitDialog
 from qasync import asyncSlot
 
 from src import config
 from src.settings_manager import SettingsManager
-from src.ui.custom_dialog import ask
 
 
 class UpdateManager(QObject):
     closeProgramRequested = pyqtSignal()
     _askDownload = pyqtSignal(object)
 
-    def __init__(self, sm: SettingsManager, tm):
+    def __init__(self, sm: SettingsManager, parent):
         super().__init__()
         self._sm = sm
-        self._tm = tm
+        self._parent = parent
         self._have_update = False
         self._new_version = self._sm.get('downloaded_release')
         self.check_release(bool(self._sm.get('auto_update', True)))
@@ -134,8 +134,8 @@ class UpdateManager(QObject):
             pass
 
     def _ask_download(self, version):
-        if ask(self._tm, f"Доступна новая версия программы: {version}. "
-                         f"Хотите загрузить обновление сейчас?") == 'Да':
+        if KitDialog.question(self._parent, f"Доступна новая версия программы: {version}. "
+                                            f"Хотите загрузить обновление сейчас?", ('Нет', 'Да')) == 'Да':
             self.prepare_release()
 
     def _run_installer_exe(self):
@@ -157,6 +157,7 @@ class UpdateManager(QObject):
         if not os.path.isfile(self.release_exe_path):
             print("Exe not found")
             return
-        if ask(self._tm, f"Версия {self._sm.get('downloaded_release')} готова к установке. Установить сейчас?") == 'Да':
+        if KitDialog.question(self._parent, f"Версия {self._sm.get('downloaded_release')} готова к установке. "
+                                            f"Установить сейчас?", ('Нет', 'Да')) == 'Да':
             self._run_installer_exe()
             self.closeProgramRequested.emit()

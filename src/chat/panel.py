@@ -2,9 +2,7 @@ import shutil
 from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
-from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitButton, KitHGroup
+from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitHGroup, KitMenu, KitDialog
 from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
@@ -14,17 +12,14 @@ from src.database import ChatManager
 from src.gpt.chat import GPTChat
 from src.settings_manager import SettingsManager
 from src.ui.authentication_window import AuthenticationWindow
-from src.ui.button import Button
-from src.ui.custom_dialog import ask
 
 
 class ChatPanel(KitHBoxLayout):
     WIDTH = 550
 
-    def __init__(self, sm: SettingsManager, tm, chat_manager: ChatManager, um):
+    def __init__(self, sm: SettingsManager, chat_manager: ChatManager, um):
         super().__init__()
         self.sm = sm
-        self.tm = tm
         self._um = um
         self._chat_manager = chat_manager
         self._chat_manager.newChat.connect(self._add_chat)
@@ -61,7 +56,7 @@ class ChatPanel(KitHBoxLayout):
 
         self._button_add_special = KitIconButton(icon='solid-chevron-down')
         self._button_add_special.main_palette = 'Bg'
-        self._button_add_special.setMenu(NewChatMenu(self.tm, self._new_chat))
+        self._button_add_special.setMenu(NewChatMenu(self, self._new_chat))
         group.addItem(self._button_add_special)
 
         self._button_settings = KitIconButton('solid-gear')
@@ -132,8 +127,8 @@ class ChatPanel(KitHBoxLayout):
     def _on_remote_chat_deleted(self, chat):
         if not chat:
             return
-        if ask(self.tm, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
-               default='Нет') == 'Да':
+        if KitDialog.question(self, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
+                              ('Нет', 'Да'), default='Нет') == 'Да':
             self._delete_chat(chat.id)
         else:
             self._chat_manager.make_remote(chat, False)
@@ -149,7 +144,7 @@ class ChatPanel(KitHBoxLayout):
     def _add_chat(self, chat):
         self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self.tm, self._chat_manager, self._um, chat)
+        chat_widget = ChatWidget(self.sm, self._chat_manager, self._um, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
@@ -241,23 +236,19 @@ class ChatPanel(KitHBoxLayout):
         self._button_add_special.setFixedSize(20, 36)
 
 
-class NewChatMenu(QMenu):
-    def __init__(self, tm, func):
-        super().__init__()
-        self.tm = tm
+class NewChatMenu(KitMenu):
+    def __init__(self, parent, func):
+        super().__init__(parent)
         self.func = func
 
-        action = self.addAction(QIcon(self.tm.get_image('simple_chat')), "Обычный диалог")
+        action = self.addAction("Обычный диалог", 'solid-message')
         action.triggered.connect(lambda: func(GPTChat.SIMPLE))
 
-        action = self.addAction(QIcon(self.tm.get_image('translate')), "Переводчик")
+        action = self.addAction("Переводчик", 'solid-language')
         action.triggered.connect(lambda: func(GPTChat.TRANSLATE))
 
-        action = self.addAction(QIcon(self.tm.get_image('summary')), "Краткое содержание")
+        action = self.addAction("Краткое содержание", 'solid-language')
         action.triggered.connect(lambda: func(GPTChat.SUMMARY))
-
-        self.tm.auto_css(self)
-        self.tm.themeChanged.connect(lambda: self.tm.auto_css(self))
 
 
 class ChatLoader(QThread):

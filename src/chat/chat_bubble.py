@@ -296,7 +296,6 @@ class FakeBubble(ChatBubble):
 
     def set_theme(self):
         super().set_theme()
-        self.setStyleSheet('background-color: red;')
 
 
 class TranslatedWidget(KitHBoxLayout):

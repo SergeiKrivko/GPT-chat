@@ -3,7 +3,8 @@ from time import sleep
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
-from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, KitMenu
+from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
+    KitMenu, KitDialog
 from googletrans import LANGUAGES
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
@@ -22,10 +23,9 @@ class ChatWidget(KitVBoxLayout):
     buttonBackPressed = pyqtSignal(int)
     updated = pyqtSignal()
 
-    def __init__(self, sm, tm, cm: ChatManager, um, chat: GPTChat):
+    def __init__(self, sm, cm: ChatManager, um, chat: GPTChat):
         super().__init__()
         self._sm = sm
-        self.tm = tm
         self._cm = cm
         self._um = um
         self._chat = chat
@@ -70,7 +70,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_settings.clicked.connect(self._open_settings)
         self._top_layout.addWidget(self._button_settings)
 
-        self._search_widget = SearchWidget(self.tm, self._chat)
+        self._search_widget = SearchWidget(self._chat)
         self._search_widget.selectionRequested.connect(self._select_text)
         self._search_widget.hide()
         self.addWidget(self._search_widget)
@@ -107,7 +107,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_bubble.setContentsMargins(5, 5, 5, 5)
         text_bg_layout.addWidget(self._text_bubble)
 
-        self._reply_list = ReplyList(self.tm, self._chat)
+        self._reply_list = ReplyList(self._chat)
         self._reply_list.hide()
         self._reply_list.scrollRequested.connect(self.scroll_to_message)
         self._text_bubble.addWidget(self._reply_list)
@@ -266,7 +266,7 @@ class ChatWidget(KitVBoxLayout):
 
     def add_text(self, text):
         if self._last_bubble is None:
-            self._last_bubble = FakeBubble(self._sm, self.tm, self._chat)
+            self._last_bubble = FakeBubble(self._sm, self._chat)
             self._add_bubble(self._last_bubble)
         self._last_bubble.add_text(text)
 
@@ -355,7 +355,7 @@ class ChatWidget(KitVBoxLayout):
         self._chat._db.commit()
 
     def _on_gpt_error(self, ex):
-        MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self.tm)
+        KitDialog.danger(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}")
 
     def _set_tm(self, tm):
         super()._set_tm(tm)

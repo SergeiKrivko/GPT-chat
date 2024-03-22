@@ -5,7 +5,7 @@ import sys
 
 
 block_cipher = None
-lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/python3.11"
+lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/python3.11/site-packages"
 
 
 a = Analysis(

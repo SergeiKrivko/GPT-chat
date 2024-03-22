@@ -1,18 +1,16 @@
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QTextEdit
+from PyQt6.QtWidgets import QTextEdit
 from PyQtUIkit.themes import KitPalette
-from PyQtUIkit.widgets import KitVBoxLayout, KitIconButton, KitVGroup, KitHBoxLayout, KitLineEdit, KitButton, KitLabel
+from PyQtUIkit.widgets import KitVBoxLayout, KitVGroup, KitHBoxLayout, KitLineEdit, KitButton, KitLabel
 
 from src.gpt.chat import GPTChat
-from src.ui.button import Button
 
 
 class SearchWidget(KitVBoxLayout):
     selectionRequested = pyqtSignal(int, int, int)
 
-    def __init__(self, tm, chat: GPTChat):
+    def __init__(self, chat: GPTChat):
         super().__init__()
-        self.tm = tm
         self._chat = chat
 
         self.setContentsMargins(5, 5, 5, 5)
