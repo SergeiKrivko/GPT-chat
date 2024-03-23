@@ -263,7 +263,6 @@ class ChatWidget(KitVBoxLayout):
         else:
             self._scroll_layout.insertWidget(index, bubble)
             self._bubbles[bubble.message.id] = bubble
-        bubble.set_theme()
 
     def add_text(self, text):
         if self._last_bubble is None:

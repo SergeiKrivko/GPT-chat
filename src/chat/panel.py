@@ -8,6 +8,7 @@ from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
+from src.chat.render_latex import rerender_all
 from src.chat.settings_window import ChatSettingsWindow
 from src.database import ChatManager
 from src.gpt.chat import GPTChat
@@ -240,6 +241,7 @@ class ChatPanel(KitHBoxLayout):
             pass
 
     def _apply_theme(self):
+        rerender_all(self._tm)
         super()._apply_theme()
         self._button_add_special.setFixedSize(20, 36)
 

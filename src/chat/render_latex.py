@@ -51,7 +51,7 @@ def render_latex(sm, tm, latex: str):
     t = ax.text(0.5, 0.5, f"${latex}$",
                 horizontalalignment='center',
                 verticalalignment='center',
-                fontsize=14, color=tm['TextColor'])
+                fontsize=14, color=tm['Main'].text)
 
     # Определение размеров формулы
     ax.figure.canvas.draw()
@@ -64,7 +64,7 @@ def render_latex(sm, tm, latex: str):
     image_id = uuid4()
     path = f"{sm.app_data_dir}/temp/{image_id}.svg"
     plt.savefig(path)
-    _images[latex] = _LatexImage(latex, path, tm['TextColor'])
+    _images[latex] = _LatexImage(latex, path, tm['Main'].text)
     return path
 
 
@@ -73,8 +73,9 @@ def delete_image(formula):
 
 
 def rerender_all(tm):
+    color = tm['Main'].text
     for el in _images.values():
-        if el.color == tm['TextColor']:
+        if el.color == color:
             continue
 
         global _fig
@@ -90,8 +91,8 @@ def rerender_all(tm):
         t = ax.text(0.5, 0.5, f"${el.formula}$",
                     horizontalalignment='center',
                     verticalalignment='center',
-                    fontsize=14, color=tm['TextColor'])
-        el.color = tm['TextColor']
+                    fontsize=14, color=color)
+        el.color = color
 
         # Определение размеров формулы
         ax.figure.canvas.draw()

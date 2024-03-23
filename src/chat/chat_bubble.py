@@ -99,7 +99,7 @@ class ChatBubble(KitHBoxLayout):
                     if formula in self._images:
                         image = self._images[formula]
                     else:
-                        image = render_latex(self._sm, self.tm, formula)
+                        image = render_latex(self._sm, self._tm, formula)
                         self._images[formula] = image
                     lst.append(f"![image.svg]({image})")
                 except Exception:
@@ -202,8 +202,6 @@ class ChatBubble(KitHBoxLayout):
             border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;"""
         self._bubble_widget.setStyleSheet(css)
         self._widget.setStyleSheet("background-color: transparent; border: none;")
-
-    def set_theme(self):
         self._set_html()
 
 
