@@ -2,7 +2,6 @@ import asyncio
 import json
 
 import aiohttp
-import requests
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
@@ -94,10 +93,14 @@ class _SignInScreen(KitVBoxLayout):
         self.setContentsMargins(20, 20, 20, 20)
         self.setSpacing(5)
 
+        self._main_layout = KitVBoxLayout()
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self.addWidget(self._main_layout)
+
         top_layout = KitHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.addWidget(top_layout)
+        self._main_layout.addWidget(top_layout)
 
         self._button_reset_password = KitButton("Сбросить пароль")
         self._button_reset_password.setFixedSize(150, 35)
@@ -112,31 +115,31 @@ class _SignInScreen(KitVBoxLayout):
         top_layout.addWidget(self._button_sign_up)
 
         label = KitLabel("Email:")
-        self.addWidget(label)
+        self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
         self._email_edit.font_size = 'big'
         self._email_edit.returnPressed.connect(self.sign_in)
-        self.addWidget(self._email_edit)
+        self._main_layout.addWidget(self._email_edit)
 
         label = KitLabel("Пароль:")
-        self.addWidget(label)
+        self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
         self._password_edit.font_size = 'big'
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_in)
-        self.addWidget(self._password_edit)
+        self._main_layout.addWidget(self._password_edit)
 
         self._error_label = KitLabel()
         self._error_label.main_palette = 'DangerText'
         self._error_label.setWordWrap(True)
-        self.addWidget(self._error_label)
+        self._main_layout.addWidget(self._error_label)
 
         bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 15, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.addWidget(bottom_layout)
+        self._main_layout.addWidget(bottom_layout)
 
         self._button_join = KitButton("Войти")
         self._button_join.radius = 8
@@ -145,36 +148,49 @@ class _SignInScreen(KitVBoxLayout):
         self._button_join.clicked.connect(self.sign_in)
         bottom_layout.addWidget(self._button_join)
 
-    def sign_in(self):
-        rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+        self._spinner = KitHBoxLayout()
+        self.addWidget(self._spinner)
+        self._spinner.hide()
 
+        spinner = KitSpinner()
+        spinner.size = 46
+        self._spinner.addWidget(spinner)
+
+    @asyncSlot()
+    async def sign_in(self):
+        rest_api_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword" \
+                       f"?key={config.FIREBASE_API_KEY}"
+        self.show_spinner(True)
         try:
-            r = requests.post(rest_api_url,
-                              params={"key": config.FIREBASE_API_KEY},
-                              data=json.dumps({"email": self._email_edit.text(),
-                                               "password": self._password_edit.text(),
-                                               "returnSecureToken": True}))
-
-            res = json.loads(r.text)
-            if r.ok:
-                self._sm.set('user_email', res['email'])
-                self._sm.set('user_token', res['idToken'])
-                self._sm.set('user_refresh_token', res['refreshToken'])
-                self._sm.set('user_id', res['localId'])
-                self._sm.authorized = True
-                self.signedIn.emit()
-            else:
-                match res.get('error', dict()).get('message'):
-                    case 'INVALID_LOGIN_CREDENTIALS':
-                        self.show_error("Неверный логин или пароль")
-                    case _:
-                        self.show_error("Неизвестная ошибка")
-                        print(r.text)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(rest_api_url, data={"email": self._email_edit.text(),
+                                                            "password": self._password_edit.text(),
+                                                            "returnSecureToken": True}) as r:
+                    res = await r.json()
+                    if r.ok:
+                        self._sm.set('user_email', res['email'])
+                        self._sm.set('user_token', res['idToken'])
+                        self._sm.set('user_refresh_token', res['refreshToken'])
+                        self._sm.set('user_id', res['localId'])
+                        self._sm.authorized = True
+                        self.signedIn.emit()
+                    else:
+                        match res.get('error', dict()).get('message'):
+                            case 'INVALID_LOGIN_CREDENTIALS':
+                                self.show_error("Неверный логин или пароль")
+                            case 'INVALID_EMAIL':
+                                self.show_error("Некорректный email")
+                            case 'MISSING_PASSWORD':
+                                self.show_error("Введите пароль")
+                            case _:
+                                self.show_error("Неизвестная ошибка")
+                                print(res)
                 self._password_edit.clear()
-        except requests.ConnectionError:
+        except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
         except Exception as ex:
             self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+        self.show_spinner(False)
 
     def reset_password(self):
         self._reset_password()
@@ -189,6 +205,10 @@ class _SignInScreen(KitVBoxLayout):
                 res = await resp.text()
                 if not resp.ok:
                     print(res)
+
+    def show_spinner(self, flag):
+        self._spinner.setHidden(not flag)
+        self._main_layout.setHidden(flag)
 
     def show_error(self, text):
         self._error_label.setText(text)
@@ -212,73 +232,115 @@ class _SignUpScreen(KitVBoxLayout):
         self.setContentsMargins(20, 20, 20, 20)
         self.setSpacing(5)
 
+        self._main_layout = KitVBoxLayout()
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self.addWidget(self._main_layout)
+
         label = KitLabel("Email:")
-        self.addWidget(label)
+        self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
         self._email_edit.font_size = 'big'
         self._email_edit.returnPressed.connect(self.sign_up)
-        self.addWidget(self._email_edit)
+        self._main_layout.addWidget(self._email_edit)
 
         label = KitLabel("Пароль:")
-        self.addWidget(label)
+        self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
         self._password_edit.font_size = 'big'
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_up)
-        self.addWidget(self._password_edit)
+        self._main_layout.addWidget(self._password_edit)
 
         label = KitLabel("Пароль еще раз:")
-        self.addWidget(label)
+        self._main_layout.addWidget(label)
 
         self._password_edit2 = KitLineEdit()
         self._password_edit2.font_size = 'big'
         self._password_edit2.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit2.returnPressed.connect(self.sign_up)
-        self.addWidget(self._password_edit2)
+        self._main_layout.addWidget(self._password_edit2)
+
+        self._error_label = KitLabel()
+        self._error_label.main_palette = 'DangerText'
+        self._error_label.setWordWrap(True)
+        self._main_layout.addWidget(self._error_label)
 
         bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 20, 0, 0)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.addWidget(bottom_layout)
+        self._main_layout.addWidget(bottom_layout)
 
         self._button_back = KitButton("Назад")
-        self._button_back.setFixedSize(150, 50)
+        self._button_back.setFixedSize(150, 30)
         self._button_back.clicked.connect(self.backPressed.emit)
         bottom_layout.addWidget(self._button_back)
 
         self._button_sign_up = KitButton("Создать аккаунт")
         self._button_sign_up.radius = 8
-        self._button_sign_up.setFixedSize(150, 50)
+        self._button_sign_up.setFixedSize(150, 30)
         self._button_sign_up.clicked.connect(self.sign_up)
         bottom_layout.addWidget(self._button_sign_up)
+
+        self._spinner = KitHBoxLayout()
+        self.addWidget(self._spinner)
+        self._spinner.hide()
+
+        spinner = KitSpinner()
+        spinner.size = 46
+        self._spinner.addWidget(spinner)
 
     def sign_up(self):
         self._sign_up()
 
     @asyncSlot()
     async def _sign_up(self):
-        if len(self._password_edit.text()) < 6 or self._password_edit.text() != self._password_edit2.text():
+        if self._password_edit.text() != self._password_edit2.text():
+            self.show_error("Пароли не совпадают")
             return
+        rest_api_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={config.FIREBASE_API_KEY}"
+        self.show_spinner(True)
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(rest_api_url, data={"email": self._email_edit.text(),
+                                                            "password": self._password_edit.text(),
+                                                            "returnSecureToken": True}) as r:
+                    res = await r.json()
+                    if r.ok:
+                        self._sm.set('user_email', res['email'])
+                        self._sm.set('user_token', res['idToken'])
+                        self._sm.set('user_refresh_token', res['refreshToken'])
+                        self._sm.set('user_id', res['localId'])
+                        self._sm.authorized = True
+                        self.signedUp.emit()
+                    else:
+                        match res.get('error', dict()).get('message'):
+                            case 'EMAIL_EXISTS':
+                                self.show_error("Аккаунт уже существует")
+                            case 'MISSING_EMAIL':
+                                self.show_error("Введите email")
+                            case 'MISSING_PASSWORD':
+                                self.show_error("Введите пароль")
+                            case 'INVALID_EMAIL':
+                                self.show_error("Некорректный email")
+                            case 'WEAK_PASSWORD : Password should be at least 6 characters':
+                                self.show_error("Слишком короткий пароль")
+                            case _:
+                                self.show_error("Неизвестная ошибка")
+                                print(res)
+        except aiohttp.ClientConnectionError:
+            self.show_error("Нет подключения к интернету")
+        except Exception as ex:
+            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+        self.show_spinner(False)
 
-        rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp"
-        r = requests.post(rest_api_url,
-                          params={"key": config.FIREBASE_API_KEY},
-                          data=json.dumps({"email": self._email_edit.text(),
-                                           "password": self._password_edit.text(),
-                                           "returnSecureToken": True}))
-        if r.ok:
-            res = json.loads(r.text)
-            self._sm.set('user_email', res['email'])
-            self._sm.set('user_token', res['idToken'])
-            self._sm.set('user_refresh_token', res['refreshToken'])
-            self._sm.set('user_id', res['localId'])
-            self._sm.authorized = True
-            self.signedUp.emit()
-        else:
-            print(r.text)
-            self._password_edit.clear()
+    def show_spinner(self, flag):
+        self._spinner.setHidden(not flag)
+        self._main_layout.setHidden(flag)
+
+    def show_error(self, text):
+        self._error_label.setText(text)
 
 
 class _VerifyEmailScreen(KitVBoxLayout):
@@ -321,14 +383,14 @@ class _VerifyEmailScreen(KitVBoxLayout):
         self._email_waiting = False
         self.backPressed.emit()
 
-    @staticmethod
-    def send_email_verification(id_token):
+    @asyncSlot()
+    async def send_email_verification(self, id_token):
         request_ref = f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/getOobConfirmationCode?key={config.FIREBASE_API_KEY}"
-        headers = {"content-type": "application/json; charset=UTF-8"}
-        data = json.dumps({"requestType": "VERIFY_EMAIL", "idToken": id_token})
-        resp = requests.post(request_ref, headers=headers, data=data)
-        if not resp.ok:
-            print(resp.text)
+        data = {"requestType": "VERIFY_EMAIL", "idToken": id_token}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(request_ref, data=data) as resp:
+                if not resp.ok:
+                    print(resp.text)
 
     @staticmethod
     async def get_account_info(id_token):
@@ -347,6 +409,8 @@ class _VerifyEmailScreen(KitVBoxLayout):
         info = await _VerifyEmailScreen.get_account_info(id_token)
         try:
             return info['users'][0]['emailVerified']
+        except aiohttp.ClientConnectionError:
+            return False
         except KeyError:
             return False
 

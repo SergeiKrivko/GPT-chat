@@ -72,6 +72,8 @@ class ChatManager(QObject):
 
     def _on_remote_chats(self, path, data):
         if path == '/':
+            if data is None:
+                return
             for remote_id in data:
                 self._add_remote_chat(remote_id)
 
