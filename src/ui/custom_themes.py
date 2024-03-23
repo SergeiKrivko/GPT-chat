@@ -1,6 +1,7 @@
 from PyQtUIkit.themes import KitTheme, builtin_themes, KitPalette
 
 _LIGHT = KitTheme({
+    'Transparent': KitPalette('#00000000', '#30000000', '#60000000', '#222222'),
     'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)', text='#222222'),
     'FontSizeSmall': 9,
     'FontSizeMedium': 11,
@@ -21,28 +22,28 @@ THEMES = {
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3F76BF, stop:1 #3B97CF)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#3B97CF', '#222222'),
-        'Bg': KitPalette('#ECF5F9', '#A8A9AB', '#3B97CF', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#3B97CF', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#3B97CF', '#222222'),
     }, _LIGHT),
     'light_green': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #377D2A, stop:1 #72B238)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#67A132', '#222222'),
-        'Bg': KitPalette('#ECF5F9', '#A8A9AB', '#67A132', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#67A132', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#67A132', '#222222'),
     }, _LIGHT),
     'light_red': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F23C18, stop:1 #F26149)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#F23C18', '#222222'),
-        'Bg': KitPalette('#ECF5F9', '#A8A9AB', '#F23C18', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#F23C18', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#F23C18', '#222222'),
     }, _LIGHT),
     'light_pink': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C25EBD, stop:1 #C086C2)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#C25EBD', '#222222'),
-        'Bg': KitPalette('#ECF5F9', '#A8A9AB', '#C25EBD', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#C25EBD', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#C25EBD', '#222222'),
     }, _LIGHT),
     'light_orange': KitTheme({
@@ -51,7 +52,7 @@ THEMES = {
         'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#E37412', '#222222'),
-        'Bg': KitPalette('#ECF5F9', '#A8A9AB', '#E37412', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#E37412', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#E37412', '#222222'),
     }, _LIGHT),
 

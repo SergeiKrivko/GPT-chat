@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 from time import sleep
 
@@ -105,6 +106,12 @@ class ChatPanel(KitHBoxLayout):
         window = ChatSettingsWindow(self, self.sm, self._chat_manager, self._um, chat)
         window.exec()
         window.save()
+        self._update_chats()
+
+    @asyncSlot()
+    async def _update_chats(self):
+        await asyncio.sleep(0.1)
+        self._list_widget.sort_chats()
 
     def _open_user_window(self):
         uid = self.sm.get('user_id')
@@ -132,6 +139,7 @@ class ChatPanel(KitHBoxLayout):
             self._delete_chat(chat.id)
         else:
             self._chat_manager.make_remote(chat, False)
+            self._list_widget.sort_chats()
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)

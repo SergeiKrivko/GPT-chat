@@ -134,6 +134,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_scroll = KitIconButton('solid-chevron-down')
         self._button_scroll.size = 36
         self._button_scroll.main_palette = 'Bg'
+        self._button_scroll.border = 0
         self._button_scroll.setContentsMargins(7, 7, 7, 7)
         self._button_scroll.radius = self._button_scroll.size // 2
         self._scroll_area.resized.connect(

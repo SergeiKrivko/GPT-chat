@@ -80,7 +80,9 @@ class ChatManager(QObject):
         else:
             remote_id = path[1:]
             if data is None:
-                self.deleteRemoteChat.emit(self._database.get_by_remote_id(remote_id))
+                chat = self._database.get_by_remote_id(remote_id)
+                if chat:
+                    self.deleteRemoteChat.emit(chat)
             else:
                 self._add_remote_chat(remote_id)
 
@@ -94,7 +96,6 @@ class ChatManager(QObject):
             new_chat = True
         else:
             new_chat = False
-        print(chat.id)
 
         chat.model = data.get('model')
         chat.name = data.get('name')
@@ -145,7 +146,13 @@ class ChatManager(QObject):
             if data is None:
                 continue
 
-            message = chat.add_message(data['role'], data['content'], data.get('reply', []))
+            reply = []
+            for el in data.get('reply', []):
+                mes = chat.get_message_by_remote_id(el)
+                if mes:
+                    reply.append(mes.id)
+            print(reply)
+            message = chat.add_message(data['role'], data['content'], reply)
             message.replied_count = data.get('links') - 1
             message.remote_id = message_remote_id
             self.newMessage.emit(chat.id, message)
@@ -171,14 +178,7 @@ class ChatManager(QObject):
         if chat is None:
             return
 
-        if chat.remote_id:
-            try:
-                await self._firebase.delete(f'chats/{chat.remote_id}')
-                await self._firebase.delete(f'messages/{chat.remote_id}')
-                await self._firebase.delete(f'events/{chat.remote_id}')
-                await self._firebase.delete(f'events/{chat.remote_id}-last')
-            except FirebaseError:
-                pass
+        await self.delete_remote_copy(chat)
 
         chat.delete()
         self.deleteChat.emit(chat_id)
@@ -258,7 +258,8 @@ class ChatManager(QObject):
     @asyncSlot()
     async def make_remote(self, chat: GPTChat, remote: bool):
         if remote == bool(chat.remote_id):
-            await self._update_chat_info(chat)
+            if remote:
+                await self._update_chat_info(chat)
             self._database.commit()
             return
         if not self._firebase.authorized:
@@ -282,16 +283,19 @@ class ChatManager(QObject):
                 self._database.commit()
 
         else:
-            remote_id = chat.remote_id
-            chat.remote_id = None
-            try:
-                await self._firebase.delete(f'chats/{remote_id}')
-                await self._firebase.delete(f'messages/{remote_id}')
-                await self._firebase.delete(f'events/{remote_id}')
-                await self._firebase.delete(f'events/{remote_id}-last')
-            except FirebaseError:
-                pass
-            self._database.commit()
+            await self.delete_remote_copy(chat)
+
+    async def delete_remote_copy(self, chat: GPTChat):
+        remote_id = chat.remote_id
+        chat.remote_id = None
+        self._database.commit()
+        try:
+            await self._firebase.delete(f'chats/{remote_id}')
+            await self._firebase.delete(f'messages/{remote_id}')
+            await self._firebase.delete(f'events/{remote_id}')
+            await self._firebase.delete(f'events/{remote_id}-last')
+        except FirebaseError:
+            pass
 
 
 class Looper(QThread):

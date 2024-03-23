@@ -88,7 +88,7 @@ class _ReplyItem(KitButton):
 
         main_layout = QHBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.setContentsMargins(36, 2, 2, 2)
+        main_layout.setContentsMargins(4, 2, 2, 2)
         self.setLayout(main_layout)
 
         self._icon_widget = KitIconWidget('solid-reply')
@@ -103,6 +103,8 @@ class _ReplyItem(KitButton):
         self._button = KitIconButton('solid-trash')
         self._button.clicked.connect(lambda: self.deleteRequested.emit(self._message.id))
         self._button.size = 22
+        self._button.main_palette = 'Bg'
+        self._button.border = 0
         main_layout.addWidget(self._button, Qt.AlignmentFlag.AlignRight)
         if not self._can_be_deleted:
             self._button.hide()
@@ -119,4 +121,3 @@ class _ReplyItem(KitButton):
         self._icon_widget._apply_theme()
         self._button._apply_theme()
         self._label._apply_theme()
-        self._label.setFont(self._tm.font_small)
