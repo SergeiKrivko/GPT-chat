@@ -3,6 +3,7 @@ from PyQtUIkit.themes import KitTheme, builtin_themes, KitPalette
 _LIGHT = KitTheme({
     'Transparent': KitPalette('#00000000', '#30000000', '#60000000', '#222222'),
     'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)', text='#222222'),
+    'LastMessage': KitPalette('#00000000', text='#4D4D4D'),
     'FontSizeSmall': 9,
     'FontSizeMedium': 11,
     'FontSizeBig': 14,
@@ -11,6 +12,7 @@ _LIGHT = KitTheme({
 
 _DARK = KitTheme({
     'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18191C, stop:1 #2A2B30)', text='#F0F0F0'),
+    'LastMessage': KitPalette('#00000000', text='#999999'),
     'FontSizeSmall': 9,
     'FontSizeMedium': 11,
     'FontSizeBig': 14,

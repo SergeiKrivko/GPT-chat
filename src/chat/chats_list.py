@@ -135,29 +135,42 @@ class GPTListWidgetItem(KitButton):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.run_context_menu)
 
-        self.setFixedHeight(44)
+        self.setFixedHeight(50)
 
         main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(7, 7, 7, 7)
+        main_layout.setContentsMargins(7, 2, 7, 2)
         self.setLayout(main_layout)
 
         self._icon_label = KitIconWidget()
         self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
+        layout = KitVBoxLayout()
+        layout.setContentsMargins(0, 1, 0, 1)
+        layout.setSpacing(0)
+        main_layout.addWidget(layout, 100)
+
         self._name_label = KitLabel()
-        self._name_label.setWordWrap(True)
-        main_layout.addWidget(self._name_label, 100)
+        layout.addWidget(self._name_label)
+
+        self._last_message_label = KitLabel()
+        self._last_message_label.main_palette = 'LastMessage'
+        self._last_message_label.font_size = 'small'
+        self._last_message_label.setWordWrap(True)
+        layout.addWidget(self._last_message_label)
 
         self._right_layout = KitVBoxLayout()
         self._right_layout.setContentsMargins(0, 0, 0, 0)
+        self._right_layout.setSpacing(4)
         main_layout.addWidget(self._right_layout)
 
         self._icon_pinned = KitIconWidget("solid-thumbtack")
+        self._icon_pinned.setFixedSize(18, 18)
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_pinned)
 
         self._icon_remote = KitIconWidget("solid-globe")
+        self._icon_remote.setFixedSize(18, 18)
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_remote)
 
@@ -179,10 +192,13 @@ class GPTListWidgetItem(KitButton):
 
         if self.chat.name and self.chat.name.strip():
             self._name_label.setText(self.chat.name)
-        elif self.chat.last_message:
-            self._name_label.setText(self.chat.last_message.content)
         else:
             self._name_label.setText('<Новый диалог>')
+
+        if self.chat.last_message:
+            self._last_message_label.setText(self.chat.last_message.content)
+        else:
+            self._last_message_label.setText("")
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self, self.chat)
@@ -208,12 +224,14 @@ class GPTListWidgetItem(KitButton):
         super()._set_tm(tm)
         self._icon_label._set_tm(tm)
         self._name_label._set_tm(tm)
+        self._last_message_label._set_tm(tm)
         self._right_layout._set_tm(tm)
 
     def _apply_theme(self):
         super()._apply_theme()
         self._icon_label._apply_theme()
         self._name_label._apply_theme()
+        self._last_message_label._apply_theme()
         self._right_layout._apply_theme()
 
 
