@@ -250,7 +250,6 @@ class _SignUpScreen(KitVBoxLayout):
 
         self._button_sign_up = KitButton("Создать аккаунт")
         self._button_sign_up.radius = 8
-        self._button_sign_up.font_size = 'big'
         self._button_sign_up.setFixedSize(150, 50)
         self._button_sign_up.clicked.connect(self.sign_up)
         bottom_layout.addWidget(self._button_sign_up)
