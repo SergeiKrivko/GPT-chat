@@ -1,4 +1,5 @@
 import shutil
+import sys
 
 from PyQt6.QtGui import QIcon
 from PyQtUIkit.widgets import KitMainWindow, KitDialog
@@ -27,7 +28,7 @@ class MainWindow(KitMainWindow):
         self.chat_manager.auth()
 
         self._update_manager = UpdateManager(self.sm, self)
-        self._update_manager.closeProgramRequested.connect(self.close)
+        self._update_manager.closeProgramRequested.connect(self._close)
 
         self._chat_widget = ChatPanel(self.sm, self.chat_manager, self._update_manager)
         self.setCentralWidget(self._chat_widget)
@@ -52,3 +53,7 @@ class MainWindow(KitMainWindow):
 
     def _on_connection_error(self):
         KitDialog.danger(self, "Ошибка", "Не удалось выполнить действие. Проверьте подключение к интернету.")
+
+    def _close(self):
+        self.close()
+        sys.exit(0)

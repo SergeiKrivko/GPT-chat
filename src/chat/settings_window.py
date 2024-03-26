@@ -1,6 +1,6 @@
 import datetime
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 
 from src.gpt.chat import GPTChat
@@ -45,9 +45,11 @@ class ChatSettingsWindow(KitDialog):
         self._theme_box.currentValueChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
 
-        self._button_update = KitButton("Обновить" if self._um.have_update else "Проверить обновление")
-        self._button_update.clicked.connect(lambda: self._um.check_release(say_if_no_release=True))
-        main_layout.addWidget(self._button_update)
+        self._update_widget = UpdateWidget()
+        self._um.set_widget(self._update_widget)
+        self._update_widget.clicked.connect(lambda: self._um.check_release(say_if_no_release=True))
+        self._update_widget.cancel.connect(lambda: self._um.cancel_downloading())
+        main_layout.addWidget(self._update_widget)
 
         self._auto_update_checkbox = KitCheckBox("Сообщать об обновлениях")
         self._auto_update_checkbox.main_palette = 'Bg'
@@ -174,3 +176,49 @@ class ChatSettingsWindow(KitDialog):
         self.sm.set('theme', self._theme_box.currentValue())
         self.theme_manager.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
         self._apply_theme()
+
+
+class UpdateWidget(KitTabLayout):
+    NO_RELEASE = 0
+    READY_TO_DOWNLOAD = 1
+    DOWNLOADING = 2
+    READY_TO_INSTALL = 3
+
+    clicked = pyqtSignal()
+    cancel = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
+
+        self._button_check = KitButton("Проверить обновление")
+        self._button_check.clicked.connect(self.clicked.emit)
+        self.addWidget(self._button_check)
+
+        self._button_download = KitButton("Скачать обновление")
+        self._button_download.clicked.connect(self.clicked.emit)
+        self.addWidget(self._button_download)
+
+        progress_layout = KitHBoxLayout()
+        progress_layout.setContentsMargins(0, 0, 0, 0)
+        self.addWidget(progress_layout)
+
+        self._progress_bar = KitProgressBar()
+        self._progress_bar.setFixedHeight(24)
+        progress_layout.addWidget(self._progress_bar)
+
+        self._button_cancel = KitIconButton('solid-xmark')
+        self._button_cancel.size = 24
+        self._button_cancel.clicked.connect(self.cancel.emit)
+        progress_layout.addWidget(self._button_cancel)
+
+        self._button_install = KitButton("Установить обновление")
+        self._button_install.clicked.connect(self.clicked.emit)
+        self.addWidget(self._button_install)
+
+    def set_status(self, status):
+        self.setCurrent(status)
+
+    def set_progress(self, value):
+        self.set_status(UpdateWidget.DOWNLOADING)
+        self._progress_bar.setValue(value)

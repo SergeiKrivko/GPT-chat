@@ -27,6 +27,13 @@ class UpdateManager(QObject):
         self._new_version = self._sm.get('downloaded_release')
         self.check_release(bool(self._sm.get('auto_update', True)))
         self._askDownload.connect(self._ask_download)
+        self.widget = None
+        self.__cancel = False
+
+    def set_widget(self, w):
+        self.widget = w
+        if self.widget:
+            self.widget.set_status(0 if not self.have_update else 1 if not os.path.isfile(self.release_exe_path) else 3)
 
     @property
     def system(self):
@@ -71,7 +78,10 @@ class UpdateManager(QObject):
         self._new_version = res.get('version', None)
         return res
 
-    async def download_release(self):
+    async def download_release(self, info):
+        self.__cancel = False
+        if self.widget:
+            self.widget.set_status(2)
         url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
               f"{quote(f'releases/{self.system}.zip', safe='')}?alt=media"
         async with aiohttp.ClientSession() as session:
@@ -80,17 +90,33 @@ class UpdateManager(QObject):
                     raise aiohttp.ClientConnectionError
                 os.makedirs(os.path.dirname(self.release_zip_path), exist_ok=True)
                 with open(self.release_zip_path, 'bw') as f:
-                    content = await resp.content.read()
-                    f.write(content)
+                    while True:
+                        chunk = await resp.content.readany()
+                        if self.__cancel or not chunk:
+                            break
+                        f.write(chunk)
+                        if self.widget:
+                            self.widget.set_progress(os.path.getsize(self.release_zip_path) * 100 // info.get('size'))
+
+    def cancel_downloading(self):
+        self.__cancel = True
+        self.widget.set_status(1)
 
     @asyncSlot()
     async def prepare_release(self):
         info = await self.get_release_info()
-        await self.download_release()
+        await self.download_release(info)
+        if self.__cancel:
+            if self.widget:
+                self.widget.set_status(1)
+                os.remove(self.release_zip_path)
+            return
         with zipfile.ZipFile(self.release_zip_path, 'r') as f:
             f.extractall(os.path.dirname(self.release_exe_path))
         os.remove(self.release_zip_path)
         self._sm.set('downloaded_release', info.get('version', ''))
+        if self.widget:
+            self.widget.set_status(3)
         self._install_release()
 
     @staticmethod
@@ -169,6 +195,8 @@ class UpdateManager(QObject):
         if not os.path.isfile(self.release_exe_path):
             print("Exe not found")
             return
+        if self.widget:
+            self.widget.set_status(3)
         if KitDialog.question(self._parent, f"Версия {self._sm.get('downloaded_release')} готова к установке. "
                                             f"Установить сейчас?", ('Нет', 'Да')) == 'Да':
             self._run_installer_exe()
