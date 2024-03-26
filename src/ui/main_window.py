@@ -21,7 +21,7 @@ class MainWindow(KitMainWindow):
         self.sm = SettingsManager(app)
         for key, item in THEMES.items():
             self.theme_manager.add_theme(key, item)
-        self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
+        self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")
 
         self.chat_manager = ChatManager(self.sm)
         self.chat_manager.connectionErrorOccurred.connect(self._on_connection_error)

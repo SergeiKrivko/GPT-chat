@@ -16,7 +16,6 @@ from src.gpt import gpt
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
 from src.gpt.translate import translate, detect
-from src.ui.message_box import MessageBox
 
 
 class ChatWidget(KitVBoxLayout):
