@@ -42,21 +42,28 @@ class GPTChat:
         for el in self.message_ids:
             yield GPTMessage(self._db, self.id, el)
 
-    def load_messages(self, limit=10, to_message=None):
+    def load_messages(self, limit=5000, to_message=None):
         if to_message is not None:
             self._db.cursor.execute(f"""SELECT id FROM Messages{self.id} WHERE deleted = 0 AND 
             id < {self._first_message} AND id >= {to_message} ORDER BY id DESC""")
-            chats = self._db.cursor.fetchall()
-        elif self._first_message is None:
-            self._db.cursor.execute(f'SELECT id FROM Messages{self.id} WHERE deleted = 0 ORDER BY id DESC')
-            chats = self._db.cursor.fetchmany(limit)
+            messages = self._db.cursor.fetchall()
+            for el in messages:
+                self._first_message = el[0]
+                yield GPTMessage(self._db, self.id, el[0])
         else:
-            self._db.cursor.execute(
-                f'SELECT id FROM Messages{self.id} WHERE deleted = 0 AND id < {self._first_message} ORDER BY id DESC')
-            chats = self._db.cursor.fetchmany(limit)
-        for el in chats:
-            self._first_message = el[0]
-            yield GPTMessage(self._db, self.id, el[0])
+            if self._first_message is None:
+                self._db.cursor.execute(f'SELECT id FROM Messages{self.id} WHERE deleted = 0 ORDER BY id DESC')
+            else:
+                self._db.cursor.execute(
+                    f'SELECT id FROM Messages{self.id} WHERE deleted = 0 AND id < {self._first_message} ORDER BY id DESC')
+            count = 0
+            for el in self._db.cursor.fetchmany(30):
+                if count >= limit or el is None:
+                    break
+                self._first_message = el[0]
+                mes = GPTMessage(self._db, self.id, el[0])
+                count += len(mes.content)
+                yield mes
 
     def drop_messages(self, from_message):
         self._db.cursor.execute(

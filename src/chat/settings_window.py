@@ -46,7 +46,7 @@ class ChatSettingsWindow(KitDialog):
         layout.addWidget(self._theme_box)
 
         self._button_update = KitButton("Обновить" if self._um.have_update else "Проверить обновление")
-        self._button_update.clicked.connect(lambda: self._um.check_release())
+        self._button_update.clicked.connect(lambda: self._um.check_release(say_if_no_release=True))
         main_layout.addWidget(self._button_update)
 
         self._auto_update_checkbox = KitCheckBox("Сообщать об обновлениях")

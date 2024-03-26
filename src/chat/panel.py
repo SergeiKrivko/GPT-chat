@@ -272,4 +272,4 @@ class ChatLoader(QThread):
     def run(self) -> None:
         for c in self._chats:
             self.addChat.emit(c)
-            sleep(0.1)
+            sleep(0.05)

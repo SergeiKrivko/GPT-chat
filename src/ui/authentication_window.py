@@ -15,7 +15,7 @@ class AuthenticationWindow(KitDialog):
         self._sm = sm
         self.name = "Авторизация"
 
-        self.setFixedSize(350, 330)
+        self.setFixedSize(400, 380)
 
         main_layout = KitHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -90,35 +90,20 @@ class _SignInScreen(KitVBoxLayout):
         super().__init__()
         self._sm = sm
 
-        self.setContentsMargins(20, 20, 20, 20)
+        self.setContentsMargins(70, 20, 70, 20)
         self.setSpacing(5)
 
         self._main_layout = KitVBoxLayout()
+        self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self.addWidget(self._main_layout)
-
-        top_layout = KitHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self._main_layout.addWidget(top_layout)
-
-        self._button_reset_password = KitButton("Сбросить пароль")
-        self._button_reset_password.setFixedSize(150, 35)
-        self._button_reset_password.clicked.connect(self.reset_password)
-        self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        top_layout.addWidget(self._button_reset_password)
-
-        self._button_sign_up = KitButton("Регистрация")
-        self._button_sign_up.setFixedSize(120, 35)
-        self._button_sign_up.clicked.connect(self.signUpPressed.emit)
-        self._button_sign_up.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        top_layout.addWidget(self._button_sign_up)
 
         label = KitLabel("Email:")
         self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
         self._email_edit.font_size = 'big'
+        self._email_edit.setFixedHeight(34)
         self._email_edit.returnPressed.connect(self.sign_in)
         self._main_layout.addWidget(self._email_edit)
 
@@ -127,6 +112,7 @@ class _SignInScreen(KitVBoxLayout):
 
         self._password_edit = KitLineEdit()
         self._password_edit.font_size = 'big'
+        self._password_edit.setFixedHeight(34)
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_in)
         self._main_layout.addWidget(self._password_edit)
@@ -137,16 +123,30 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.addWidget(self._error_label)
 
         bottom_layout = KitHBoxLayout()
-        bottom_layout.setContentsMargins(0, 15, 0, 0)
+        bottom_layout.setContentsMargins(0, 10, 0, 10)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._main_layout.addWidget(bottom_layout)
 
         self._button_join = KitButton("Войти")
         self._button_join.radius = 8
         self._button_join.font_size = 'big'
-        self._button_join.setFixedSize(150, 50)
+        self._button_join.setFixedSize(256, 50)
         self._button_join.clicked.connect(self.sign_in)
         bottom_layout.addWidget(self._button_join)
+
+        self._button_reset_password = KitButton("Сбросить пароль")
+        self._button_reset_password.main_palette = 'Transparent'
+        self._button_reset_password.border = 0
+        self._button_reset_password.clicked.connect(self.reset_password)
+        self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._main_layout.addWidget(self._button_reset_password)
+
+        self._button_sign_up = KitButton("Регистрация")
+        self._button_sign_up.main_palette = 'Transparent'
+        self._button_sign_up.border = 0
+        self._button_sign_up.clicked.connect(self.signUpPressed.emit)
+        self._button_sign_up.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._main_layout.addWidget(self._button_sign_up)
 
         self._spinner = KitHBoxLayout()
         self.addWidget(self._spinner)
@@ -229,11 +229,12 @@ class _SignUpScreen(KitVBoxLayout):
         super().__init__()
         self._sm = sm
 
-        self.setContentsMargins(20, 20, 20, 20)
+        self.setContentsMargins(70, 20, 70, 20)
         self.setSpacing(5)
 
         self._main_layout = KitVBoxLayout()
         self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.addWidget(self._main_layout)
 
         label = KitLabel("Email:")
@@ -241,6 +242,7 @@ class _SignUpScreen(KitVBoxLayout):
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
         self._email_edit.font_size = 'big'
+        self._email_edit.setFixedHeight(34)
         self._email_edit.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._email_edit)
 
@@ -249,6 +251,7 @@ class _SignUpScreen(KitVBoxLayout):
 
         self._password_edit = KitLineEdit()
         self._password_edit.font_size = 'big'
+        self._password_edit.setFixedHeight(34)
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._password_edit)
@@ -258,6 +261,7 @@ class _SignUpScreen(KitVBoxLayout):
 
         self._password_edit2 = KitLineEdit()
         self._password_edit2.font_size = 'big'
+        self._password_edit2.setFixedHeight(34)
         self._password_edit2.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit2.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._password_edit2)
@@ -268,18 +272,22 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.addWidget(self._error_label)
 
         bottom_layout = KitHBoxLayout()
-        bottom_layout.setContentsMargins(0, 20, 0, 0)
+        bottom_layout.setContentsMargins(0, 10, 0, 10)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._main_layout.addWidget(bottom_layout)
 
-        self._button_back = KitButton("Назад")
-        self._button_back.setFixedSize(150, 30)
+        # self._button_back = KitButton("Назад")
+        self._button_back = KitIconButton('solid-arrow-left')
+        self._button_back.radius = 8
+        self._button_back.size = 50
+        self._button_back.setContentsMargins(10, 10, 10, 10)
+        # self._button_back.setFixedSize(150, 30)
         self._button_back.clicked.connect(self.backPressed.emit)
         bottom_layout.addWidget(self._button_back)
 
         self._button_sign_up = KitButton("Создать аккаунт")
         self._button_sign_up.radius = 8
-        self._button_sign_up.setFixedSize(150, 30)
+        self._button_sign_up.setFixedSize(200, 50)
         self._button_sign_up.clicked.connect(self.sign_up)
         bottom_layout.addWidget(self._button_sign_up)
 

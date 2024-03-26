@@ -108,7 +108,7 @@ class UpdateManager(QObject):
         return False
 
     @asyncSlot()
-    async def check_release(self, auto_update=True):
+    async def check_release(self, auto_update=True, say_if_no_release=False):
         try:
             downloaded_version = self._sm.get('downloaded_release', '')
             if not os.path.isfile(self.release_exe_path):
@@ -130,8 +130,20 @@ class UpdateManager(QObject):
                         ver = info.get('version', '')
                         looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
                         looper.finished.connect(lambda: self._ask_download(ver))
+                elif say_if_no_release:
+                    looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
+                    looper.finished.connect(self._on_no_release)
         except aiohttp.ClientConnectionError:
-            pass
+            if say_if_no_release:
+                looper = self._sm.run_process(lambda: sleep(0.1), 'update_prog_timer')
+                looper.finished.connect(self._on_connection_error)
+
+    def _on_no_release(self):
+        KitDialog.success(self._parent, "Обновление", f"Установлена последняя версия программы: {config.APP_VERSION}")
+
+    def _on_connection_error(self):
+        KitDialog.warning(self._parent, "Обновление", f"Не удалось проверить наличие обновления: "
+                                                      f"нет подключения к интернету")
 
     def _ask_download(self, version):
         if KitDialog.question(self._parent, f"Доступна новая версия программы: {version}. "
