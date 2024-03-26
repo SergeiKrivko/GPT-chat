@@ -25,6 +25,7 @@ class ChatPanel(KitHBoxLayout):
         self._um = um
         self._chat_manager = chat_manager
         self._chat_manager.newChat.connect(self._add_chat)
+        self._chat_manager.newChats.connect(self._add_chats)
         self._chat_manager.deleteChat.connect(self._on_chat_deleted)
         self._chat_manager.deleteRemoteChat.connect(self._on_remote_chat_deleted)
         # self._chat_manager.updateChat.connect(self._list_widget.sort_chats)
@@ -44,22 +45,13 @@ class ChatPanel(KitHBoxLayout):
         self._top_layout.setContentsMargins(8, 8, 8, 8)
         self._main_layout.addWidget(self._top_layout)
 
-        group = KitHGroup()
-        group.border = 0
-        group.height = 36
-        self._top_layout.addWidget(group)
-
         self._button_add = KitIconButton('solid-plus')
         self._button_add.size = 36
+        self._button_add.border = 0
         self._button_add.setContentsMargins(3, 3, 3, 3)
         self._button_add.main_palette = 'Bg'
         self._button_add.clicked.connect(lambda: self._new_chat())
-        group.addItem(self._button_add)
-
-        self._button_add_special = KitIconButton(icon='solid-chevron-down')
-        self._button_add_special.main_palette = 'Bg'
-        self._button_add_special.setMenu(NewChatMenu(self, self._new_chat))
-        group.addItem(self._button_add_special)
+        self._top_layout.addWidget(self._button_add)
 
         self._button_settings = KitIconButton('solid-gear')
         self._button_settings.size = 36
@@ -150,7 +142,7 @@ class ChatPanel(KitHBoxLayout):
     def _new_chat(self, chat_type=GPTChat.SIMPLE):
         self._chat_manager.new_chat(chat_type)
 
-    def _add_chat(self, chat):
+    def _add_chat(self, chat, no_sort=False):
         self.chats[chat.id] = chat
 
         chat_widget = ChatWidget(self.sm, self._chat_manager, self._um, chat)
@@ -160,7 +152,13 @@ class ChatPanel(KitHBoxLayout):
         self.addWidget(chat_widget, 2)
         self.chat_widgets[chat.id] = chat_widget
 
-        self._list_widget.add_item(chat)
+        self._list_widget.add_item(chat, no_sort=no_sort)
+
+    def _add_chats(self, chats: list):
+        for i in range(len(chats) - 1):
+            self._add_chat(chats[i], no_sort=True)
+        if chats:
+            self._add_chat(chats[-1])
 
     def _delete_chat(self, chat_id):
         if chat_id == self.current:
@@ -243,33 +241,3 @@ class ChatPanel(KitHBoxLayout):
     def _apply_theme(self):
         rerender_all(self._tm)
         super()._apply_theme()
-        self._button_add_special.setFixedSize(20, 36)
-
-
-class NewChatMenu(KitMenu):
-    def __init__(self, parent, func):
-        super().__init__(parent)
-        self.func = func
-
-        action = self.addAction("Обычный диалог", 'solid-message')
-        action.triggered.connect(lambda: func(GPTChat.SIMPLE))
-
-        action = self.addAction("Переводчик", 'solid-language')
-        action.triggered.connect(lambda: func(GPTChat.TRANSLATE))
-
-        action = self.addAction("Краткое содержание", 'solid-language')
-        action.triggered.connect(lambda: func(GPTChat.SUMMARY))
-
-
-class ChatLoader(QThread):
-    addChat = pyqtSignal(GPTChat)
-
-    def __init__(self, chats: list[GPTChat], first=None):
-        super().__init__()
-        self._chats: chats = chats
-        self._first = first
-
-    def run(self) -> None:
-        for c in self._chats:
-            self.addChat.emit(c)
-            sleep(0.05)

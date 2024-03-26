@@ -1,6 +1,7 @@
 import asyncio
 from uuid import uuid4
 
+import aiohttp
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from qasync import asyncSlot
 
@@ -11,11 +12,13 @@ from src.gpt.chat import GPTChat
 
 class ChatManager(QObject):
     newChat = pyqtSignal(object)
+    newChats = pyqtSignal(list)
     deleteChat = pyqtSignal(object)
     deleteRemoteChat = pyqtSignal(object)
     updateChat = pyqtSignal(object)
     newMessage = pyqtSignal(object, object)
     deleteMessage = pyqtSignal(object, object)
+    connectionErrorOccurred = pyqtSignal()
 
     def __init__(self, sm):
         super().__init__()
@@ -57,18 +60,19 @@ class ChatManager(QObject):
                 self._sm.run_process(looper, 'firebase-events')
 
     async def _load_chats(self):
-        for chat in self._database.chats:
-            await asyncio.sleep(0.1)
-            self.newChat.emit(chat)
-            if chat.remote_id and self._firebase.authorized:
-                flag = await self._firebase.get(f'chats/{chat.remote_id}')
-                if not flag:
-                    self.deleteRemoteChat.emit(chat)
+        self.newChats.emit(self._database.chats)
 
         if self._firebase.authorized:
             looper = ChatsLooper(self._firebase)
             looper.event.connect(self._on_remote_chats)
             self._sm.run_process(looper, 'firebase-chats')
+
+            for chat in self._database.chats:
+                if not chat.remote_id:
+                    continue
+                flag = await self._firebase.get(f'chats/{chat.remote_id}')
+                if not flag:
+                    self.deleteRemoteChat.emit(chat)
 
     def _on_remote_chats(self, path, data):
         if path == '/':
@@ -151,7 +155,6 @@ class ChatManager(QObject):
                 mes = chat.get_message_by_remote_id(el)
                 if mes:
                     reply.append(mes.id)
-            print(reply)
             message = chat.add_message(data['role'], data['content'], reply)
             message.replied_count = data.get('links') - 1
             message.remote_id = message_remote_id
@@ -178,7 +181,11 @@ class ChatManager(QObject):
         if chat is None:
             return
 
-        await self.delete_remote_copy(chat)
+        try:
+            await self.delete_remote_copy(chat)
+        except aiohttp.ClientConnectionError:
+            self.connectionErrorOccurred.emit()
+            return
 
         chat.delete()
         self.deleteChat.emit(chat_id)
@@ -191,7 +198,7 @@ class ChatManager(QObject):
         if chat.remote_id:
             try:
                 message.remote_id = str(uuid4())
-                chat.remote_last += 1
+                chat.remote_last = (chat.remote_last or 0) + 1
                 await self._firebase.set(f'messages/{chat.remote_id}/{message.remote_id}', message.to_dict())
                 await self._firebase.set(f'events/{chat.remote_id}/{chat.remote_last}', ['add', message.remote_id])
                 await self._firebase.set(f'events/{chat.remote_id}-last', chat.remote_last)
@@ -287,6 +294,8 @@ class ChatManager(QObject):
 
     async def delete_remote_copy(self, chat: GPTChat):
         remote_id = chat.remote_id
+        if not remote_id:
+            return
         chat.remote_id = None
         self._database.commit()
         try:
@@ -295,7 +304,12 @@ class ChatManager(QObject):
             await self._firebase.delete(f'events/{remote_id}')
             await self._firebase.delete(f'events/{remote_id}-last')
         except FirebaseError:
-            pass
+            chat.remote_id = remote_id
+            self._database.commit()
+        except aiohttp.ClientConnectionError as ex:
+            chat.remote_id = remote_id
+            self._database.commit()
+            raise ex
 
 
 class Looper(QThread):

@@ -276,21 +276,10 @@ class GPTChat:
             if el not in ids:
                 ids.insert(0, el)
 
-        return self.system_prompts() + [GPTMessage(self._db, self.id, message_id).to_json() for message_id in ids]
+        return [GPTMessage(self._db, self.id, message_id).to_json() for message_id in ids]
 
     def delete(self):
         self._db.cursor.execute(f"""DELETE FROM Chats WHERE id = {self._id}""")
         self._db.cursor.execute(f"""DROP TABLE IF EXISTS Messages{self._id}""")
         self._db.commit()
-
-    def system_prompts(self):
-        match self.type:
-            case GPTChat.SIMPLE:
-                return []
-            case GPTChat.TRANSLATE:
-                return [{'role': 'system', 'content': f"You translate messages from {self.type_data['language1']} to "
-                                                      f"{self.type_data['language2']} or vice versa. ONLY TRANSLATE!"}]
-            case GPTChat.SUMMARY:
-                return [{'role': 'system', 'content': "You compose a summary of the messages sent to you using"
-                                                      " russian language"}]
 

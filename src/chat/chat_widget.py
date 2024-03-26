@@ -355,7 +355,7 @@ class ChatWidget(KitVBoxLayout):
         self._chat._db.commit()
 
     def _on_gpt_error(self, ex):
-        KitDialog.danger(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}")
+        KitDialog.danger(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
 
     def _set_tm(self, tm):
         super()._set_tm(tm)

@@ -1,7 +1,7 @@
 import shutil
 
 from PyQt6.QtGui import QIcon
-from PyQtUIkit.widgets import KitMainWindow
+from PyQtUIkit.widgets import KitMainWindow, KitDialog
 
 from src import config
 from src.chat.panel import ChatPanel
@@ -23,6 +23,7 @@ class MainWindow(KitMainWindow):
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'grey')}")
 
         self.chat_manager = ChatManager(self.sm)
+        self.chat_manager.connectionErrorOccurred.connect(self._on_connection_error)
         self.chat_manager.auth()
 
         self._update_manager = UpdateManager(self.sm, self)
@@ -49,7 +50,5 @@ class MainWindow(KitMainWindow):
             pass
         super().closeEvent(a0)
 
-    # def set_theme(self):
-    #     rerender_all(self.tm)
-    #     self.setStyleSheet(self.tm.bg_style_sheet)
-    #     self._chat_widget.set_theme()
+    def _on_connection_error(self):
+        KitDialog.danger(self, "Ошибка", "Не удалось выполнить действие. Проверьте подключение к интернету.")

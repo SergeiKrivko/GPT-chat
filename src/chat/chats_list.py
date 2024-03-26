@@ -68,7 +68,7 @@ class GPTListWidget(KitScrollArea):
                 item.setChecked(False)
         self.currentItemChanged.emit(chat_id)
 
-    def add_item(self, chat: GPTChat):
+    def add_item(self, chat: GPTChat, no_sort=False):
         item = GPTListWidgetItem(self._tm, chat)
         item.selected.connect(self._on_item_selected)
         item.deleteRequested.connect(self.deleteItem)
@@ -76,8 +76,9 @@ class GPTListWidget(KitScrollArea):
         chat_id = chat.id
         self._items[chat_id] = item
         self._layout.addWidget(item)
-        self._set_items_width()
-        self.sort_chats()
+        if not no_sort:
+            self._set_items_width()
+            self.sort_chats()
 
     def pin_chat(self, chat_id):
         self.sort_chats()
@@ -141,7 +142,7 @@ class GPTListWidgetItem(KitButton):
         main_layout.setContentsMargins(7, 2, 7, 2)
         self.setLayout(main_layout)
 
-        self._icon_label = KitIconWidget()
+        self._icon_label = KitIconWidget('regular-message')
         self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
@@ -180,20 +181,13 @@ class GPTListWidgetItem(KitButton):
         return f"ChatItem({self.chat.id}, {self.chat.get_sort_key()})"
 
     def update_name(self):
-        icons = {
-            GPTChat.SIMPLE: 'regular-message',
-            GPTChat.TRANSLATE: 'solid-language',
-            GPTChat.SUMMARY: 'solid-language',
-        }
-        self._icon_label.icon = icons.get(self.chat.type, 'regular-message')
-
         self._icon_pinned.setHidden(not self.chat.pinned)
         self._icon_remote.setHidden(not self.chat.remote_id)
 
         if self.chat.name and self.chat.name.strip():
             self._name_label.setText(self.chat.name)
         else:
-            self._name_label.setText('<Новый диалог>')
+            self._name_label.setText('<Новый чат>')
 
         if self.chat.last_message:
             self._last_message_label.setText(self.chat.last_message.content)
