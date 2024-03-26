@@ -76,6 +76,7 @@ def upload_version():
           f"{quote(f'releases/{version_file()}', safe='')}{f'?auth={token}' if token else ''}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
+        'size': os.path.getsize(release_file()),
     }, indent=2).encode('utf-8'))
     if not resp.ok:
         raise Exception(resp.text)
