@@ -3,11 +3,12 @@ from PyQt6.QtGui import QFontMetrics, QIcon, QTextCursor, QFont
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy, QLabel, QPushButton
 from PyQtUIkit.widgets import *
 from googletrans import LANGUAGES
+from qasync import asyncSlot
 
 from src.chat.render_latex import render_latex, delete_image
 from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
-from src.gpt.translate import translate, detect
+from src.gpt.translate import async_translate, async_detect
 
 
 class ChatBubble(KitHBoxLayout):
@@ -135,8 +136,9 @@ class ChatBubble(KitHBoxLayout):
             case ContextMenu.SHOW_ORIGINAL:
                 self._show_original_message()
 
-    def _translate_message(self, dest='ru'):
-        res = translate(self._text_edit.toMarkdown(), dest)
+    @asyncSlot()
+    async def _translate_message(self, dest='ru'):
+        res = await async_translate(self._text_edit.toMarkdown(), dest)
         self._translated_widget.set_src(res.src)
         self._translated_widget.show()
         self._text_edit.setMarkdown(res.text)
@@ -219,10 +221,6 @@ class ContextMenu(KitMenu):
         super().__init__(parent)
         self.action = None
         self.data = None
-        try:
-            message_lang = detect(bubble.message.content).lang
-        except Exception:
-            message_lang = None
 
         action = self.addAction('Ответить', 'solid-reply')
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
@@ -245,19 +243,29 @@ class ContextMenu(KitMenu):
 
         self.addSeparator()
 
-        if message_lang:
-            if message_lang != 'ru':
-                action = self.addAction('Перевести на русский', 'solid-language')
-                action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, 'ru'))
+        if bubble.translated:
+            action = self.addAction('Показать оригинал')
+            action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
-            menu = self.addMenu('Перевести на ...', 'solid-language')
-            for key, item in LANGUAGES.items():
-                action = menu.addAction(item)
-                action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
+        menu = self.addMenu('Перевести на ...', 'solid-language')
+        for key, item in LANGUAGES.items():
+            action = menu.addAction(item)
+            action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
 
-            if bubble.translated:
-                action = self.addAction('Показать оригинал')
-                action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
+        self.detect_lang(bubble.message.content)
+
+    @asyncSlot()
+    async def detect_lang(self, text):
+        try:
+            message_lang = await async_detect(text)
+            message_lang = message_lang.lang
+        except Exception:
+            message_lang = None
+
+        if message_lang != 'ru':
+            action = self.addAction('Перевести на русский', 'solid-language')
+            action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, 'ru'))
+            self._apply_theme()
 
     def set_action(self, action, data=None):
         self.action = action

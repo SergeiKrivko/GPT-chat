@@ -71,7 +71,7 @@ class SettingsManager(QObject):
     def set(self, key, value):
         self.q_settings.setValue(key, value)
 
-    def run_process(self, thread: QThread | FunctionType | LambdaType, name: str):
+    def run_process(self, thread: QThread | FunctionType | LambdaType, name: str) -> QThread:
         if not isinstance(thread, QThread):
             thread = Looper(thread)
 

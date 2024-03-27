@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QApplication
 from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
     KitMenu, KitDialog
 from googletrans import LANGUAGES
+from qasync import asyncSlot
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
 from src.chat.reply_widget import ReplyList
@@ -15,7 +16,7 @@ from src.database import ChatManager
 from src.gpt import gpt
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
-from src.gpt.translate import translate, detect
+from src.gpt.translate import async_translate, async_detect
 
 
 class ChatWidget(KitVBoxLayout):
@@ -291,7 +292,12 @@ class ChatWidget(KitVBoxLayout):
             case _SendMessageContextMenu.SEND_WITHOUT_REQUEST:
                 self.send_message(False)
             case _SendMessageContextMenu.TRANSLATE:
-                self._text_edit.setText(translate(self._text_edit.toPlainText(), menu.data).text)
+                self.translate(menu.data)
+
+    @asyncSlot()
+    async def translate(self, lang):
+        res = await async_translate(self._text_edit.toPlainText(), lang)
+        self._text_edit.setText(res.text)
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:
@@ -451,11 +457,7 @@ class _SendMessageContextMenu(KitMenu):
         super().__init__(parent)
         self.action = None
         self.data = None
-        self.__height = 56
-        try:
-            message_lang = detect(text).lang
-        except Exception:
-            message_lang = None
+        self.__height = 56 + 33
 
         action = self.addAction('Отправить', 'solid-paper-plane')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
@@ -465,9 +467,22 @@ class _SendMessageContextMenu(KitMenu):
 
         self.addSeparator()
 
-        if message_lang:
-            self.__height += 33
+        menu = self.addMenu('Перевести на ...', 'solid-language')
+        for key, item in LANGUAGES.items():
+            action = menu.addAction(item)
+            action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
 
+        self.detect_lang(text)
+
+    @asyncSlot()
+    async def detect_lang(self, text):
+        try:
+            message_lang = await async_detect(text)
+            message_lang = message_lang.lang
+        except Exception:
+            message_lang = None
+
+        if message_lang:
             if message_lang != 'ru':
                 self.__height += 24
                 action = self.addAction('Перевести на русский', 'solid-language')
@@ -478,10 +493,7 @@ class _SendMessageContextMenu(KitMenu):
                 action = self.addAction('Перевести на английский', 'solid-language')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
 
-            menu = self.addMenu('Перевести на ...', 'solid-language')
-            for key, item in LANGUAGES.items():
-                action = menu.addAction(item)
-                action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
+            self._apply_theme()
 
     def get_height(self):
         return self.__height
