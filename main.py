@@ -3,6 +3,7 @@ import sys
 
 from src import config
 from src.commands import read_json
+from src.macos_sert import sert
 
 
 def main():
@@ -73,6 +74,8 @@ def run_app():
     from qasync import QEventLoop, QApplication
 
     from src.ui.main_window import MainWindow
+
+    sert()
 
     app = QApplication([])
     app.setOrganizationName(config.ORGANISATION_NAME)
