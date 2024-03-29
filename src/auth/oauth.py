@@ -10,13 +10,14 @@ from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
 from src import config
+from src.settings_manager import SettingsManager
 
 
 class OAuthScreen(KitVBoxLayout):
     signedIn = pyqtSignal()
     backPressed = pyqtSignal()
 
-    def __init__(self, sm):
+    def __init__(self, sm: SettingsManager):
         super().__init__()
         self._sm = sm
         self._provider = ''
@@ -136,8 +137,33 @@ class OAuthScreen(KitVBoxLayout):
         match provider:
             case 'github':
                 self.auth_with_github()
+            case 'google':
+                self.auth_with_google()
             case _:
                 KitDialog.warning(self, "Ошибка", "Данный метод авторизации пока не поддерживается")
+
+    @asyncSlot()
+    async def auth_with_google(self):
+        try:
+            from google_auth_oauthlib.flow import InstalledAppFlow
+            from googleapiclient.discovery import build
+
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'client_secrets.json',
+                scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email',
+                        'https://www.googleapis.com/auth/userinfo.profile'])
+
+            def run_local_server():
+                flow.run_local_server(port=2000)
+                self._provider_data = f"id_token={flow.oauth2session.token['id_token']}&providerId=google.com"
+
+            thread = self._sm.run_process(run_local_server, 'oauth-google')
+            thread.finished.connect(lambda: self.sign_in())
+
+        except aiohttp.ClientConnectionError:
+            self.show_error("Нет подключения к интернету")
+        except Exception as ex:
+            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
 
     @asyncSlot()
     async def auth_with_github(self):
@@ -179,6 +205,10 @@ class OAuthScreen(KitVBoxLayout):
         except Exception as ex:
             self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
 
+    @asyncSlot()
+    async def sign_in(self):
+        await self._sign_in()
+
     async def _sign_in(self):
         try:
             async with aiohttp.ClientSession() as session:
@@ -202,6 +232,7 @@ class OAuthScreen(KitVBoxLayout):
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
+                        print(res.get('error', dict()).get('message'))
                         self.show_error(res.get('error', dict()).get('message'))
         except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
