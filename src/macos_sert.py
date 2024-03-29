@@ -12,6 +12,8 @@ def sert():
     if sys.platform != 'darwin':
         return
 
+    # cacert.pem
+
     openssl_dir, openssl_cafile = os.path.split(
         ssl.get_default_verify_paths().openssl_cafile)
 

@@ -34,7 +34,7 @@ class ChatBubble(KitHBoxLayout):
                                 else Qt.LayoutDirection.RightToLeft)
         self.setAlignment(Qt.AlignmentFlag.AlignTop |
                           Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(10, 3, 10, 3)
 
         self._bubble_widget = KitVBoxLayout()
         self._bubble_widget.main_palette = 'UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'

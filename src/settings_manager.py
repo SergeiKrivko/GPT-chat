@@ -4,18 +4,17 @@ from types import FunctionType, LambdaType
 import aiohttp
 import appdirs
 from PyQt6.QtCore import QSettings, QObject, QThread
-from PyQt6.QtWidgets import QApplication
+from PyQtUIkit.widgets import KitAsyncApplication
 from qasync import asyncSlot
 
 from src import config
 
 
 class SettingsManager(QObject):
-    def __init__(self, app: QApplication):
+    def __init__(self):
         super().__init__()
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
-        self.app = app
-        self.q_settings = QSettings()
+        self.q_settings = QSettings(config.ORGANISATION_NAME, config.APP_NAME)
         self.app_data_dir = appdirs.user_data_dir(config.APP_NAME, config.ORGANISATION_NAME).replace('\\', '/')
 
         self._background_processes = dict()
@@ -96,7 +95,7 @@ class SettingsManager(QObject):
             item.terminate()
 
     def copy_text(self, text):
-        self.app.clipboard().setText(text)
+        KitAsyncApplication.clipboard().setText(text)
 
 
 class Looper(QThread):

@@ -1,9 +1,9 @@
-import asyncio
 import sys
+
+from PyQtUIkit.widgets import KitAsyncApplication
 
 from src import config
 from src.commands import read_json
-from src.macos_sert import sert
 
 
 def main():
@@ -71,31 +71,14 @@ def except_hook(cls, exception, traceback):
 
 
 def run_app():
-    from qasync import QEventLoop, QApplication
-
     from src.ui.main_window import MainWindow
 
-    sert()
-
-    app = QApplication([])
+    app = KitAsyncApplication(MainWindow)
     app.setOrganizationName(config.ORGANISATION_NAME)
     app.setOrganizationDomain(config.ORGANISATION_URL)
     app.setApplicationName(config.APP_NAME)
     app.setApplicationVersion(config.APP_VERSION)
-
-    event_loop = QEventLoop(app)
-    asyncio.set_event_loop(event_loop)
-
-    app_close_event = asyncio.Event()
-    app.aboutToQuit.connect(app_close_event.set)
-
-    window = MainWindow(app)
-    window.show()
-    # window.set_theme()
-    sys.excepthook = except_hook
-
-    with event_loop:
-        event_loop.run_until_complete(app_close_event.wait())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

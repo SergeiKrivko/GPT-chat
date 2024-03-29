@@ -23,6 +23,7 @@ class ChatSettingsWindow(KitDialog):
 
         main_layout = KitVBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(8)
         self.setWidget(main_layout)
 
         self._theme_checkbox = KitCheckBox("Темная тема")
@@ -32,7 +33,7 @@ class ChatSettingsWindow(KitDialog):
         main_layout.addWidget(self._theme_checkbox)
 
         layout = KitHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 
@@ -83,7 +84,6 @@ class ChatSettingsWindow(KitDialog):
         main_layout.addWidget(self._model_box)
 
         layout = KitHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 

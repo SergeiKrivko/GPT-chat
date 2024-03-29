@@ -1,12 +1,16 @@
 import asyncio
 import json
+from time import time
 
 import aiohttp
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QUrl
+from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtNetworkAuth import QOAuth2AuthorizationCodeFlow, QOAuthHttpServerReplyHandler
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
 from src import config
+from src.auth.oauth import OAuthScreen
 
 
 class AuthenticationWindow(KitDialog):
@@ -15,76 +19,78 @@ class AuthenticationWindow(KitDialog):
         self._sm = sm
         self.name = "Авторизация"
 
-        self.setFixedSize(400, 380)
+        self.setFixedSize(400, 400)
 
-        main_layout = KitHBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        self.setWidget(main_layout)
+        self._main_layout = KitTabLayout()
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setWidget(self._main_layout)
 
         authorized = self._sm.get('user_id') and self._sm.get('user_email') and self._sm.get('user_token')
 
         self._sign_in_screen = _SignInScreen(self._sm)
         self._sign_in_screen.signedIn.connect(self._on_signed_in)
         self._sign_in_screen.signUpPressed.connect(self._on_sign_up_pressed)
-        if authorized:
-            self._sign_in_screen.hide()
-        main_layout.addWidget(self._sign_in_screen)
+        self._sign_in_screen.oauthRequested.connect(self._on_oauth_requested)
+        self._main_layout.addWidget(self._sign_in_screen)
 
         self._sign_up_screen = _SignUpScreen(self._sm)
         self._sign_up_screen.signedUp.connect(self._on_signed_in)
         self._sign_up_screen.backPressed.connect(self._on_sign_up_stopped)
-        self._sign_up_screen.hide()
-        main_layout.addWidget(self._sign_up_screen)
+        self._main_layout.addWidget(self._sign_up_screen)
 
         self._verify_email_screen = _VerifyEmailScreen(self._sm)
         self._verify_email_screen.emailVerified.connect(self._on_email_verified)
         self._verify_email_screen.backPressed.connect(self._on_sign_up_stopped)
         self._verify_email_screen.hide()
-        main_layout.addWidget(self._verify_email_screen)
+        self._main_layout.addWidget(self._verify_email_screen)
+
+        self._oauth_screen = OAuthScreen(self._sm)
+        self._oauth_screen.signedIn.connect(self._on_signed_in)
+        self._oauth_screen.backPressed.connect(self._on_sign_up_stopped)
+        self._main_layout.addWidget(self._oauth_screen)
 
         self._signed_screen = _SignedScreen(self._sm)
         self._signed_screen.exitAccount.connect(self._on_exit_account)
-        if not authorized:
-            self._signed_screen.hide()
-        main_layout.addWidget(self._signed_screen)
+        self._main_layout.addWidget(self._signed_screen)
+
+        if authorized:
+            self._main_layout.setCurrent(4)
 
     def _on_exit_account(self):
-        self._signed_screen.hide()
-        self._sign_in_screen.show()
+        self._main_layout.setCurrent(0)
 
     def _on_signed_in(self):
         self._on_signed_in_async()
 
     @asyncSlot()
     async def _on_signed_in_async(self):
-        self._sign_up_screen.hide()
-        self._sign_in_screen.hide()
-
         email_verified = await _VerifyEmailScreen.check_email_verified(self._sm.get('user_token'))
         if email_verified:
             self._on_email_verified()
         else:
+            self._main_layout.setCurrent(2)
             self._verify_email_screen.update_user()
             self._verify_email_screen.show()
 
     def _on_email_verified(self):
-        self._verify_email_screen.hide()
         self._signed_screen.update_account()
-        self._signed_screen.show()
+        self._main_layout.setCurrent(4)
 
     def _on_sign_up_stopped(self):
-        self._sign_up_screen.hide()
-        self._verify_email_screen.hide()
-        self._sign_in_screen.show()
+        self._main_layout.setCurrent(0)
+
+    def _on_oauth_requested(self, provider):
+        self._main_layout.setCurrent(3)
+        self._oauth_screen.auth(provider)
 
     def _on_sign_up_pressed(self):
-        self._sign_in_screen.hide()
-        self._sign_up_screen.show()
+        self._main_layout.setCurrent(1)
 
 
 class _SignInScreen(KitVBoxLayout):
     signedIn = pyqtSignal()
     signUpPressed = pyqtSignal()
+    oauthRequested = pyqtSignal(str)
 
     def __init__(self, sm):
         super().__init__()
@@ -94,8 +100,8 @@ class _SignInScreen(KitVBoxLayout):
         self.setSpacing(5)
 
         self._main_layout = KitVBoxLayout()
+        self._main_layout.setSpacing(6)
         self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._main_layout.setContentsMargins(0, 0, 0, 0)
         self.addWidget(self._main_layout)
 
         label = KitLabel("Email:")
@@ -147,6 +153,18 @@ class _SignInScreen(KitVBoxLayout):
         self._button_sign_up.clicked.connect(self.signUpPressed.emit)
         self._button_sign_up.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._main_layout.addWidget(self._button_sign_up)
+
+        oauth_layout = KitHBoxLayout()
+        oauth_layout.setSpacing(6)
+        oauth_layout.addWidget(label := KitLabel("Войти через:"))
+        label.setWordWrap(True)
+        self._main_layout.addWidget(oauth_layout)
+
+        for el in ['google', 'github', 'apple', 'microsoft']:
+            button = KitIconButton(f'brands-{el}')
+            button.size = 40
+            button.clicked.connect(lambda x,  provider=el: self.oauthRequested.emit(provider))
+            oauth_layout.addWidget(button)
 
         self._spinner = KitHBoxLayout()
         self.addWidget(self._spinner)
@@ -233,7 +251,7 @@ class _SignUpScreen(KitVBoxLayout):
         self.setSpacing(5)
 
         self._main_layout = KitVBoxLayout()
-        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self._main_layout.setSpacing(6)
         self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.addWidget(self._main_layout)
 
@@ -273,6 +291,7 @@ class _SignUpScreen(KitVBoxLayout):
 
         bottom_layout = KitHBoxLayout()
         bottom_layout.setContentsMargins(0, 10, 0, 10)
+        bottom_layout.setSpacing(6)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._main_layout.addWidget(bottom_layout)
 
@@ -409,6 +428,7 @@ class _VerifyEmailScreen(KitVBoxLayout):
             async with session.post(request_ref, data=data) as resp:
                 res = await resp.text()
                 if not resp.ok:
+                    print(res)
                     raise aiohttp.ClientConnectionError
         return json.loads(res)
 

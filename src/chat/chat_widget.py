@@ -46,7 +46,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_back.size = 36
         self._button_back.main_palette = 'Bg'
         self._button_back.border = 0
-        self._button_back.setContentsMargins(3, 3, 3, 3)
+        # self._button_back.setContentsMargins(3, 3, 3, 3)
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         self._top_layout.addWidget(self._button_back)
 
@@ -57,7 +57,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_search.size = 36
         self._button_search.main_palette = 'Bg'
         self._button_search.border = 0
-        self._button_search.setContentsMargins(3, 3, 3, 3)
+        # self._button_search.setContentsMargins(3, 3, 3, 3)
         self._button_search.clicked.connect(self._show_search)
         self._button_search.setCheckable(True)
         self._top_layout.addWidget(self._button_search)
@@ -66,7 +66,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
-        self._button_settings.setContentsMargins(3, 3, 3, 3)
+        # self._button_settings.setContentsMargins(3, 3, 3, 3)
         self._button_settings.clicked.connect(self._open_settings)
         self._top_layout.addWidget(self._button_settings)
 
@@ -88,7 +88,6 @@ class ChatWidget(KitVBoxLayout):
 
         self._scroll_layout = KitVBoxLayout()
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_layout.addWidget(self._scroll_layout)
 
         self._progress_marker = KitLabel("GPT печатает...")
@@ -113,7 +112,6 @@ class ChatWidget(KitVBoxLayout):
         self._text_bubble.addWidget(self._reply_list)
 
         bottom_layout = KitHBoxLayout()
-        bottom_layout.setContentsMargins(0, 0, 0, 0)
         self._text_bubble.addWidget(bottom_layout)
 
         self._text_edit = ChatInputArea()
@@ -135,7 +133,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_scroll.size = 36
         self._button_scroll.main_palette = 'Bg'
         self._button_scroll.border = 0
-        self._button_scroll.setContentsMargins(7, 7, 7, 7)
+        self._button_scroll.setContentsMargins(3, 3, 3, 3)
         self._button_scroll.radius = self._button_scroll.size // 2
         self._scroll_area.resized.connect(
             lambda: self._button_scroll.move(self._scroll_area.width() - 51, self._scroll_area.height() - 46))
@@ -424,6 +422,7 @@ class _ScrollWidget(KitVBoxLayout):
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
+        self.setContentsMargins(0, 7, 0, 7)
         self.resized.emit()
 
 

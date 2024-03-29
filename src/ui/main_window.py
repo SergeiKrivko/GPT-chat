@@ -14,12 +14,12 @@ from src.ui.update_manager import UpdateManager
 
 
 class MainWindow(KitMainWindow):
-    def __init__(self, app):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
         self.setWindowIcon(QIcon('icon.png'))
 
-        self.sm = SettingsManager(app)
+        self.sm = SettingsManager()
         for key, item in THEMES.items():
             self.theme_manager.add_theme(key, item)
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")

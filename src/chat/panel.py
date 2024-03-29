@@ -1,9 +1,8 @@
 import asyncio
 import shutil
-from time import sleep
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitHGroup, KitMenu, KitDialog
+from PyQt6.QtCore import Qt
+from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitDialog
 from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
@@ -13,7 +12,7 @@ from src.chat.settings_window import ChatSettingsWindow
 from src.database import ChatManager
 from src.gpt.chat import GPTChat
 from src.settings_manager import SettingsManager
-from src.ui.authentication_window import AuthenticationWindow
+from src.auth.authentication_window import AuthenticationWindow
 
 
 class ChatPanel(KitHBoxLayout):
@@ -43,19 +42,18 @@ class ChatPanel(KitHBoxLayout):
         self._top_layout = KitHBoxLayout()
         self._top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._top_layout.setContentsMargins(8, 8, 8, 8)
+        self._top_layout.setSpacing(4)
         self._main_layout.addWidget(self._top_layout)
 
         self._button_add = KitIconButton('solid-plus')
         self._button_add.size = 36
         self._button_add.border = 0
-        self._button_add.setContentsMargins(3, 3, 3, 3)
         self._button_add.main_palette = 'Bg'
         self._button_add.clicked.connect(lambda: self._new_chat())
         self._top_layout.addWidget(self._button_add)
 
         self._button_settings = KitIconButton('solid-gear')
         self._button_settings.size = 36
-        self._button_settings.setContentsMargins(3, 3, 3, 3)
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
         self._button_settings.clicked.connect(self._open_settings)
@@ -63,7 +61,6 @@ class ChatPanel(KitHBoxLayout):
 
         self._button_user = KitIconButton('solid-user')
         self._button_user.size = 36
-        self._button_user.setContentsMargins(3, 3, 3, 3)
         self._button_user.main_palette = 'Bg'
         self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
@@ -71,7 +68,6 @@ class ChatPanel(KitHBoxLayout):
 
         self._button_search = KitIconButton('solid-magnifying-glass')
         self._button_search.size = 36
-        self._button_search.setContentsMargins(3, 3, 3, 3)
         self._button_search.main_palette = 'Bg'
         self._button_search.border = 0
         self._button_search.clicked.connect(self._show_search)

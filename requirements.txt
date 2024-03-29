@@ -10,4 +10,5 @@ Brotli
 platformdirs
 undetected-chromedriver~=3.5.5
 googletrans==3.1.0a0
-PyQtUIkit~=1.2.10
+PyQtUIkit~=1.4.1
+PyQt6-NetworkAuth~=6.6.0
