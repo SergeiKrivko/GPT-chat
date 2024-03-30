@@ -165,7 +165,6 @@ class OAuthScreen(KitVBoxLayout):
         except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
         except Exception as ex:
-            print(ex)
             self.show_error(f"{ex.__class__.__name__}: {ex}")
 
     @asyncSlot()

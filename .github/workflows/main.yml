@@ -25,6 +25,7 @@ jobs:
 
       - name: Build by Pyinstaller
         run: |
+          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           venv\Scripts\Activate.ps1
           pyinstaller --noconfirm GPT-chat.spec
 
@@ -73,6 +74,7 @@ jobs:
       - name: Build by Pyinstaller
         id: build
         run: |
+          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           source venv/bin/activate
           pyinstaller --noconfirm GPT-chat.spec
           cd src
@@ -127,6 +129,7 @@ jobs:
 
       - name: Build by Pyinstaller
         run: |
+          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           source venv/bin/activate
           pyinstaller --noconfirm GPT-chat.spec
           rm -rf dist/GPT-chat
