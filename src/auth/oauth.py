@@ -97,7 +97,7 @@ class OAuthScreen(KitVBoxLayout):
         self._error_line = KitLabel()
         self._error_line.main_palette = 'DangerText'
         link.addWidget(self._error_line)
-        
+
         button = KitButton("Войти")
         button.setFixedSize(256, 50)
         button.clicked.connect(lambda: self._try_link())
@@ -145,13 +145,15 @@ class OAuthScreen(KitVBoxLayout):
     @asyncSlot()
     async def auth_with_google(self):
         try:
-            from google_auth_oauthlib.flow import InstalledAppFlow
-            from googleapiclient.discovery import build
+            if not config.SECRET_DATA:
+                self.show_error("Авторизация через Google не поддерживается в данной версии приложения")
+                return
 
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'client_secrets.json',
-                scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email',
-                        'https://www.googleapis.com/auth/userinfo.profile'])
+            from google_auth_oauthlib.flow import InstalledAppFlow
+
+            flow = InstalledAppFlow.from_client_config(
+                config.GOOGLE_OAUTH_SECRETS,
+                scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'])
 
             def run_local_server():
                 flow.run_local_server(port=2000)
@@ -163,7 +165,8 @@ class OAuthScreen(KitVBoxLayout):
         except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
         except Exception as ex:
-            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+            print(ex)
+            self.show_error(f"{ex.__class__.__name__}: {ex}")
 
     @asyncSlot()
     async def auth_with_github(self):
@@ -203,7 +206,7 @@ class OAuthScreen(KitVBoxLayout):
         except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
         except Exception as ex:
-            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+            self.show_error(f"{ex.__class__.__name__}: {ex}")
 
     @asyncSlot()
     async def sign_in(self):
@@ -237,7 +240,7 @@ class OAuthScreen(KitVBoxLayout):
         except aiohttp.ClientConnectionError:
             self.show_error("Нет подключения к интернету")
         except Exception as ex:
-            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+            self.show_error(f"{ex.__class__.__name__}: {ex}")
 
     @asyncSlot()
     async def _try_link(self):
