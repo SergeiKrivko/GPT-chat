@@ -1,11 +1,8 @@
 import asyncio
 import json
-from time import time
 
 import aiohttp
-from PyQt6.QtCore import Qt, pyqtSignal, QUrl
-from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtNetworkAuth import QOAuth2AuthorizationCodeFlow, QOAuthHttpServerReplyHandler
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
