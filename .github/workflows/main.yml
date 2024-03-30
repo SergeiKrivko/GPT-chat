@@ -24,9 +24,11 @@ jobs:
           python -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Build by Pyinstaller
+        env:
+          SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
-          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           venv\Scripts\Activate.ps1
+          python -c "print(__import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
 
       - name: Fix Qt6, Update setup.iss
@@ -73,9 +75,11 @@ jobs:
 
       - name: Build by Pyinstaller
         id: build
+        env:
+          SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
-          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           source venv/bin/activate
+          python -c "print(__import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
           cd src
           python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
@@ -128,9 +132,11 @@ jobs:
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Build by Pyinstaller
+        env:
+          SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
-          echo ${{ secrets.SECRET_CONFIG }} > src/secret_config.py
           source venv/bin/activate
+          python -c "print(__import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
           rm -rf dist/GPT-chat
 
