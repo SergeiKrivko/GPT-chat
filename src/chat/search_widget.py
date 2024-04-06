@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QPropertyAnimation, QSize, QParallelAnimationGroup
 from PyQt6.QtWidgets import QTextEdit
 from PyQtUIkit.themes import KitPalette
 from PyQtUIkit.widgets import KitVBoxLayout, KitVGroup, KitHBoxLayout, KitLineEdit, KitButton, KitLabel
@@ -21,6 +21,7 @@ class SearchWidget(KitVBoxLayout):
         self._bubble.main_palette = 'Bg'
         self._bubble.radius = 8
         self._bubble.setContentsMargins(8, 3, 3, 3)
+        self._bubble.setSpacing(6)
         self.addWidget(self._bubble)
 
         self._line_edit = KitLineEdit()
@@ -33,9 +34,10 @@ class SearchWidget(KitVBoxLayout):
         self._bubble.addWidget(self._label)
 
         self._buttons_group = KitVGroup()
-        self._buttons_group.width = 28
+        self._buttons_group.width = 24
         self._buttons_group.main_palette = 'Bg'
         self._buttons_group.border = 0
+        self._buttons_group.radius = 6
         self._bubble.addWidget(self._buttons_group)
 
         self._button_up = KitButton(icon='solid-chevron-up')
@@ -50,6 +52,7 @@ class SearchWidget(KitVBoxLayout):
 
         self._current_selected = None
         self._search_result = []
+        self.__anim = None
         self._text_edit = QTextEdit()
 
     def _search(self):
@@ -97,13 +100,15 @@ class SearchWidget(KitVBoxLayout):
 
     def _select_text(self):
         self._label.setText(f"{self._current_selected + 1}/{len(self._search_result)}")
-        self.selectionRequested.emit(*self._search_result[self._current_selected], len(self._line_edit.text()))
+        if self._search_result:
+            self.selectionRequested.emit(*self._search_result[self._current_selected], len(self._line_edit.text()))
 
     def _apply_theme(self):
         if not self._tm or not self._tm.active:
             return
         super()._apply_theme()
         self._line_edit.main_palette = KitPalette('#00000000', text=self.main_palette.text)
-        self._button_up.setMinimumSize(28, 16)
-        self._button_down.setMinimumSize(28, 16)
-        self._buttons_group.setFixedSize(28, 32)
+        self._button_up.setMinimumSize(24, 16)
+        self._button_up.setContentsMargins(6, 6, 6, 6)
+        self._button_down.setMinimumSize(24, 16)
+        self._buttons_group.setFixedSize(24, 32)

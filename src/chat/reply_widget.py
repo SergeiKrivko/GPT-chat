@@ -1,6 +1,7 @@
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QHBoxLayout
-from PyQtUIkit.widgets import KitVBoxLayout, KitButton, KitIconButton, KitLabel, KitIconWidget
+from PyQtUIkit.core import KitFont
+from PyQtUIkit.widgets import KitVBoxLayout, KitButton, KitIconButton, KitLabel, KitIconWidget, KitLayoutButton
 
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
@@ -71,7 +72,7 @@ class ReplyList(KitVBoxLayout):
             yield el
 
 
-class _ReplyItem(KitButton):
+class _ReplyItem(KitLayoutButton):
     deleteRequested = pyqtSignal(int)
     scrollRequested = pyqtSignal(int)
 
@@ -81,43 +82,28 @@ class _ReplyItem(KitButton):
         self._can_be_deleted = can_be_deleted
         self.main_palette = 'Transparent'
         self.border = 0
+        self.radius = 6
+        self.setContentsMargins(4, 2, 2, 2)
 
         self.setFixedHeight(26)
         self.clicked.connect(lambda: self.scrollRequested.emit(self._message.id))
         self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
 
-        main_layout = QHBoxLayout()
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.setContentsMargins(4, 2, 2, 2)
-        self.setLayout(main_layout)
-
         self._icon_widget = KitIconWidget('solid-reply')
-        self._icon_widget.setFixedSize(22, 22)
-        main_layout.addWidget(self._icon_widget)
+        self._icon_widget.setFixedSize(18, 18)
+        self.addWidget(self._icon_widget)
 
         self._label = KitLabel(self._message.content.split('\n')[0])
         self._label.setFixedHeight(16)
-        self._label.setWordWrap(True)
-        main_layout.addWidget(self._label, 1000)
+        self._label.font_size = KitFont.Size.SMALL
+        # self._label.setWordWrap(True)
+        self.addWidget(self._label, 1000)
 
         self._button = KitIconButton('solid-trash')
         self._button.clicked.connect(lambda: self.deleteRequested.emit(self._message.id))
         self._button.size = 22
         self._button.main_palette = 'Bg'
         self._button.border = 0
-        main_layout.addWidget(self._button, Qt.AlignmentFlag.AlignRight)
+        self.addWidget(self._button, Qt.AlignmentFlag.AlignRight)
         if not self._can_be_deleted:
             self._button.hide()
-
-    def _set_tm(self, tm):
-        super()._set_tm(tm)
-        for el in [self._button, self._label, self._icon_widget]:
-            el._set_tm(tm)
-
-    def _apply_theme(self):
-        if not self._tm or not self._tm.active:
-            return
-        super()._apply_theme()
-        self._icon_widget._apply_theme()
-        self._button._apply_theme()
-        self._label._apply_theme()

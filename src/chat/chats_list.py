@@ -2,6 +2,7 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu, QPushButton
+from PyQtUIkit.core import KitFont
 from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu
 
 from src.gpt.chat import GPTChat
@@ -156,7 +157,7 @@ class GPTListWidgetItem(KitButton):
 
         self._last_message_label = KitLabel()
         self._last_message_label.main_palette = 'LastMessage'
-        self._last_message_label.font_size = 'small'
+        self._last_message_label.font_size = KitFont.Size.SMALL
         self._last_message_label.setWordWrap(True)
         layout.addWidget(self._last_message_label)
 

@@ -91,6 +91,7 @@ class ChatWidget(KitVBoxLayout):
         scroll_layout.addWidget(self._scroll_layout)
 
         self._progress_marker = KitLabel("GPT печатает...")
+        self._progress_marker.setContentsMargins(10, 0, 0, 0)
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
@@ -134,7 +135,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_scroll.main_palette = 'Bg'
         self._button_scroll.border = 0
         self._button_scroll.setContentsMargins(3, 3, 3, 3)
-        self._button_scroll.radius = self._button_scroll.size // 2
+        self._button_scroll.radius = self._button_scroll.height() // 2
         self._scroll_area.resized.connect(
             lambda: self._button_scroll.move(self._scroll_area.width() - 51, self._scroll_area.height() - 46))
         self._button_scroll.clicked.connect(lambda: self._scroll(True, True))
@@ -162,7 +163,10 @@ class ChatWidget(KitVBoxLayout):
     def _on_load_finished(self):
         self._loading_messages = False
         if self._want_to_scroll is not None:
-            self.scroll_to_message(self._want_to_scroll)
+            if isinstance(self._want_to_scroll, tuple):
+                self._select_text(*self._want_to_scroll)
+            else:
+                self.scroll_to_message(self._want_to_scroll)
             self._want_to_scroll = None
 
     def send_message(self, run_gpt=True):
@@ -230,6 +234,9 @@ class ChatWidget(KitVBoxLayout):
         if message_id in self._bubbles:
             self._bubbles[message_id].select_text(offset, length)
             self.scroll_to_message(message_id)
+        else:
+            self._want_to_scroll = message_id, offset, length
+            self._load_messages(to_message=message_id)
 
     def _on_text_selected(self, bubble):
         if self._bubble_with_selected_text == bubble:

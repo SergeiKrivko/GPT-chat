@@ -48,6 +48,12 @@ class ChatBubble(KitHBoxLayout):
         self._bubble_widget.setContentsMargins(4, 4, 4, 4)
         self.addWidget(self._bubble_widget, 10)
 
+        self._font_metrics = QFontMetrics(QFont('Roboto', 11))
+        width = self._font_metrics.size(0, self._message.content).width() + 20
+        if self.message.replys:
+            width = max(width, 250)
+        self._bubble_widget.setMaximumWidth(width)
+
         self._reply_widget = ReplyList(self._chat, 2)
         self._reply_widget.scrollRequested.connect(self.scrollRequested.emit)
         self._reply_widget.hide()
@@ -60,15 +66,12 @@ class ChatBubble(KitHBoxLayout):
         self._translated_widget.showOriginal.connect(self._show_original_message)
         self._bubble_widget.addWidget(self._translated_widget)
 
-        self._font_metrics = QFontMetrics(QFont('Roboto', 11))
-
         self._text_edit = KitTextEdit()
         self._text_edit.main_palette = 'Transparent'
         self._text_edit.border = 0
         self._text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._text_edit.customContextMenuRequested.connect(
             lambda pos: self.run_context_menu(self._text_edit.mapToGlobal(pos)))
-        self._bubble_widget.setMaximumWidth(self._font_metrics.size(0, self._message.content).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
@@ -195,15 +198,16 @@ class ChatBubble(KitHBoxLayout):
 
     def _apply_theme(self):
         super()._apply_theme()
-        css = f"""color: {self._tm['UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'].text}; 
-            background-color: {self._tm['UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'].main};
-            border: 1px solid {self._tm['Border'].main};
-            border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
-            border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;
-            border-bottom-left-radius: {0 if self._side == ChatBubble.SIDE_LEFT else ChatBubble._BORDER_RADIUS}px;
-            border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;"""
-        self._bubble_widget.setStyleSheet(css)
-        self._widget.setStyleSheet("background-color: transparent; border: none;")
+        # palette = 'UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'
+        # css = f"""color: {self._tm.palette(palette).text};
+        #     background-color: {self._tm.palette(palette).main};
+        #     border: 1px solid {self.border_palette.main};
+        #     border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
+        #     border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;
+        #     border-bottom-left-radius: {0 if self._side == ChatBubble.SIDE_LEFT else ChatBubble._BORDER_RADIUS}px;
+        #     border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;"""
+        # self._bubble_widget.setStyleSheet(css)
+        # self._widget.setStyleSheet("background-color: transparent; border: none;")
         self._set_html()
 
 
@@ -314,11 +318,11 @@ class TranslatedWidget(KitHBoxLayout):
         self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
 
         self._label = KitLabel("Переведено с _")
-        # self._label.font_size = 'small'
+        # self._label.font_size = FontSize.SMALL
         self.addWidget(self._label, 10)
 
         self._button = KitButton("Показать оригинал")
-        # self._button.font_size = 'small'
+        # self._button.font_size = FontSize.SMALL
         self._button.clicked.connect(self.showOriginal.emit)
         self.addWidget(self._button)
 

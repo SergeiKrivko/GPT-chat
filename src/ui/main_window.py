@@ -36,18 +36,24 @@ class MainWindow(KitMainWindow):
 
         translate.init(self.sm)
 
+        self.__previous_size = (0, 0)
+        self.__size = (0, 0)
         self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))
         if self.sm.get('maximized', False) not in {False, 'False', 'false', 0}:
             self.showMaximized()
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
-        if not self.isMaximized():
-            self.sm.set('window_width', self.width())
-            self.sm.set('window_height', self.height())
+        self.__previous_size = self.__size
+        self.__size = (self.width(), self.height())
+        self.sm.set('window_width', self.width())
+        self.sm.set('window_height', self.height())
 
     def closeEvent(self, a0) -> None:
         self.sm.set('maximized', 1 if self.isMaximized() else 0)
+        if self.isMaximized():
+            self.sm.set('window_width', self.__previous_size[0])
+            self.sm.set('window_height', self.__previous_size[1])
         try:
             shutil.rmtree(f"{self.sm.app_data_dir}/temp")
         except Exception:

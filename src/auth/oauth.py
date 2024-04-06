@@ -6,6 +6,7 @@ from typing import Literal
 import aiohttp
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QApplication
+from PyQtUIkit.core import KitFont
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -52,7 +53,7 @@ class OAuthScreen(KitVBoxLayout):
         self._spinner.addWidget(spinner)
 
         self._error = KitLabel()
-        self._error.main_palette = 'DangerText'
+        self._error.main_palette = 'Danger'
         self._tab_layout.addWidget(self._error)
 
         self._code = KitVBoxLayout()
@@ -83,7 +84,7 @@ class OAuthScreen(KitVBoxLayout):
         link.addWidget(KitLabel("Email:"))
         self._email_line = KitLineEdit('')
         self._email_line.setFixedHeight(34)
-        self._email_line.font_size = 'big'
+        self._email_line.font_size = KitFont.Size.BIG
         self._email_line.setReadOnly(True)
         link.addWidget(self._email_line)
 
@@ -91,11 +92,11 @@ class OAuthScreen(KitVBoxLayout):
         self._password_line = KitLineEdit('')
         self._password_line.setFixedHeight(34)
         self._password_line.setEchoMode(KitLineEdit.EchoMode.Password)
-        self._password_line.font_size = 'big'
+        self._password_line.font_size = KitFont.Size.BIG
         link.addWidget(self._password_line)
 
         self._error_line = KitLabel()
-        self._error_line.main_palette = 'DangerText'
+        self._error_line.main_palette = 'Danger'
         link.addWidget(self._error_line)
 
         button = KitButton("Войти")

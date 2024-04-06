@@ -3,6 +3,7 @@ import json
 
 import aiohttp
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQtUIkit.core import KitFont
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -105,8 +106,8 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
-        self._email_edit.font_size = 'big'
-        self._email_edit.setFixedHeight(34)
+        self._email_edit.font_size = KitFont.Size.BIG
+        # self._email_edit.setFixedHeight(34)
         self._email_edit.returnPressed.connect(self.sign_in)
         self._main_layout.addWidget(self._email_edit)
 
@@ -114,14 +115,14 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
-        self._password_edit.font_size = 'big'
+        self._password_edit.font_size = KitFont.Size.BIG
         self._password_edit.setFixedHeight(34)
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_in)
         self._main_layout.addWidget(self._password_edit)
 
         self._error_label = KitLabel()
-        self._error_label.main_palette = 'DangerText'
+        self._error_label.main_palette = 'Danger'
         self._error_label.setWordWrap(True)
         self._main_layout.addWidget(self._error_label)
 
@@ -132,7 +133,7 @@ class _SignInScreen(KitVBoxLayout):
 
         self._button_join = KitButton("Войти")
         self._button_join.radius = 8
-        self._button_join.font_size = 'big'
+        self._button_join.font_size = KitFont.Size.BIG
         self._button_join.setFixedSize(256, 50)
         self._button_join.clicked.connect(self.sign_in)
         bottom_layout.addWidget(self._button_join)
@@ -152,12 +153,14 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.addWidget(self._button_sign_up)
 
         oauth_layout = KitHBoxLayout()
+        oauth_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         oauth_layout.setSpacing(6)
         oauth_layout.addWidget(label := KitLabel("Войти через:"))
+        label.setFixedWidth(94)
         label.setWordWrap(True)
         self._main_layout.addWidget(oauth_layout)
 
-        for el in ['google', 'github', 'apple', 'microsoft']:
+        for el in ['google', 'github']:
             button = KitIconButton(f'brands-{el}')
             button.size = 40
             button.clicked.connect(lambda x,  provider=el: self.oauthRequested.emit(provider))
@@ -256,7 +259,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
-        self._email_edit.font_size = 'big'
+        self._email_edit.font_size = KitFont.Size.BIG
         self._email_edit.setFixedHeight(34)
         self._email_edit.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._email_edit)
@@ -265,7 +268,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
-        self._password_edit.font_size = 'big'
+        self._password_edit.font_size = KitFont.Size.BIG
         self._password_edit.setFixedHeight(34)
         self._password_edit.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit.returnPressed.connect(self.sign_up)
@@ -275,14 +278,14 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.addWidget(label)
 
         self._password_edit2 = KitLineEdit()
-        self._password_edit2.font_size = 'big'
+        self._password_edit2.font_size = KitFont.Size.BIG
         self._password_edit2.setFixedHeight(34)
         self._password_edit2.setEchoMode(KitLineEdit.EchoMode.Password)
         self._password_edit2.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._password_edit2)
 
         self._error_label = KitLabel()
-        self._error_label.main_palette = 'DangerText'
+        self._error_label.main_palette = 'Danger'
         self._error_label.setWordWrap(True)
         self._main_layout.addWidget(self._error_label)
 
@@ -462,7 +465,7 @@ class _SignedScreen(KitVBoxLayout):
         self.setSpacing(5)
 
         self._label = KitLabel()
-        self._label.font_size = 'big'
+        self._label.font_size = KitFont.Size.BIG
         self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_account()
         self.addWidget(self._label)
@@ -474,7 +477,7 @@ class _SignedScreen(KitVBoxLayout):
 
         self._button_exit = KitButton("Выйти")
         self._button_exit.radius = 8
-        self._button_exit.font_size = 'big'
+        self._button_exit.font_size = KitFont.Size.BIG
         self._button_exit.setFixedSize(150, 50)
         self._button_exit.clicked.connect(self.exit_account)
         bottom_layout.addWidget(self._button_exit)

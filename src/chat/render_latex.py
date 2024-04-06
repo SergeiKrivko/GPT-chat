@@ -73,7 +73,7 @@ def delete_image(formula):
 
 
 def rerender_all(tm):
-    color = tm['Main'].text
+    color = tm.palette('Main').text
     for el in _images.values():
         if el.color == color:
             continue
