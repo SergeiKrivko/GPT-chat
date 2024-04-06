@@ -28,7 +28,7 @@ class ChatSettingsWindow(KitDialog):
 
         self._theme_checkbox = KitCheckBox("Темная тема")
         self._theme_checkbox.main_palette = 'Bg'
-        self._theme_checkbox.setState(self.sm.get('dark_theme', 'light') == 'dark')
+        self._theme_checkbox.setChecked(self.sm.get('dark_theme', 'light') == 'dark')
         self._theme_checkbox.stateChanged.connect(self._on_theme_changed)
         main_layout.addWidget(self._theme_checkbox)
 
@@ -54,7 +54,7 @@ class ChatSettingsWindow(KitDialog):
 
         self._auto_update_checkbox = KitCheckBox("Сообщать об обновлениях")
         self._auto_update_checkbox.main_palette = 'Bg'
-        self._auto_update_checkbox.setState(bool(self.sm.get('auto_update', True)))
+        self._auto_update_checkbox.setChecked(bool(self.sm.get('auto_update', True)))
         main_layout.addWidget(self._auto_update_checkbox)
 
         self._separator = KitHBoxLayout()
@@ -149,7 +149,7 @@ class ChatSettingsWindow(KitDialog):
             self._time_label.setText(
                 f"Создан: {datetime.datetime.fromtimestamp(self._chat.ctime).strftime('%D %H:%M')}")
             self._name_label.setText(self._chat.name)
-            self._sync_checkbox.setState(self._chat.remote_id is not None)
+            self._sync_checkbox.setChecked(self._chat.remote_id is not None)
         else:
             self._temperature_box.hide()
             self._saved_messages_box.hide()
@@ -162,17 +162,17 @@ class ChatSettingsWindow(KitDialog):
                 el.hide()
 
     def save(self):
-        self.sm.set('auto_update', 'true' if self._auto_update_checkbox.state() else '')
+        self.sm.set('auto_update', 'true' if self._auto_update_checkbox.state else '')
         if self._chat is not None:
-            self._chat.name = self._name_label.text()
-            self._chat.used_messages = self._used_messages_box.value()
-            self._chat.saved_messages = self._saved_messages_box.value()
-            self._chat.temperature = self._temperature_box.value()
+            self._chat.name = self._name_label.text
+            self._chat.used_messages = self._used_messages_box.value
+            self._chat.saved_messages = self._saved_messages_box.value
+            self._chat.temperature = self._temperature_box.value
             self._chat.model = self._model_box.currentValue()
-            self._cm.make_remote(self._chat, self._sync_checkbox.state())
+            self._cm.make_remote(self._chat, self._sync_checkbox.state)
 
     def _on_theme_changed(self):
-        self.sm.set('dark_theme', 'dark' if self._theme_checkbox.state() else 'light')
+        self.sm.set('dark_theme', 'dark' if self._theme_checkbox.state else 'light')
         self.sm.set('theme', self._theme_box.currentValue())
         self.theme_manager.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
         self._apply_theme()
@@ -200,7 +200,7 @@ class UpdateWidget(KitTabLayout):
         self.addWidget(self._button_download)
 
         progress_layout = KitHBoxLayout()
-        progress_layout.setContentsMargins(0, 0, 0, 0)
+        progress_layout.spacing = 6
         self.addWidget(progress_layout)
 
         self._progress_bar = KitProgressBar()
