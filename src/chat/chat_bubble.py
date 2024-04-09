@@ -50,7 +50,7 @@ class ChatBubble(KitHBoxLayout):
 
         self._font_metrics = QFontMetrics(QFont('Roboto', 11))
         width = self._font_metrics.size(0, self._message.content).width() + 20
-        if self.message.replys:
+        if len(list(self.message.replys)):
             width = max(width, 250)
         self._bubble_widget.setMaximumWidth(width)
 

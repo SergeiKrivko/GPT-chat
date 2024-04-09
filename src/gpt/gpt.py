@@ -1,4 +1,13 @@
-import g4f
+global g4f
+
+
+def init():
+    from time import sleep
+
+    sleep(3)
+    global g4f
+    import g4f as lib
+    g4f = lib
 
 
 def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
@@ -50,4 +59,7 @@ def try_response(messages: list[dict[str: str]], model=None, count=5, handler=No
 
 
 def get_models():
-    return ['default'] + g4f.models._all_models
+    try:
+        return ['default'] + g4f.models._all_models
+    except NameError:
+        return ['default']

@@ -7,7 +7,7 @@ from PyQtUIkit.widgets import KitMainWindow, KitDialog
 from src import config
 from src.chat.panel import ChatPanel
 from src.database import ChatManager
-from src.gpt import translate
+from src.gpt import translate, gpt
 from src.settings_manager import SettingsManager
 from src.ui.custom_themes import THEMES
 from src.ui.update_manager import UpdateManager
@@ -41,6 +41,8 @@ class MainWindow(KitMainWindow):
         self.resize(int(self.sm.get('window_width', 300)), int(self.sm.get('window_height', 600)))
         if self.sm.get('maximized', False) not in {False, 'False', 'false', 0}:
             self.showMaximized()
+
+        self.sm.run_process(gpt.init, 'g4f-import')
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
