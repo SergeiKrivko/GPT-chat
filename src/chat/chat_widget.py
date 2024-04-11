@@ -62,7 +62,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_search.setCheckable(True)
         self._top_layout.addWidget(self._button_search)
 
-        self._button_settings = KitIconButton('solid-gear')
+        self._button_settings = KitIconButton('solid-wrench')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
@@ -227,8 +227,9 @@ class ChatWidget(KitVBoxLayout):
         return bubble
 
     def set_top_hidden(self, hidden):
-        for el in [self._name_label, self._button_settings, self._button_back, self._top_layout]:
-            el.setHidden(hidden)
+        # for el in [self._name_label, self._button_settings, self._button_back, self._top_layout]:
+        #     el.setHidden(hidden)
+        self._button_back.setHidden(hidden)
 
     def _select_text(self, message_id, offset, length):
         if message_id in self._bubbles:

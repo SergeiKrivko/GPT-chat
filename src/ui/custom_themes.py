@@ -38,6 +38,7 @@ THEMES = {
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#3B97CF', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#3B97CF', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#3B97CF', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#3B97CF', '#222222'),
     }, inherit=_LIGHT),
     'light_green': KitTheme({
@@ -45,6 +46,7 @@ THEMES = {
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#67A132', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#67A132', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#67A132', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#67A132', '#222222'),
     }, inherit=_LIGHT),
     'light_red': KitTheme({
@@ -52,6 +54,7 @@ THEMES = {
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#F23C18', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#F23C18', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#F23C18', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#F23C18', '#222222'),
     }, inherit=_LIGHT),
     'light_pink': KitTheme({
@@ -59,6 +62,7 @@ THEMES = {
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#C25EBD', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#C25EBD', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#C25EBD', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#C25EBD', '#222222'),
     }, inherit=_LIGHT),
     'light_orange': KitTheme({
@@ -68,6 +72,7 @@ THEMES = {
                                  text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#E37412', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#E37412', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#E37412', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#E37412', '#222222'),
     }, inherit=_LIGHT),
 
@@ -76,6 +81,7 @@ THEMES = {
                                   text='#F0F0F0'),
         'Main': KitPalette('#2B2D30', '#3E4145', '#264773', '#F0F0F0'),
         'Bg': KitPalette('#141517', '#4E5157', '#264773', '#F0F0F0'),
+        'Menu': KitPalette('#1F2024', '#4E5157', '#264773', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#264773', '#F0F0F0'),
     }, inherit=_DARK),
     'dark_green': KitTheme({
@@ -83,6 +89,7 @@ THEMES = {
                                   text='#F0F0F0'),
         'Main': KitPalette('#2B2D30', '#3E4145', '#306E25', '#F0F0F0'),
         'Bg': KitPalette('#141517', '#4E5157', '#306E25', '#F0F0F0'),
+        'Menu': KitPalette('#1F2024', '#4E5157', '#306E25', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#306E25', '#F0F0F0'),
     }, inherit=_DARK),
     'dark_red': KitTheme({
@@ -90,6 +97,7 @@ THEMES = {
                                   text='#F0F0F0'),
         'Main': KitPalette('#2B2D30', '#3E4145', '#B81818', '#F0F0F0'),
         'Bg': KitPalette('#141517', '#4E5157', '#B81818', '#F0F0F0'),
+        'Menu': KitPalette('#1F2024', '#4E5157', '#B81818', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#B81818', '#F0F0F0'),
     }, inherit=_DARK),
     'dark_pink': KitTheme({
@@ -97,6 +105,7 @@ THEMES = {
                                   text='#F0F0F0'),
         'Main': KitPalette('#2B2D30', '#3E4145', '#75165F', '#F0F0F0'),
         'Bg': KitPalette('#141517', '#4E5157', '#75165F', '#F0F0F0'),
+        'Menu': KitPalette('#1F2024', '#4E5157', '#75165F', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#75165F', '#F0F0F0'),
     }, inherit=_DARK),
     'dark_orange': KitTheme({
@@ -104,6 +113,7 @@ THEMES = {
                                   text='#F0F0F0'),
         'Main': KitPalette('#2B2D30', '#3E4145', '#B25B15', '#F0F0F0'),
         'Bg': KitPalette('#141517', '#4E5157', '#B25B15', '#F0F0F0'),
+        'Menu': KitPalette('#1F2024', '#4E5157', '#B25B15', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#B25B15', '#F0F0F0'),
     }, inherit=_DARK),
 }

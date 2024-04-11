@@ -266,7 +266,10 @@ class ChatManager(QObject):
     async def make_remote(self, chat: GPTChat, remote: bool):
         if remote == bool(chat.remote_id):
             if remote:
-                await self._update_chat_info(chat)
+                try:
+                    await self._update_chat_info(chat)
+                except aiohttp.ClientConnectionError:
+                    pass
             self._database.commit()
             return
         if not self._firebase.authorized:

@@ -2,13 +2,15 @@ import asyncio
 import shutil
 
 from PyQt6.QtCore import Qt
-from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitDialog
+from PyQtUIkit.core import KitIcon, KitFont
+from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitDialog, KitVSeparator, KitLabel, \
+    KitIconWidget
 from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.render_latex import rerender_all
-from src.chat.settings_window import ChatSettingsWindow
+from src.ui.settings_window import SettingsWindow
 from src.database import ChatManager
 from src.gpt.chat import GPTChat
 from src.settings_manager import SettingsManager
@@ -35,51 +37,63 @@ class ChatPanel(KitHBoxLayout):
         self.setContentsMargins(0, 0, 0, 0)
 
         self._main_layout = KitVBoxLayout()
-        self._main_layout.setContentsMargins(0, 0, 0, 0)
-        self._main_layout.setSpacing(0)
-        self.addWidget(self._main_layout, 0)
+        self.addWidget(self._main_layout, 1)
 
-        self._top_layout = KitHBoxLayout()
-        self._top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._top_layout.setContentsMargins(8, 8, 8, 8)
-        self._top_layout.setSpacing(4)
-        self._main_layout.addWidget(self._top_layout)
+        top_layout = KitHBoxLayout()
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        top_layout.setContentsMargins(8, 8, 8, 8)
+        top_layout.setSpacing(4)
+        self._main_layout.addWidget(top_layout)
 
         self._button_add = KitIconButton('solid-plus')
         self._button_add.size = 36
         self._button_add.border = 0
         self._button_add.main_palette = 'Bg'
         self._button_add.clicked.connect(lambda: self._new_chat())
-        self._top_layout.addWidget(self._button_add)
+        top_layout.addWidget(self._button_add)
 
-        self._button_settings = KitIconButton('solid-gear')
-        self._button_settings.size = 36
-        self._button_settings.main_palette = 'Bg'
-        self._button_settings.border = 0
-        self._button_settings.clicked.connect(self._open_settings)
-        self._top_layout.addWidget(self._button_settings)
+        layout = KitHBoxLayout()
+        layout.alignment = Qt.AlignmentFlag.AlignRight
+        top_layout.addWidget(layout)
 
         self._button_user = KitIconButton('solid-user')
         self._button_user.size = 36
         self._button_user.main_palette = 'Bg'
         self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
-        self._top_layout.addWidget(self._button_user)
+        layout.addWidget(self._button_user)
 
-        self._button_search = KitIconButton('solid-magnifying-glass')
-        self._button_search.size = 36
-        self._button_search.main_palette = 'Bg'
-        self._button_search.border = 0
-        self._button_search.clicked.connect(self._show_search)
-        self._button_search.setCheckable(True)
-        self._top_layout.addWidget(self._button_search)
-
-        self._top_layout.addWidget(KitHBoxLayout(), 1000)
+        self._button_settings = KitIconButton('solid-gear')
+        self._button_settings.size = 36
+        self._button_settings.main_palette = 'Bg'
+        self._button_settings.border = 0
+        self._button_settings.clicked.connect(self._open_settings)
+        layout.addWidget(self._button_settings)
 
         self._list_widget = GPTListWidget()
         self._main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
         self._list_widget.currentItemChanged.connect(self._select_chat)
+
+        self._separator = KitVSeparator()
+        self.addWidget(self._separator)
+
+        self._no_chat_widget = KitVBoxLayout()
+        self._no_chat_widget.alignment = Qt.AlignmentFlag.AlignCenter
+        self.addWidget(self._no_chat_widget)
+        self._no_chat_widget.addWidget(KitVBoxLayout(), 100)
+
+        icon_widget = KitIconWidget('regular-comments')
+        icon_widget.setFixedHeight(300)
+        icon_widget.setMaximumWidth(300)
+        self._no_chat_widget.addWidget(icon_widget)
+
+        label = KitLabel("Выберите чат")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.font_size = KitFont.Size.SUPER_BIG
+        label.font = 'bold'
+        self._no_chat_widget.addWidget(label)
+        self._no_chat_widget.addWidget(KitVBoxLayout(), 100)
 
         self.chats = dict()
         self.chat_widgets = dict()
@@ -91,11 +105,9 @@ class ChatPanel(KitHBoxLayout):
             self._last_chat = None
 
     def _open_settings(self):
-        chat = None if self.current is None else self.chats[self.current]
-        window = ChatSettingsWindow(self, self.sm, self._chat_manager, self._um, chat)
+        window = SettingsWindow(self, self.sm, self._chat_manager, self._um)
         window.exec()
         window.save()
-        self._update_chats()
 
     @asyncSlot()
     async def _update_chats(self):
@@ -172,9 +184,9 @@ class ChatPanel(KitHBoxLayout):
         if self.current is not None:
             self._close_chat(self.current)
         self.sm.set('current_dialog', str(chat_id))
+        self._no_chat_widget.hide()
         self.chat_widgets[chat_id].show()
         self.current = chat_id
-        self._button_search.setChecked(self.chat_widgets[chat_id].search_active)
         self._resize()
 
     def _on_new_message(self, chat_id, message):
@@ -205,22 +217,22 @@ class ChatPanel(KitHBoxLayout):
 
     def _resize(self):
         if self.width() > 550:
+            self._separator.show()
             self.set_list_hidden(False)
             if self.current is not None:
                 self.chat_widgets[self.current].set_top_hidden(True)
-            self._list_widget.setFixedWidth(max(250, self.width() // 4))
-            self._button_search.show()
+            else:
+                self._no_chat_widget.show()
+            self._main_layout.setFixedWidth(max(250, self.width() // 4))
         elif self.current is not None:
+            self._separator.hide()
             self.set_list_hidden(True)
             self.chat_widgets[self.current].set_top_hidden(False)
         else:
+            self._separator.hide()
+            self._no_chat_widget.hide()
             self.set_list_hidden(False)
-            self._button_search.hide()
-            self._list_widget.setMaximumWidth(10000)
-
-    def _show_search(self):
-        if self.current is not None:
-            self.chat_widgets[self.current].show_search(self._button_search.isChecked())
+            self._main_layout.setMaximumWidth(10000)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)

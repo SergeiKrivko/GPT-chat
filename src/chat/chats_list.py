@@ -27,7 +27,8 @@ class GPTListWidget(KitScrollArea):
     def __init__(self):
         super().__init__()
         self.setMinimumWidth(240)
-        self.main_palette = 'Bg'
+        self.main_palette = 'Menu'
+        self.radius = 0
         # self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self._layout = KitVBoxLayout()
@@ -116,7 +117,6 @@ class Label(QLabel):
 
 
 class GPTListWidgetItem(KitButton):
-    PALETTE = 'Bg'
     ICON_SIZE = 16
 
     selected = pyqtSignal(int)
@@ -128,7 +128,7 @@ class GPTListWidgetItem(KitButton):
         self._tm = tm
         self.chat = chat
         self._chat_id = chat.id
-        self.main_palette = 'Bg'
+        self.main_palette = 'Menu'
         self.border = 0
         self.radius = 6
         self.setCheckable(True)
