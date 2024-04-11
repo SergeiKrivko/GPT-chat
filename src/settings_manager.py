@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable
+from typing import Callable, Any
 
 import aiohttp
 import appdirs
@@ -70,7 +70,7 @@ class SettingsManager(QObject):
     def set(self, key, value):
         self.q_settings.setValue(key, value)
 
-    def run_process(self, thread: QThread | Callable[[], None], name: str) -> QThread:
+    def run_process(self, thread: QThread | Callable[[], Any], name: str) -> QThread:
         if not isinstance(thread, QThread):
             thread = Looper(thread)
 

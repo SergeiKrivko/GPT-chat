@@ -1,10 +1,6 @@
-import datetime
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 
-from src.gpt.chat import GPTChat
-from src.gpt.gpt import get_models
 from src.ui.update_manager import UpdateManager
 
 

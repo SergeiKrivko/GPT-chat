@@ -10,6 +10,7 @@ from qasync import asyncSlot
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.render_latex import rerender_all
+from src.gpt.check_providers import CheckModelsService
 from src.ui.settings_window import SettingsWindow
 from src.database import ChatManager
 from src.gpt.chat import GPTChat
@@ -32,6 +33,8 @@ class ChatPanel(KitHBoxLayout):
         # self._chat_manager.updateChat.connect(self._list_widget.sort_chats)
         self._chat_manager.newMessage.connect(self._on_new_message)
         self._chat_manager.deleteMessage.connect(self._on_delete_message)
+
+        self._check_model_service = CheckModelsService(self.sm)
 
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContentsMargins(0, 0, 0, 0)

@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 
 from src.gpt.chat import GPTChat
+from src.gpt.check_providers import ModelComboBox
 from src.gpt.gpt import get_models
 from src.ui.update_manager import UpdateManager
 
@@ -42,9 +43,7 @@ class ChatSettingsWindow(KitDialog):
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._model_box = KitComboBox()
-        for el in get_models():
-            self._model_box.addItem(el)
+        self._model_box = ModelComboBox()
         main_layout.addWidget(self._model_box)
 
         layout = KitHBoxLayout()
