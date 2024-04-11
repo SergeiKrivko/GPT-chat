@@ -226,23 +226,23 @@ class ContextMenu(KitMenu):
         self.action = None
         self.data = None
 
-        action = self.addAction('Ответить', 'solid-reply')
+        action = self.addAction('Ответить', 'custom-reply')          # 'feather-corner-up-left
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
 
         self.addSeparator()
 
-        action = self.addAction('Выделить все')
+        action = self.addAction('Выделить все', 'feather-italic')
         action.triggered.connect(lambda: self.set_action(ContextMenu.SELECT_ALL))
 
-        action = self.addAction('Копировать как текст', 'solid-copy')
+        action = self.addAction('Копировать как текст', 'feather-copy')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_TEXT))
 
-        action = self.addAction('Копировать как Markdown', 'brands-markdown')
+        action = self.addAction('Копировать как Markdown', 'custom-copy-md')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_MARKDOWN))
 
         self.addSeparator()
 
-        action = self.addAction('Удалить', 'solid-trash')
+        action = self.addAction('Удалить', 'feather-trash-2')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
         self.addSeparator()
@@ -251,7 +251,7 @@ class ContextMenu(KitMenu):
             action = self.addAction('Показать оригинал')
             action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
-        menu = self.addMenu('Перевести на ...', 'solid-language')
+        menu = self.addMenu('Перевести на ...', 'custom-translate')
         for key, item in LANGUAGES.items():
             action = menu.addAction(item)
             action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
@@ -267,7 +267,7 @@ class ContextMenu(KitMenu):
             message_lang = None
 
         if message_lang != 'ru':
-            action = self.addAction('Перевести на русский', 'solid-language')
+            action = self.addAction('Перевести на русский', 'custom-translate')
             action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, 'ru'))
             self._apply_theme()
 

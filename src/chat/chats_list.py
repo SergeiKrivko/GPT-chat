@@ -143,7 +143,7 @@ class GPTListWidgetItem(KitButton):
         main_layout.setContentsMargins(7, 2, 7, 2)
         self.setLayout(main_layout)
 
-        self._icon_label = KitIconWidget('regular-message')
+        self._icon_label = KitIconWidget('feather-message-square')
         self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
@@ -166,12 +166,12 @@ class GPTListWidgetItem(KitButton):
         self._right_layout.setSpacing(4)
         main_layout.addWidget(self._right_layout)
 
-        self._icon_pinned = KitIconWidget("solid-thumbtack")
+        self._icon_pinned = KitIconWidget("custom-pin")
         self._icon_pinned.setFixedSize(18, 18)
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_pinned)
 
-        self._icon_remote = KitIconWidget("solid-globe")
+        self._icon_remote = KitIconWidget("feather-globe")
         self._icon_remote.setFixedSize(18, 18)
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_remote)
@@ -240,14 +240,14 @@ class ContextMenu(KitMenu):
         self._chat = chat
         self.action = None
 
-        action = self.addAction("Удалить", 'solid-trash')
+        action = self.addAction("Удалить", 'feather-trash-2')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
 
         if self._chat.pinned:
-            action = self.addAction("Открепить", 'solid-thumbtack')
+            action = self.addAction("Открепить", 'custom-unpin')
             action.triggered.connect(lambda: self.set_action(ContextMenu.UNPIN))
         else:
-            action = self.addAction("Закрепить", 'solid-thumbtack')
+            action = self.addAction("Закрепить", 'custom-pin')
             action.triggered.connect(lambda: self.set_action(ContextMenu.PIN))
 
     def set_action(self, action):

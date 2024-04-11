@@ -12,7 +12,10 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('icon.png', '.')],
-    datas=[(os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts")],
+    datas=[
+        (os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
+        (os.path.abspath("assets"), "assets")
+    ],
     hiddenimports=['matplotlib.backends.backend_svg'],
     hookspath=[],
     hooksconfig={},

@@ -45,7 +45,7 @@ class ChatPanel(KitHBoxLayout):
         top_layout.setSpacing(4)
         self._main_layout.addWidget(top_layout)
 
-        self._button_add = KitIconButton('solid-plus')
+        self._button_add = KitIconButton('feather-plus')
         self._button_add.size = 36
         self._button_add.border = 0
         self._button_add.main_palette = 'Bg'
@@ -56,14 +56,14 @@ class ChatPanel(KitHBoxLayout):
         layout.alignment = Qt.AlignmentFlag.AlignRight
         top_layout.addWidget(layout)
 
-        self._button_user = KitIconButton('solid-user')
+        self._button_user = KitIconButton('feather-user')
         self._button_user.size = 36
         self._button_user.main_palette = 'Bg'
         self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
         layout.addWidget(self._button_user)
 
-        self._button_settings = KitIconButton('solid-gear')
+        self._button_settings = KitIconButton('feather-settings')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0

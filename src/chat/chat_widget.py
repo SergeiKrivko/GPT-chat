@@ -42,7 +42,7 @@ class ChatWidget(KitVBoxLayout):
         self._top_layout.setSpacing(5)
         self.addWidget(self._top_layout)
 
-        self._button_back = KitIconButton('solid-arrow-left')
+        self._button_back = KitIconButton('feather-arrow-left')
         self._button_back.size = 36
         self._button_back.main_palette = 'Bg'
         self._button_back.border = 0
@@ -53,7 +53,7 @@ class ChatWidget(KitVBoxLayout):
         self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
         self._top_layout.addWidget(self._name_label)
 
-        self._button_search = KitIconButton('solid-magnifying-glass')
+        self._button_search = KitIconButton('custom-search')
         self._button_search.size = 36
         self._button_search.main_palette = 'Bg'
         self._button_search.border = 0
@@ -62,7 +62,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_search.setCheckable(True)
         self._top_layout.addWidget(self._button_search)
 
-        self._button_settings = KitIconButton('solid-wrench')
+        self._button_settings = KitIconButton('feather-tool')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
@@ -120,7 +120,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
-        self._button = KitIconButton("solid-paper-plane")
+        self._button = KitIconButton("feather-send")
         self._button.main_palette = 'Bg'
         self._button.size = 30
         self._button.border = 0
@@ -130,11 +130,11 @@ class ChatWidget(KitVBoxLayout):
         self._button.clicked.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._button)
 
-        self._button_scroll = KitIconButton('solid-chevron-down')
+        self._button_scroll = KitIconButton('feather-chevron-down')
         self._button_scroll.size = 36
         self._button_scroll.main_palette = 'Bg'
         self._button_scroll.border = 0
-        self._button_scroll.setContentsMargins(3, 3, 3, 3)
+        self._button_scroll.setContentsMargins(1, 1, 1, 1)
         self._button_scroll.radius = self._button_scroll.height() // 2
         self._scroll_area.resized.connect(
             lambda: self._button_scroll.move(self._scroll_area.width() - 51, self._scroll_area.height() - 46))
@@ -466,15 +466,15 @@ class _SendMessageContextMenu(KitMenu):
         self.data = None
         self.__height = 56 + 33
 
-        action = self.addAction('Отправить', 'solid-paper-plane')
+        action = self.addAction('Отправить', 'feather-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
 
-        action = self.addAction('Отправить без запроса', 'regular-paper-plane')
+        action = self.addAction('Отправить без запроса', 'feather-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
 
         self.addSeparator()
 
-        menu = self.addMenu('Перевести на ...', 'solid-language')
+        menu = self.addMenu('Перевести на ...', 'custom-translate')
         for key, item in LANGUAGES.items():
             action = menu.addAction(item)
             action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
@@ -492,12 +492,12 @@ class _SendMessageContextMenu(KitMenu):
         if message_lang:
             if message_lang != 'ru':
                 self.__height += 24
-                action = self.addAction('Перевести на русский', 'solid-language')
+                action = self.addAction('Перевести на русский', 'custom-translate')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'ru'))
 
             if message_lang != 'en':
                 self.__height += 24
-                action = self.addAction('Перевести на английский', 'solid-language')
+                action = self.addAction('Перевести на английский', 'custom-translate')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
 
             self._apply_theme()

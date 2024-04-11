@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 
@@ -18,6 +19,9 @@ class MainWindow(KitMainWindow):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
         self.setWindowIcon(QIcon('icon.png'))
+
+        for el in os.listdir(config.ASSETS_DIR):
+            self.theme_manager.add_icon(f"{config.ASSETS_DIR}/{el}", 'custom-' + el[:-4])
 
         self.sm = SettingsManager()
         for key, item in THEMES.items():
