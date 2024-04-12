@@ -129,19 +129,19 @@ class _ModelItem(KitLayoutButton):
         self._spinner.width = 3
         self.addWidget(self._spinner)
 
-        self._icon_ok = KitIconWidget('solid-check')
+        self._icon_ok = KitIconWidget('line-checkmark')
         self._icon_ok.main_palette = 'Success'
         self._icon_ok.setFixedSize(24, 24)
         self._icon_ok.hide()
         self.addWidget(self._icon_ok)
 
-        self._icon_fail = KitIconWidget('solid-xmark')
+        self._icon_fail = KitIconWidget('line-close')
         self._icon_fail.main_palette = 'Danger'
         self._icon_fail.setFixedSize(24, 24)
         self._icon_fail.hide()
         self.addWidget(self._icon_fail)
 
-        self._icon_unknown = KitIconWidget('solid-question')
+        self._icon_unknown = KitIconWidget('line-help')
         self._icon_unknown.setFixedSize(24, 24)
         self._icon_unknown.hide()
         self.addWidget(self._icon_unknown)
@@ -185,18 +185,18 @@ class ModelComboBox(KitHBoxLayout):
         self._button.addWidget(self._label)
 
         self.setContentsMargins(0, 0, 6, 0)
-        self._arrow = KitIconWidget('solid-angle-down')
+        self._arrow = KitIconWidget('line-chevron-down')
         self._arrow._use_text_only = False
         self._arrow.setFixedSize(16, 12)
         self._button.addWidget(self._arrow)
 
-        self._update_button = KitIconButton('solid-arrows-rotate')
+        self._update_button = KitIconButton('line-refresh')
         self._update_button.size = 28
         self._update_button.clicked.connect(lambda: MANAGER.update())
         self._update_button.setHidden(MANAGER.updating)
         self.addWidget(self._update_button)
 
-        self._cancel_button = KitIconButton('solid-ban')
+        self._cancel_button = KitIconButton('line-ban')
         self._cancel_button.size = 28
         self._cancel_button.clicked.connect(MANAGER.stop)
         self._cancel_button.setHidden(not MANAGER.updating)

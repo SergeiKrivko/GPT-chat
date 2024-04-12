@@ -40,12 +40,12 @@ class SearchWidget(KitVBoxLayout):
         self._buttons_group.radius = 6
         self._bubble.addWidget(self._buttons_group)
 
-        self._button_up = KitButton(icon='solid-chevron-up')
+        self._button_up = KitButton(icon='line-chevron-up')
         self._button_up.main_palette = 'Bg'
         self._button_up.clicked.connect(self._select_previous)
         self._buttons_group.addItem(self._button_up)
 
-        self._button_down = KitButton(icon='solid-chevron-down')
+        self._button_down = KitButton(icon='line-chevron-down')
         self._button_down.main_palette = 'Bg'
         self._button_down.clicked.connect(self._select_next)
         self._buttons_group.addItem(self._button_down)

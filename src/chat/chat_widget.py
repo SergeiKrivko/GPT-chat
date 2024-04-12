@@ -42,7 +42,7 @@ class ChatWidget(KitVBoxLayout):
         self._top_layout.setSpacing(5)
         self.addWidget(self._top_layout)
 
-        self._button_back = KitIconButton('feather-arrow-left')
+        self._button_back = KitIconButton('line-arrow-back')
         self._button_back.size = 36
         self._button_back.main_palette = 'Bg'
         self._button_back.border = 0
@@ -62,7 +62,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_search.setCheckable(True)
         self._top_layout.addWidget(self._button_search)
 
-        self._button_settings = KitIconButton('feather-tool')
+        self._button_settings = KitIconButton('line-build')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
@@ -120,7 +120,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
-        self._button = KitIconButton("feather-send")
+        self._button = KitIconButton("line-send")
         self._button.main_palette = 'Bg'
         self._button.size = 30
         self._button.border = 0
@@ -130,7 +130,7 @@ class ChatWidget(KitVBoxLayout):
         self._button.clicked.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._button)
 
-        self._button_scroll = KitIconButton('feather-chevron-down')
+        self._button_scroll = KitIconButton('line-chevron-down')
         self._button_scroll.size = 36
         self._button_scroll.main_palette = 'Bg'
         self._button_scroll.border = 0
@@ -466,10 +466,10 @@ class _SendMessageContextMenu(KitMenu):
         self.data = None
         self.__height = 56 + 33
 
-        action = self.addAction('Отправить', 'feather-send')
+        action = self.addAction('Отправить', 'line-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
 
-        action = self.addAction('Отправить без запроса', 'feather-send')
+        action = self.addAction('Отправить без запроса', 'solid-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
 
         self.addSeparator()

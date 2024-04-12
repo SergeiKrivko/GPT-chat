@@ -44,7 +44,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['icon.png'] + [f'images/icons/icon{i}.png' for i in range(2, 7)],
+    icon='icon.png',
 )
 coll = COLLECT(
     exe,
@@ -60,4 +60,4 @@ coll = COLLECT(
 app = BUNDLE(coll,
              name='GPT-chat.app',
              icon='icon_mac.png',
-             bundle_identifier=None)
+             bundle_identifier="com.sergeikrivko.gpt")

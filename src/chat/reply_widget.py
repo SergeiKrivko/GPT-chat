@@ -89,7 +89,7 @@ class _ReplyItem(KitLayoutButton):
         self.clicked.connect(lambda: self.scrollRequested.emit(self._message.id))
         self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
 
-        self._icon_widget = KitIconWidget('solid-reply')
+        self._icon_widget = KitIconWidget('custom-reply')
         self._icon_widget.setFixedSize(18, 18)
         self.addWidget(self._icon_widget)
 
@@ -99,7 +99,7 @@ class _ReplyItem(KitLayoutButton):
         # self._label.setWordWrap(True)
         self.addWidget(self._label, 1000)
 
-        self._button = KitIconButton('solid-trash')
+        self._button = KitIconButton('line-trash')
         self._button.clicked.connect(lambda: self.deleteRequested.emit(self._message.id))
         self._button.size = 22
         self._button.main_palette = 'Bg'

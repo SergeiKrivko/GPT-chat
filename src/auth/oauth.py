@@ -32,7 +32,7 @@ class OAuthScreen(KitVBoxLayout):
         top_layout.setSpacing(10)
         self.addWidget(top_layout)
 
-        button_back = KitIconButton('solid-arrow-left')
+        button_back = KitIconButton('line-arrow-back')
         button_back.size = 40
         top_layout.addWidget(button_back)
         button_back.clicked.connect(self.backPressed.emit)
@@ -73,7 +73,7 @@ class OAuthScreen(KitVBoxLayout):
         self._code_label.setReadOnly(True)
         group.addItem(self._code_label)
 
-        button = KitIconButton('regular-copy')
+        button = KitIconButton('line-copy')
         button.clicked.connect(self.open_url)
         group.addItem(button)
 

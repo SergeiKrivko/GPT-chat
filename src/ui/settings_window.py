@@ -91,7 +91,7 @@ class UpdateWidget(KitTabLayout):
         self._progress_bar.setFixedHeight(24)
         progress_layout.addWidget(self._progress_bar)
 
-        self._button_cancel = KitIconButton('solid-xmark')
+        self._button_cancel = KitIconButton('line-ban')
         self._button_cancel.size = 24
         self._button_cancel.clicked.connect(self.cancel.emit)
         progress_layout.addWidget(self._button_cancel)

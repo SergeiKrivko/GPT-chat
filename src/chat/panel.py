@@ -48,7 +48,7 @@ class ChatPanel(KitHBoxLayout):
         top_layout.setSpacing(4)
         self._main_layout.addWidget(top_layout)
 
-        self._button_add = KitIconButton('feather-plus')
+        self._button_add = KitIconButton('line-add')
         self._button_add.size = 36
         self._button_add.border = 0
         self._button_add.main_palette = 'Bg'
@@ -59,14 +59,14 @@ class ChatPanel(KitHBoxLayout):
         layout.alignment = Qt.AlignmentFlag.AlignRight
         top_layout.addWidget(layout)
 
-        self._button_user = KitIconButton('feather-user')
+        self._button_user = KitIconButton('line-person')
         self._button_user.size = 36
         self._button_user.main_palette = 'Bg'
         self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
         layout.addWidget(self._button_user)
 
-        self._button_settings = KitIconButton('feather-settings')
+        self._button_settings = KitIconButton('line-settings')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
@@ -86,7 +86,7 @@ class ChatPanel(KitHBoxLayout):
         self.addWidget(self._no_chat_widget)
         self._no_chat_widget.addWidget(KitVBoxLayout(), 100)
 
-        icon_widget = KitIconWidget('regular-comments')
+        icon_widget = KitIconWidget('line-chatbubbles')
         icon_widget.setFixedHeight(300)
         icon_widget.setMaximumWidth(300)
         self._no_chat_widget.addWidget(icon_widget)

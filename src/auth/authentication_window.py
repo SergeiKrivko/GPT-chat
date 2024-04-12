@@ -296,7 +296,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.addWidget(bottom_layout)
 
         # self._button_back = KitButton("Назад")
-        self._button_back = KitIconButton('solid-arrow-left')
+        self._button_back = KitIconButton('line-arrow-back')
         self._button_back.radius = 8
         self._button_back.size = 50
         self._button_back.setContentsMargins(10, 10, 10, 10)

@@ -143,7 +143,7 @@ class GPTListWidgetItem(KitButton):
         main_layout.setContentsMargins(7, 2, 7, 2)
         self.setLayout(main_layout)
 
-        self._icon_label = KitIconWidget('feather-message-square')
+        self._icon_label = KitIconWidget('line-chatbox')
         self._icon_label.setFixedSize(24, 24)
         main_layout.addWidget(self._icon_label)
 
@@ -171,7 +171,7 @@ class GPTListWidgetItem(KitButton):
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_pinned)
 
-        self._icon_remote = KitIconWidget("feather-globe")
+        self._icon_remote = KitIconWidget("line-globe")
         self._icon_remote.setFixedSize(18, 18)
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_remote)
@@ -240,7 +240,7 @@ class ContextMenu(KitMenu):
         self._chat = chat
         self.action = None
 
-        action = self.addAction("Удалить", 'feather-trash-2')
+        action = self.addAction("Удалить", 'line-trash')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
 
         if self._chat.pinned:

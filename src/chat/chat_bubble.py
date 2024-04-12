@@ -86,6 +86,9 @@ class ChatBubble(KitHBoxLayout):
 
     def _set_html(self):
         self._text_edit.setMarkdown(self.parse_latex())
+        html = self._text_edit.toHtml().replace('Courier New', 'Roboto Mono').replace(
+            'Segoe UI', 'Roboto').replace('font-size:9pt', 'font-size:11pt')
+        self._text_edit.setHtml(html)
 
     def parse_latex(self):
         lst = []
@@ -226,15 +229,15 @@ class ContextMenu(KitMenu):
         self.action = None
         self.data = None
 
-        action = self.addAction('Ответить', 'custom-reply')          # 'feather-corner-up-left
+        action = self.addAction('Ответить', 'custom-reply')
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
 
         self.addSeparator()
 
-        action = self.addAction('Выделить все', 'feather-italic')
+        action = self.addAction('Выделить все', 'line-text')
         action.triggered.connect(lambda: self.set_action(ContextMenu.SELECT_ALL))
 
-        action = self.addAction('Копировать как текст', 'feather-copy')
+        action = self.addAction('Копировать как текст', 'line-copy')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_TEXT))
 
         action = self.addAction('Копировать как Markdown', 'custom-copy-md')
@@ -242,7 +245,7 @@ class ContextMenu(KitMenu):
 
         self.addSeparator()
 
-        action = self.addAction('Удалить', 'feather-trash-2')
+        action = self.addAction('Удалить', 'line-trash')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
         self.addSeparator()
