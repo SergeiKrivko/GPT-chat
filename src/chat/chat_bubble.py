@@ -84,16 +84,16 @@ class ChatBubble(KitHBoxLayout):
         self._widget = QWidget()
         self.addWidget(self._widget, 1)
 
-    def _set_html(self):
-        self._text_edit.setMarkdown(self.parse_latex())
+    def _set_html(self, text=None):
+        self._text_edit.setMarkdown(self.parse_latex(text or self._message.content))
         html = self._text_edit.toHtml().replace('Courier New', 'Roboto Mono').replace(
             'Segoe UI', 'Roboto').replace('font-size:9pt', 'font-size:11pt')
         self._text_edit.setHtml(html)
 
-    def parse_latex(self):
+    def parse_latex(self, text: str):
         lst = []
 
-        text = self._message.content.replace('\\(', '\\[').replace('\\)', '\\]')
+        text = text.replace('\\(', '\\[').replace('\\)', '\\]')
         while '\\[' in text:
             ind = text.index('\\[')
             lst.append(text[:ind])
@@ -133,7 +133,7 @@ class ChatBubble(KitHBoxLayout):
             case ContextMenu.COPY_AS_TEXT:
                 self._sm.copy_text(self._text_edit.toPlainText())
             case ContextMenu.COPY_AS_MARKDOWN:
-                self._sm.copy_text(self._text_edit.toMarkdown())
+                self._sm.copy_text(self._message.content)
             case ContextMenu.SELECT_ALL:
                 self._text_edit.selectAll()
                 self._text_edit.setFocus()
@@ -147,11 +147,11 @@ class ChatBubble(KitHBoxLayout):
         res = await async_translate(self._text_edit.toMarkdown(), dest)
         self._translated_widget.set_src(res.src)
         self._translated_widget.show()
-        self._text_edit.setMarkdown(res.text)
+        self._set_html(res.text)
 
     def _show_original_message(self):
         self._translated_widget.hide()
-        self._text_edit.setMarkdown(self.message.content)
+        self._set_html()
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
