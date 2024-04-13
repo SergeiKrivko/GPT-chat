@@ -120,15 +120,17 @@ class UpdateManager(QObject):
         self._install_release()
 
     @staticmethod
-    def compare_version(version: str):
+    def compare_version(version: str, cur_version=None):
         """
         Compare version and APP_VERSION from config
-        :param version: version *.*.*
-        :return: True if version > config.APP_VERSION
+        :param version: version `*.*.*`
+        :param cur_version: current version `*.*.*` (config.APP_VERSION if None)
+        :return: True if version > current_version
         """
+        cur_version = cur_version or config.APP_VERSION
         if version.count('.') != 2:
             return False
-        for a1, a2 in zip(version.split('.'), config.APP_VERSION.split('.')):
+        for a1, a2 in zip(version.split('.'), cur_version.split('.')):
             if a1 != a2:
                 return int(a1) > int(a2)
         return False

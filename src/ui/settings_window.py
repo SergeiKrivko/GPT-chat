@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import *
 
+from src.ui.patch_notes_dialog import PatchNotesDialog
 from src.ui.update_manager import UpdateManager
 
 
@@ -51,6 +52,11 @@ class SettingsWindow(KitDialog):
         self._auto_update_checkbox.main_palette = 'Bg'
         self._auto_update_checkbox.setChecked(bool(self.sm.get('auto_update', True)))
         main_layout.addWidget(self._auto_update_checkbox)
+
+        self._patch_notes_window = PatchNotesDialog(parent, self.sm)
+        self._patch_notes_button = KitButton("Описание обновления")
+        self._patch_notes_button.on_click = self._patch_notes_window.exec
+        main_layout.addWidget(self._patch_notes_button)
 
     def save(self):
         self.sm.set('auto_update', 'true' if self._auto_update_checkbox.state else '')

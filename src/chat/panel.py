@@ -102,15 +102,16 @@ class ChatPanel(KitHBoxLayout):
         self.chat_widgets = dict()
         self.current = None
 
+        self._settings_window = SettingsWindow(self, self.sm, self._chat_manager, self._um)
+
         try:
             self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
             self._last_chat = None
 
     def _open_settings(self):
-        window = SettingsWindow(self, self.sm, self._chat_manager, self._um)
-        window.exec()
-        window.save()
+        self._settings_window.exec()
+        self._settings_window.save()
 
     @asyncSlot()
     async def _update_chats(self):
