@@ -86,8 +86,8 @@ class ChatBubble(KitHBoxLayout):
 
     def _set_html(self, text=None):
         self._text_edit.setMarkdown(self.parse_latex(text or self._message.content))
-        html = self._text_edit.toHtml().replace('Courier New', 'Roboto Mono').replace(
-            'Segoe UI', 'Roboto').replace('font-size:9pt', 'font-size:11pt')
+        html = self._text_edit.toHtml().replace("font-family:'Courier New'", "font-family:'Roboto Mono'").replace(
+            "font-family:'Segoe UI'", "font-family:'Roboto'").replace('font-size:9pt', 'font-size:11pt')
         self._text_edit.setHtml(html)
 
     def parse_latex(self, text: str):

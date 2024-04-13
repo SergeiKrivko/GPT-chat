@@ -6,8 +6,8 @@ matplotlib~=3.8.0
 networkx~=3.2.1
 qasync~=0.27.1
 aiohttp~=3.9.3
-Brotli
-platformdirs
+Brotli~=1.1.0
+platformdirs~=4.2.0
 undetected-chromedriver~=3.5.5
 googletrans==3.1.0a0
 PyQtUIkit==2.4.1

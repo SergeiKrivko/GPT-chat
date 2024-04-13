@@ -57,7 +57,7 @@ class SearchWidget(KitVBoxLayout):
 
     def _search(self):
         self._search_result.clear()
-        substr = self._line_edit.text()
+        substr = self._line_edit.text
 
         if not substr.strip():
             return
@@ -101,7 +101,7 @@ class SearchWidget(KitVBoxLayout):
     def _select_text(self):
         self._label.setText(f"{self._current_selected + 1}/{len(self._search_result)}")
         if self._search_result:
-            self.selectionRequested.emit(*self._search_result[self._current_selected], len(self._line_edit.text()))
+            self.selectionRequested.emit(*self._search_result[self._current_selected], len(self._line_edit.text))
 
     def _apply_theme(self):
         if not self._tm or not self._tm.active:

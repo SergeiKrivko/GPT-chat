@@ -390,7 +390,8 @@ class Looper(QThread):
     def run(self):
         try:
             for el in gpt.stream_response(self.text, **self.kwargs):
-                self.sendMessage.emit(el)
+                if isinstance(el, str):
+                    self.sendMessage.emit(el)
             sleep(0.1)
         except Exception as ex:
             self.exception.emit(ex)
