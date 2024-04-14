@@ -3,7 +3,7 @@ from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu, QPushButton
 from PyQtUIkit.core import KitFont
-from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu
+from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu, KitLayoutButton
 
 from src.gpt.chat import GPTChat
 
@@ -32,9 +32,9 @@ class GPTListWidget(KitScrollArea):
         # self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self._layout = KitVBoxLayout()
-        self._layout.setSpacing(5)
+        self._layout.spacing = 0
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._layout.setContentsMargins(15, 10, 10, 10)
+        self._layout.padding = 0, 10, 0, 0
         self.setWidget(self._layout)
 
         self._items = dict()
@@ -94,9 +94,9 @@ class GPTListWidget(KitScrollArea):
         self._set_items_width()
 
     def _set_items_width(self):
-        width = self.width() - 30
+        width = self.width() - 0
         if self.verticalScrollBar().maximum():
-            width -= 8
+            width -= 12
         for el in self._items.values():
             el.setFixedWidth(width)
 
@@ -116,7 +116,7 @@ class Label(QLabel):
         super().mouseMoveEvent(ev)
 
 
-class GPTListWidgetItem(KitButton):
+class GPTListWidgetItem(KitLayoutButton):
     ICON_SIZE = 16
 
     selected = pyqtSignal(int)
@@ -130,27 +130,24 @@ class GPTListWidgetItem(KitButton):
         self._chat_id = chat.id
         self.main_palette = 'Menu'
         self.border = 0
-        self.radius = 6
+        self.radius = 0
         self.setCheckable(True)
         self.clicked.connect(self._on_clicked)
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.run_context_menu)
 
-        self.setFixedHeight(50)
-
-        main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(7, 2, 7, 2)
-        self.setLayout(main_layout)
+        self.setFixedHeight(56)
+        self.setContentsMargins(12, 5, 12, 5)
 
         self._icon_label = KitIconWidget('line-chatbox')
         self._icon_label.setFixedSize(24, 24)
-        main_layout.addWidget(self._icon_label)
+        self.addWidget(self._icon_label)
 
         layout = KitVBoxLayout()
         layout.setContentsMargins(0, 1, 0, 1)
         layout.setSpacing(0)
-        main_layout.addWidget(layout, 100)
+        self.addWidget(layout, 100)
 
         self._name_label = KitLabel()
         layout.addWidget(self._name_label)
@@ -164,7 +161,7 @@ class GPTListWidgetItem(KitButton):
         self._right_layout = KitVBoxLayout()
         self._right_layout.setContentsMargins(0, 0, 0, 0)
         self._right_layout.setSpacing(4)
-        main_layout.addWidget(self._right_layout)
+        self.addWidget(self._right_layout)
 
         self._icon_pinned = KitIconWidget("custom-pin")
         self._icon_pinned.setFixedSize(18, 18)
@@ -214,20 +211,6 @@ class GPTListWidgetItem(KitButton):
             self.setChecked(True)
         else:
             self.selected.emit(self.chat.id)
-
-    def _set_tm(self, tm):
-        super()._set_tm(tm)
-        self._icon_label._set_tm(tm)
-        self._name_label._set_tm(tm)
-        self._last_message_label._set_tm(tm)
-        self._right_layout._set_tm(tm)
-
-    def _apply_theme(self):
-        super()._apply_theme()
-        self._icon_label._apply_theme()
-        self._name_label._apply_theme()
-        self._last_message_label._apply_theme()
-        self._right_layout._apply_theme()
 
 
 class ContextMenu(KitMenu):
