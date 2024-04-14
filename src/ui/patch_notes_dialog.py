@@ -93,6 +93,7 @@ class PatchNotesDialog(KitDialog):
 
         self._text_edit = KitTextEdit()
         self._text_edit.border = 0
+        self._text_edit.setReadOnly(True)
         self._text_edit.main_palette = 'Bg'
         layout.addWidget(self._text_edit)
 
@@ -143,11 +144,18 @@ class PatchNotesDialog(KitDialog):
             await asyncio.sleep(20)
 
     async def _download_note(self, version: Version):
-        async with self._session.get(f"/SergeiKrivko/GPT-chat/master/patch_notes/"
-                                     f"{str(version).replace('.', '-')}.md") as resp:
-            if resp.ok:
-                res = await resp.text()
-                return res
+        while True:
+            try:
+                async with self._session.get(f"/SergeiKrivko/GPT-chat/master/patch_notes/"
+                                             f"{str(version).replace('.', '-')}.md") as resp:
+                    if resp.ok:
+                        res = await resp.text()
+                        return res
+            except aiohttp.ClientConnectionError:
+                pass
+            await asyncio.sleep(5)
+            while self.isHidden():
+                await asyncio.sleep(5)
 
     async def _open_note(self, version: Version):
         self._tab_layout.setCurrent(0)
