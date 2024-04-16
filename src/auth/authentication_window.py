@@ -181,8 +181,8 @@ class _SignInScreen(KitVBoxLayout):
         self.show_spinner(True)
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(rest_api_url, data={"email": self._email_edit.text(),
-                                                            "password": self._password_edit.text(),
+                async with session.post(rest_api_url, data={"email": self._email_edit.text,
+                                                            "password": self._password_edit.text,
                                                             "returnSecureToken": True}) as r:
                     res = await r.json()
                     if r.ok:
@@ -217,7 +217,7 @@ class _SignInScreen(KitVBoxLayout):
     async def _reset_password(self):
         request_ref = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getOobConfirmationCode?key={0}".format(
             config.FIREBASE_API_KEY)
-        data = json.dumps({"requestType": "PASSWORD_RESET", "email": self._email_edit.text()})
+        data = json.dumps({"requestType": "PASSWORD_RESET", "email": self._email_edit.text})
         async with aiohttp.ClientSession() as session:
             async with session.post(request_ref, data=data) as resp:
                 res = await resp.text()
@@ -323,15 +323,15 @@ class _SignUpScreen(KitVBoxLayout):
 
     @asyncSlot()
     async def _sign_up(self):
-        if self._password_edit.text() != self._password_edit2.text():
+        if self._password_edit.text != self._password_edit2.text:
             self.show_error("Пароли не совпадают")
             return
         rest_api_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={config.FIREBASE_API_KEY}"
         self.show_spinner(True)
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(rest_api_url, data={"email": self._email_edit.text(),
-                                                            "password": self._password_edit.text(),
+                async with session.post(rest_api_url, data={"email": self._email_edit.text,
+                                                            "password": self._password_edit.text,
                                                             "returnSecureToken": True}) as r:
                     res = await r.json()
                     if r.ok:
