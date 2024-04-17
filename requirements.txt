@@ -10,5 +10,5 @@ Brotli~=1.1.0
 platformdirs~=4.2.0
 undetected-chromedriver~=3.5.5
 googletrans==3.1.0a0
-PyQtUIkit==2.6.0
+PyQtUIkit==2.7.0
 google-auth-oauthlib~=1.2.0
