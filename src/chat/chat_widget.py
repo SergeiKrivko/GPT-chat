@@ -3,6 +3,7 @@ from time import sleep
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
     KitMenu, KitDialog
 from googletrans import LANGUAGES
@@ -50,7 +51,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         self._top_layout.addWidget(self._button_back)
 
-        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else 'Диалог')
+        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocalString.chat)
         self._top_layout.addWidget(self._name_label)
 
         self._button_search = KitIconButton('custom-search')
@@ -90,7 +91,7 @@ class ChatWidget(KitVBoxLayout):
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_layout.addWidget(self._scroll_layout)
 
-        self._progress_marker = KitLabel("GPT печатает...")
+        self._progress_marker = KitLabel(KitLocalString.gpt_print)
         self._progress_marker.setContentsMargins(10, 0, 0, 0)
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
@@ -116,7 +117,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_bubble.addWidget(bottom_layout)
 
         self._text_edit = ChatInputArea()
-        self._text_edit.setPlaceholderText("Сообщение...")
+        self._text_edit.placeholder_text = KitLocalString.message_placeholder
         self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
@@ -467,17 +468,17 @@ class _SendMessageContextMenu(KitMenu):
         self.data = None
         self.__height = 56 + 33
 
-        action = self.addAction('Отправить', 'line-send')
+        action = self.addAction(KitLocalString.send, 'line-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
 
-        action = self.addAction('Отправить без запроса', 'solid-send')
+        action = self.addAction(KitLocalString.send_without_request, 'solid-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
 
         self.addSeparator()
 
-        menu = self.addMenu('Перевести на ...', 'custom-translate')
-        for key, item in LANGUAGES.items():
-            action = menu.addAction(item)
+        menu = self.addMenu(KitLocalString.translate_to, 'custom-translate')
+        for key in LANGUAGES:
+            action = menu.addAction(getattr(KitLocalString, f'lang_{key}'))
             action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
 
         self.detect_lang(text)
@@ -491,14 +492,15 @@ class _SendMessageContextMenu(KitMenu):
             message_lang = None
 
         if message_lang:
-            if message_lang != 'ru':
+            if message_lang != self.theme_manager.lang:
                 self.__height += 24
-                action = self.addAction('Перевести на русский', 'custom-translate')
-                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'ru'))
+                action = self.addAction(KitLocalString.translate_to_local, 'custom-translate')
+                action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE,
+                                                                 self.theme_manager.lang))
 
-            if message_lang != 'en':
+            if message_lang != 'en' and self.theme_manager.lang != 'en':
                 self.__height += 24
-                action = self.addAction('Перевести на английский', 'custom-translate')
+                action = self.addAction(KitLocalString.translate_to_english, 'custom-translate')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
 
             self._apply_theme()

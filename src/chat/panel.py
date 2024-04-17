@@ -3,6 +3,7 @@ import shutil
 
 from PyQt6.QtCore import Qt
 from PyQtUIkit.core import KitIcon, KitFont
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitDialog, KitVSeparator, KitLabel, \
     KitIconWidget
 from qasync import asyncSlot
@@ -91,7 +92,7 @@ class ChatPanel(KitHBoxLayout):
         icon_widget.setMaximumWidth(300)
         self._no_chat_widget.addWidget(icon_widget)
 
-        label = KitLabel("Выберите чат")
+        label = KitLabel(KitLocalString.select_chat)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.font_size = KitFont.Size.SUPER_BIG
         label.font = 'bold'

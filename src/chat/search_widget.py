@@ -1,6 +1,7 @@
 from PyQt6.QtCore import pyqtSignal, QPropertyAnimation, QSize, QParallelAnimationGroup
 from PyQt6.QtWidgets import QTextEdit
 from PyQtUIkit.themes import KitPalette
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import KitVBoxLayout, KitVGroup, KitHBoxLayout, KitLineEdit, KitButton, KitLabel
 
 from src.gpt.chat import GPTChat
@@ -26,7 +27,7 @@ class SearchWidget(KitVBoxLayout):
 
         self._line_edit = KitLineEdit()
         self._line_edit.border = 0
-        self._line_edit.setPlaceholderText("Поиск...")
+        self._line_edit.placeholder_text = KitLocalString.search + "..."
         self._line_edit.textEdited.connect(self._search)
         self._bubble.addWidget(self._line_edit)
 

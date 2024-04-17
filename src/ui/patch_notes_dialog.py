@@ -5,6 +5,7 @@ from time import sleep
 import aiohttp
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.core import KitFont
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -50,7 +51,7 @@ class PatchNotesDialog(KitDialog):
 
     def __init__(self, parent, sm: SettingsManager):
         super().__init__(parent)
-        self.name = "Описание обновления"
+        self.name = KitLocalString.patch_note
         self._sm = sm
         self.setFixedSize(600, 400)
 

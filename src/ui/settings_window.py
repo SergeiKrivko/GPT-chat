@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import *
 
 from src.ui.patch_notes_dialog import PatchNotesDialog
@@ -11,7 +12,7 @@ class SettingsWindow(KitDialog):
         self.sm = sm
         self._cm = cm
         self._um = um
-        self.name = "Настройки"
+        self.name = KitLocalString.settings
         self.main_palette = 'Bg'
 
         self._labels = []
@@ -22,7 +23,11 @@ class SettingsWindow(KitDialog):
         main_layout.setSpacing(8)
         self.setWidget(main_layout)
 
-        self._theme_checkbox = KitCheckBox("Темная тема")
+        lang_box = KitLanguageBox()
+        lang_box.langChanged.connect(self._on_lang_changed)
+        main_layout.addWidget(lang_box)
+
+        self._theme_checkbox = KitCheckBox(KitLocalString.dark_theme)
         self._theme_checkbox.main_palette = 'Bg'
         self._theme_checkbox.setChecked(self.sm.get('dark_theme', 'light') == 'dark')
         self._theme_checkbox.stateChanged.connect(self._on_theme_changed)
@@ -33,11 +38,15 @@ class SettingsWindow(KitDialog):
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 
-        label = KitLabel("Оформление:")
+        label = KitLabel(KitLocalString.theme_color + ':')
         self._labels.append(label)
         layout.addWidget(label)
 
-        self._theme_box = KitComboBox('blue', 'green', 'red', 'orange', 'pink')
+        self._theme_box = KitComboBox(KitComboBoxItem(KitLocalString.blue, 'blue'),
+                                      KitComboBoxItem(KitLocalString.green, 'green'),
+                                      KitComboBoxItem(KitLocalString.red, 'red'),
+                                      KitComboBoxItem(KitLocalString.orange, 'orange'),
+                                      KitComboBoxItem(KitLocalString.pink, 'pink'),)
         self._theme_box.setCurrentIndex(['blue', 'green', 'red', 'orange', 'pink'].index(self.sm.get('theme', 'blue')))
         self._theme_box.currentValueChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
@@ -48,13 +57,13 @@ class SettingsWindow(KitDialog):
         self._update_widget.cancel.connect(lambda: self._um.cancel_downloading())
         main_layout.addWidget(self._update_widget)
 
-        self._auto_update_checkbox = KitCheckBox("Сообщать об обновлениях")
+        self._auto_update_checkbox = KitCheckBox(KitLocalString.report_updates)
         self._auto_update_checkbox.main_palette = 'Bg'
         self._auto_update_checkbox.setChecked(bool(self.sm.get('auto_update', True)))
         main_layout.addWidget(self._auto_update_checkbox)
 
         self._patch_notes_window = PatchNotesDialog(parent, self.sm)
-        self._patch_notes_button = KitButton("Описание обновления")
+        self._patch_notes_button = KitButton(KitLocalString.patch_note)
         self._patch_notes_button.on_click = self._patch_notes_window.exec
         main_layout.addWidget(self._patch_notes_button)
 
@@ -66,6 +75,10 @@ class SettingsWindow(KitDialog):
         self.sm.set('theme', self._theme_box.currentValue())
         self.theme_manager.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
         self._apply_theme()
+
+    def _on_lang_changed(self):
+        self.sm.set('language', self.theme_manager.lang)
+        self._apply_lang()
 
 
 class UpdateWidget(KitTabLayout):
@@ -81,11 +94,11 @@ class UpdateWidget(KitTabLayout):
         super().__init__()
         self.setContentsMargins(0, 0, 0, 0)
 
-        self._button_check = KitButton("Проверить обновление")
+        self._button_check = KitButton(KitLocalString.check_update)
         self._button_check.clicked.connect(self.clicked.emit)
         self.addWidget(self._button_check)
 
-        self._button_download = KitButton("Скачать обновление")
+        self._button_download = KitButton(KitLocalString.download_update)
         self._button_download.clicked.connect(self.clicked.emit)
         self.addWidget(self._button_download)
 
@@ -102,7 +115,7 @@ class UpdateWidget(KitTabLayout):
         self._button_cancel.clicked.connect(self.cancel.emit)
         progress_layout.addWidget(self._button_cancel)
 
-        self._button_install = KitButton("Установить обновление")
+        self._button_install = KitButton(KitLocalString.install_update)
         self._button_install.clicked.connect(self.clicked.emit)
         self.addWidget(self._button_install)
 

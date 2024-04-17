@@ -4,6 +4,7 @@ import json
 import aiohttp
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.core import KitFont
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -15,7 +16,7 @@ class AuthenticationWindow(KitDialog):
     def __init__(self, parent, sm):
         super().__init__(parent)
         self._sm = sm
-        self.name = "Авторизация"
+        self.name = KitLocalString.authorization
 
         self.setFixedSize(400, 400)
 
@@ -102,7 +103,7 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.addWidget(self._main_layout)
 
-        label = KitLabel("Email:")
+        label = KitLabel(KitLocalString.email + ":")
         self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
@@ -111,7 +112,7 @@ class _SignInScreen(KitVBoxLayout):
         self._email_edit.returnPressed.connect(self.sign_in)
         self._main_layout.addWidget(self._email_edit)
 
-        label = KitLabel("Пароль:")
+        label = KitLabel(KitLocalString.password + ":")
         self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
@@ -131,21 +132,21 @@ class _SignInScreen(KitVBoxLayout):
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._main_layout.addWidget(bottom_layout)
 
-        self._button_join = KitButton("Войти")
+        self._button_join = KitButton(KitLocalString.sign_in)
         self._button_join.radius = 8
         self._button_join.font_size = KitFont.Size.BIG
         self._button_join.setFixedSize(256, 50)
         self._button_join.clicked.connect(self.sign_in)
         bottom_layout.addWidget(self._button_join)
 
-        self._button_reset_password = KitButton("Сбросить пароль")
+        self._button_reset_password = KitButton(KitLocalString.reset_password)
         self._button_reset_password.main_palette = 'Transparent'
         self._button_reset_password.border = 0
         self._button_reset_password.clicked.connect(self.reset_password)
         self._button_reset_password.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._main_layout.addWidget(self._button_reset_password)
 
-        self._button_sign_up = KitButton("Регистрация")
+        self._button_sign_up = KitButton(KitLocalString.sign_up)
         self._button_sign_up.main_palette = 'Transparent'
         self._button_sign_up.border = 0
         self._button_sign_up.clicked.connect(self.signUpPressed.emit)
@@ -155,7 +156,7 @@ class _SignInScreen(KitVBoxLayout):
         oauth_layout = KitHBoxLayout()
         oauth_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         oauth_layout.setSpacing(6)
-        oauth_layout.addWidget(label := KitLabel("Войти через:"))
+        oauth_layout.addWidget(label := KitLabel(KitLocalString.oauth))
         label.setFixedWidth(94)
         label.setWordWrap(True)
         self._main_layout.addWidget(oauth_layout)
@@ -163,7 +164,7 @@ class _SignInScreen(KitVBoxLayout):
         for el in ['google', 'github']:
             button = KitIconButton(f'brands-{el}')
             button.size = 40
-            button.clicked.connect(lambda x,  provider=el: self.oauthRequested.emit(provider))
+            button.clicked.connect(lambda x, provider=el: self.oauthRequested.emit(provider))
             oauth_layout.addWidget(button)
 
         self._spinner = KitHBoxLayout()
@@ -195,19 +196,19 @@ class _SignInScreen(KitVBoxLayout):
                     else:
                         match res.get('error', dict()).get('message'):
                             case 'INVALID_LOGIN_CREDENTIALS':
-                                self.show_error("Неверный логин или пароль")
+                                self.show_error(KitLocalString.wrong_password)
                             case 'INVALID_EMAIL':
-                                self.show_error("Некорректный email")
+                                self.show_error(KitLocalString.wrong_email)
                             case 'MISSING_PASSWORD':
-                                self.show_error("Введите пароль")
+                                self.show_error(KitLocalString.password_missing)
                             case _:
-                                self.show_error("Неизвестная ошибка")
+                                self.show_error(KitLocalString.unknown_error)
                                 print(res)
                 self._password_edit.clear()
         except aiohttp.ClientConnectionError:
-            self.show_error("Нет подключения к интернету")
+            self.show_error(KitLocalString.auth_connection_error)
         except Exception as ex:
-            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
+            self.show_error(KitLocalString.unknown_error + f": {ex.__class__.__name__}: {ex}")
         self.show_spinner(False)
 
     def reset_password(self):
@@ -229,7 +230,7 @@ class _SignInScreen(KitVBoxLayout):
         self._main_layout.setHidden(flag)
 
     def show_error(self, text):
-        self._error_label.setText(text)
+        self._error_label.text = text
 
     def show(self) -> None:
         super().show()
@@ -255,7 +256,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.addWidget(self._main_layout)
 
-        label = KitLabel("Email:")
+        label = KitLabel(KitLocalString.email + ':')
         self._main_layout.addWidget(label)
 
         self._email_edit = KitLineEdit(self._sm.get('user_email', ''))
@@ -264,7 +265,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._email_edit.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._email_edit)
 
-        label = KitLabel("Пароль:")
+        label = KitLabel(KitLocalString.password + ":")
         self._main_layout.addWidget(label)
 
         self._password_edit = KitLineEdit()
@@ -274,7 +275,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._password_edit.returnPressed.connect(self.sign_up)
         self._main_layout.addWidget(self._password_edit)
 
-        label = KitLabel("Пароль еще раз:")
+        label = KitLabel(KitLocalString.password_again + ':')
         self._main_layout.addWidget(label)
 
         self._password_edit2 = KitLineEdit()
@@ -304,7 +305,7 @@ class _SignUpScreen(KitVBoxLayout):
         self._button_back.clicked.connect(self.backPressed.emit)
         bottom_layout.addWidget(self._button_back)
 
-        self._button_sign_up = KitButton("Создать аккаунт")
+        self._button_sign_up = KitButton(KitLocalString.create_account)
         self._button_sign_up.radius = 8
         self._button_sign_up.setFixedSize(200, 50)
         self._button_sign_up.clicked.connect(self.sign_up)
@@ -324,7 +325,7 @@ class _SignUpScreen(KitVBoxLayout):
     @asyncSlot()
     async def _sign_up(self):
         if self._password_edit.text != self._password_edit2.text:
-            self.show_error("Пароли не совпадают")
+            self.show_error(KitLocalString.passwords_not_match)
             return
         rest_api_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={config.FIREBASE_API_KEY}"
         self.show_spinner(True)
@@ -344,30 +345,30 @@ class _SignUpScreen(KitVBoxLayout):
                     else:
                         match res.get('error', dict()).get('message'):
                             case 'EMAIL_EXISTS':
-                                self.show_error("Аккаунт уже существует")
+                                self.show_error(KitLocalString.account_exists)
                             case 'MISSING_EMAIL':
-                                self.show_error("Введите email")
+                                self.show_error(KitLocalString.missing_email)
                             case 'MISSING_PASSWORD':
-                                self.show_error("Введите пароль")
+                                self.show_error(KitLocalString.missing_password)
                             case 'INVALID_EMAIL':
-                                self.show_error("Некорректный email")
+                                self.show_error(KitLocalString.wrong_email)
                             case 'WEAK_PASSWORD : Password should be at least 6 characters':
-                                self.show_error("Слишком короткий пароль")
+                                self.show_error(KitLocalString.too_short_password)
                             case _:
-                                self.show_error("Неизвестная ошибка")
+                                self.show_error(KitLocalString.unknown_error)
                                 print(res)
         except aiohttp.ClientConnectionError:
-            self.show_error("Нет подключения к интернету")
+            self.show_error(KitLocalString.auth_connection_error)
         except Exception as ex:
-            self.show_error(f"Неизвестная ошибка: {ex.__class__.__name__}: {ex}")
-        self.show_spinner(False)
+            self.show_error(KitLocalString.unknown_error + f": {ex.__class__.__name__}: {ex}")
+            self.show_spinner(False)
 
     def show_spinner(self, flag):
         self._spinner.setHidden(not flag)
         self._main_layout.setHidden(flag)
 
     def show_error(self, text):
-        self._error_label.setText(text)
+        self._error_label.text = text
 
 
 class _VerifyEmailScreen(KitVBoxLayout):
@@ -390,19 +391,18 @@ class _VerifyEmailScreen(KitVBoxLayout):
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.addWidget(bottom_layout)
 
-        self._button_back = KitButton("Назад")
+        self._button_back = KitButton(KitLocalString.back)
         self._button_back.setFixedSize(150, 50)
         self._button_back.clicked.connect(self._exit)
         bottom_layout.addWidget(self._button_back)
 
-        self._button_send_again = KitButton("Отправить еще раз")
+        self._button_send_again = KitButton(KitLocalString.send_again)
         self._button_send_again.setFixedSize(150, 50)
         self._button_send_again.clicked.connect(lambda: self.send_email_verification(self._sm.get('user_token')))
         bottom_layout.addWidget(self._button_send_again)
 
     def update_user(self):
-        self._label.setText(f"На ваш адрес {self._sm.get('user_email', '<Ошибка>')} было отправлено письмо. "
-                            f"Перейдите по ссылке в этом письме, чтобы подтвердить адрес электронной почты.")
+        self._label.text = KitLocalString.email_send.get(self.theme_manager).format(self._sm.get('user_email', '<Ошибка>'))
         self.send_email_verification(self._sm.get('user_token'))
         self.wait_while_email_verified(self._sm.get('user_token'))
 
@@ -475,7 +475,7 @@ class _SignedScreen(KitVBoxLayout):
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.addWidget(bottom_layout)
 
-        self._button_exit = KitButton("Выйти")
+        self._button_exit = KitButton(KitLocalString.sign_out)
         self._button_exit.radius = 8
         self._button_exit.font_size = KitFont.Size.BIG
         self._button_exit.setFixedSize(150, 50)
@@ -489,4 +489,4 @@ class _SignedScreen(KitVBoxLayout):
         self._sm.set('user_token', '')
 
     def update_account(self):
-        self._label.setText(self._sm.get('user_email', ''))
+        self._label.text = self._sm.get('user_email', '')

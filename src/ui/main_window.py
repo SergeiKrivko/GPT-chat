@@ -3,6 +3,7 @@ import shutil
 import sys
 
 from PyQt6.QtGui import QIcon
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import KitMainWindow, KitDialog
 
 from src import config
@@ -27,6 +28,9 @@ class MainWindow(KitMainWindow):
         for key, item in THEMES.items():
             self.theme_manager.add_theme(key, item)
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")
+        
+        self.theme_manager.set_lang_path('src.ui.local')
+        self.theme_manager.set_lang(self.sm.get('language'))
 
         self.chat_manager = ChatManager(self.sm)
         self.chat_manager.connectionErrorOccurred.connect(self._on_connection_error)
@@ -67,7 +71,7 @@ class MainWindow(KitMainWindow):
         super().closeEvent(a0)
 
     def _on_connection_error(self):
-        KitDialog.danger(self, "Ошибка", "Не удалось выполнить действие. Проверьте подключение к интернету.")
+        KitDialog.danger(self, KitLocalString.error, KitLocalString.connection_error)
 
     def _close(self):
         self.close()

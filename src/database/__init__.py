@@ -156,7 +156,7 @@ class ChatManager(QObject):
                 if mes:
                     reply.append(mes.id)
             message = chat.add_message(data['role'], data['content'], reply)
-            message.replied_count = data.get('links') - 1
+            message.replied_count = data.get('links', 1) - 1
             message.remote_id = message_remote_id
             self.newMessage.emit(chat.id, message)
 

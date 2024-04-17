@@ -7,6 +7,7 @@ import aiohttp
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QApplication
 from PyQtUIkit.core import KitFont
+from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -60,7 +61,7 @@ class OAuthScreen(KitVBoxLayout):
         self._code.setSpacing(10)
         self._tab_layout.addWidget(self._code)
 
-        self._code.addWidget(label := KitLabel("Скопируйте код и перейдите по ссылке"))
+        self._code.addWidget(label := KitLabel(KitLocalString.copy_code))
         label.setWordWrap(True)
 
         group = KitHGroup()
@@ -74,6 +75,7 @@ class OAuthScreen(KitVBoxLayout):
         group.addItem(self._code_label)
 
         button = KitIconButton('line-copy')
+        button.size = 40
         button.clicked.connect(self.open_url)
         group.addItem(button)
 
@@ -99,7 +101,7 @@ class OAuthScreen(KitVBoxLayout):
         self._error_line.main_palette = 'Danger'
         link.addWidget(self._error_line)
 
-        button = KitButton("Войти")
+        button = KitButton(KitLocalString.sign_in)
         button.setFixedSize(256, 50)
         button.clicked.connect(lambda: self._try_link())
         link.addWidget(button)
@@ -108,7 +110,7 @@ class OAuthScreen(KitVBoxLayout):
 
     def show_error(self, text: str):
         self._tab_layout.setCurrent(1)
-        self._error.setText(text)
+        self._error.text = text
 
     def show_password_error(self, text: str):
         self._tab_layout.setCurrent(3)
@@ -133,7 +135,7 @@ class OAuthScreen(KitVBoxLayout):
             webbrowser.open(self._url)
 
     def auth(self, provider: Literal['google', 'github', 'apple', 'microsoft']):
-        self._top_label.setText(f"Вход через {provider.upper()}")
+        self._top_label.text = KitLocalString.sign_in_via + f" {provider.upper()}"
         self._provider = provider
         match provider:
             case 'github':
@@ -141,7 +143,8 @@ class OAuthScreen(KitVBoxLayout):
             case 'google':
                 self.auth_with_google()
             case _:
-                KitDialog.warning(self, "Ошибка", "Данный метод авторизации пока не поддерживается")
+                KitDialog.warning(self, KitLocalString.error.get(self._tm),
+                                  "Данный метод авторизации пока не поддерживается")
 
     @asyncSlot()
     async def auth_with_google(self):
@@ -164,7 +167,7 @@ class OAuthScreen(KitVBoxLayout):
             thread.finished.connect(lambda: self.sign_in())
 
         except aiohttp.ClientConnectionError:
-            self.show_error("Нет подключения к интернету")
+            self.show_error(KitLocalString.auth_connection_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")
 
@@ -238,7 +241,7 @@ class OAuthScreen(KitVBoxLayout):
                         print(res.get('error', dict()).get('message'))
                         self.show_error(res.get('error', dict()).get('message'))
         except aiohttp.ClientConnectionError:
-            self.show_error("Нет подключения к интернету")
+            self.show_error(KitLocalString.auth_connction_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")
 
@@ -258,11 +261,11 @@ class OAuthScreen(KitVBoxLayout):
                     else:
                         match res.get('error', dict()).get('message'):
                             case 'INVALID_LOGIN_CREDENTIALS':
-                                self.show_password_error("Неверный логин или пароль")
+                                self.show_password_error(KitLocalString.wrong_password)
                             case 'INVALID_EMAIL':
-                                self.show_password_error("Некорректный email")
+                                self.show_password_error(KitLocalString.wrong_email)
                             case 'MISSING_PASSWORD':
-                                self.show_password_error("Введите пароль")
+                                self.show_password_error(KitLocalString.missing_password)
                             case _:
                                 self.show_password_error(res.get('error', dict()).get('message'))
                         return
@@ -287,6 +290,6 @@ class OAuthScreen(KitVBoxLayout):
                     else:
                         self.show_error(res.get('error', dict()).get('message'))
         except aiohttp.ClientConnectionError:
-            self.show_error("Нет подключения к интернету")
+            self.show_error(KitLocalString.auth_connection_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")
