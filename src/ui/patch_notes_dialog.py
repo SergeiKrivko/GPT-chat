@@ -163,7 +163,15 @@ class PatchNotesDialog(KitDialog):
         text = await self._download_note(version)
         self._tab_layout.setCurrent(1)
         cur_version = Version(config.APP_VERSION)
-        self._version_label.setText(f"Версия {version} ({'Текущая' if version == cur_version else 'Не установлена' if version > cur_version else 'Предыдущая'})")
+
+        if version == cur_version:
+            version_desc = KitLocalString.current_version
+        elif version > cur_version:
+            version_desc = KitLocalString.next_version
+        else:
+            version_desc = KitLocalString.last_version
+
+        self._version_label.text = KitLocalString.version + ' ' + str(version) + ' (' + version_desc + ')'
         self._text_edit.setMarkdown(text)
         html = self._text_edit.toHtml().replace("font-family:'Courier New'", "font-family:'Roboto Mono'").replace(
             "font-family:'Segoe UI'", "font-family:'Roboto'").replace('font-size:9pt', 'font-size:11pt')
