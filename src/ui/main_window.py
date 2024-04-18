@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 
+from PyQt6.QtCore import QLocale
 from PyQt6.QtGui import QIcon
 from PyQtUIkit.themes.local import KitLocalString
 from PyQtUIkit.widgets import KitMainWindow, KitDialog
@@ -30,7 +31,7 @@ class MainWindow(KitMainWindow):
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")
         
         self.theme_manager.set_lang_path('src.ui.local')
-        self.theme_manager.set_lang(self.sm.get('language'))
+        self.theme_manager.set_lang(self.sm.get('language', QLocale.languageToCode(QLocale.system().language())))
 
         self.chat_manager = ChatManager(self.sm)
         self.chat_manager.connectionErrorOccurred.connect(self._on_connection_error)
