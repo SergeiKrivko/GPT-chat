@@ -31,6 +31,17 @@ class MainWindow(KitMainWindow):
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")
         
         self.theme_manager.set_locales_path('src.ui.locale')
+        self.theme_manager.get_languages = lambda: [
+            ('en', 'English'),
+            ('ru', 'Русский'),
+            ('de', 'Deutsch'),
+            ('fr', 'Français'),
+            ('it', 'Italiano'),
+            ('es', 'Español'),
+            ('pt', 'Português'),
+            ('zh-cn', '简体中文）'),
+            ('ja', '日本語'),
+        ]
         self.theme_manager.set_locale(self.sm.get('language'), 'en')
 
         self.chat_manager = ChatManager(self.sm)
