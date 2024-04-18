@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QIcon, QTextCursor, QFont
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy, QLabel, QPushButton
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 from googletrans import LANGUAGES
 from qasync import asyncSlot
@@ -230,34 +230,34 @@ class ContextMenu(KitMenu):
         self.action = None
         self.data = None
 
-        action = self.addAction(KitLocalString.reply, 'custom-reply')
+        action = self.addAction(KitLocaleString.reply, 'custom-reply')
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
 
         self.addSeparator()
 
-        action = self.addAction(KitLocalString.select_all, 'line-text')
+        action = self.addAction(KitLocaleString.select_all, 'line-text')
         action.triggered.connect(lambda: self.set_action(ContextMenu.SELECT_ALL))
 
-        action = self.addAction(KitLocalString.copy_as_text, 'line-copy')
+        action = self.addAction(KitLocaleString.copy_as_text, 'line-copy')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_TEXT))
 
-        action = self.addAction(KitLocalString.copy_as_markdown, 'custom-copy-md')
+        action = self.addAction(KitLocaleString.copy_as_markdown, 'custom-copy-md')
         action.triggered.connect(lambda: self.set_action(ContextMenu.COPY_AS_MARKDOWN))
 
         self.addSeparator()
 
-        action = self.addAction(KitLocalString.delete, 'line-trash')
+        action = self.addAction(KitLocaleString.delete, 'line-trash')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
 
         self.addSeparator()
 
         if bubble.translated:
-            action = self.addAction(KitLocalString.show_original)
+            action = self.addAction(KitLocaleString.show_original)
             action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
-        menu = self.addMenu(KitLocalString.translate_to, 'custom-translate')
+        menu = self.addMenu(KitLocaleString.translate_to, 'custom-translate')
         for key in LANGUAGES:
-            action = menu.addAction(getattr(KitLocalString, f'lang_{key}'))
+            action = menu.addAction(getattr(KitLocaleString, f'lang_{key}'))
             action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
 
         self.detect_lang(bubble.message.content)
@@ -266,13 +266,13 @@ class ContextMenu(KitMenu):
     async def detect_lang(self, text):
         try:
             message_lang = await async_detect(text)
-            message_lang = message_lang.lang
+            message_lang = message_lang.locale
         except Exception:
             message_lang = None
 
-        if message_lang != self.theme_manager.lang:
-            action = self.addAction(KitLocalString.translate_to_local, 'custom-translate')
-            action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, self.theme_manager.lang))
+        if message_lang != self.theme_manager.locale:
+            action = self.addAction(KitLocaleString.translate_to_locale, 'custom-translate')
+            action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, self.theme_manager.locale))
             self._apply_theme()
 
     def set_action(self, action, data=None):
@@ -321,15 +321,15 @@ class TranslatedWidget(KitHBoxLayout):
         self.setContentsMargins(8, 2, 2, 2)
         self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
 
-        self._label = KitLabel(KitLocalString.translated_from)
+        self._label = KitLabel(KitLocaleString.translated_from)
         # self._label.font_size = FontSize.SMALL
         self.addWidget(self._label, 10)
 
-        self._button = KitButton(KitLocalString.show_original)
+        self._button = KitButton(KitLocaleString.show_original)
         # self._button.font_size = FontSize.SMALL
         self._button.clicked.connect(self.showOriginal.emit)
         self.addWidget(self._button)
 
     def set_src(self, src):
-        self._label.text = getattr(KitLocalString, f'translated_from_{src}')
+        self._label.text = getattr(KitLocaleString, f'translated_from_{src}')
 

@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import aiohttp
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitDialog
 from qasync import asyncSlot
 
@@ -169,17 +169,17 @@ class UpdateManager(QObject):
                 looper.finished.connect(self._on_connection_error)
 
     def _on_no_release(self):
-        KitDialog.success(self._parent, KitLocalString.update.get(self._tm),
-                          KitLocalString.last_version_installed.get(self._tm) + f": {config.APP_VERSION}")
+        KitDialog.success(self._parent, KitLocaleString.update.get(self._tm),
+                          KitLocaleString.last_version_installed.get(self._tm) + f": {config.APP_VERSION}")
 
     def _on_connection_error(self):
-        KitDialog.warning(self._parent, KitLocalString.update.get(self._tm),
-                          KitLocalString.check_update_connection_error.get(self._tm))
+        KitDialog.warning(self._parent, KitLocaleString.update.get(self._tm),
+                          KitLocaleString.check_update_connection_error.get(self._tm))
 
     def _ask_download(self, version):
-        if KitDialog.question(self._parent, f"{KitLocalString.new_version_available.get(self._tm)}: "
-                                            f"{version}. {KitLocalString.want_to_download_update.get(self._tm)}",
-                              (KitLocalString.no.get(self._tm), KitLocalString.yes.get(self._tm))) == KitLocalString.yes.get(self._tm):
+        if KitDialog.question(self._parent, f"{KitLocaleString.new_version_available.get(self._tm)}: "
+                                            f"{version}. {KitLocaleString.want_to_download_update.get(self._tm)}",
+                              (KitLocaleString.no.get(self._tm), KitLocaleString.yes.get(self._tm))) == KitLocaleString.yes.get(self._tm):
             self.prepare_release()
 
     def _run_installer_exe(self):
@@ -189,7 +189,7 @@ class UpdateManager(QObject):
             case 'linux':
                 # os.system(f"xdg-open {self.release_exe_path}")
                 with open(script := f"{os.path.dirname(self.release_exe_path)}/script", 'w', encoding='utf-8') as f:
-                    f.write(f"echo \"{KitLocalString.sudo_required.get(self._tm)}\"\n"
+                    f.write(f"echo \"{KitLocaleString.sudo_required.get(self._tm)}\"\n"
                             f"sudo dpkg -r gptchat\nsudo dpkg -i {self.release_exe_path}\n"
                             f"/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/{config.APP_NAME}\n")
                 os.system(f'chmod 755 {script}')
@@ -203,8 +203,8 @@ class UpdateManager(QObject):
             return
         if self.widget:
             self.widget.set_status(3)
-        if KitDialog.question(self._parent, f"{KitLocalString.ready_to_install.get(self._tm).format(self._sm.get('downloaded_release'))}. "
-                                            f"{KitLocalString.install_now.get(self._tm)}",
-                              (KitLocalString.no.get(self._tm), KitLocalString.yes.get(self._tm))) == KitLocalString.yes.get(self._tm):
+        if KitDialog.question(self._parent, f"{KitLocaleString.ready_to_install.get(self._tm).format(self._sm.get('downloaded_release'))}. "
+                                            f"{KitLocaleString.install_now.get(self._tm)}",
+                              (KitLocaleString.no.get(self._tm), KitLocaleString.yes.get(self._tm))) == KitLocaleString.yes.get(self._tm):
             self._run_installer_exe()
             self.closeProgramRequested.emit()

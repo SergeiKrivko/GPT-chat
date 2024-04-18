@@ -3,7 +3,7 @@ from PyQt6.QtCore import pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QMenu, QPushButton
 from PyQtUIkit.core import KitFont
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu, KitLayoutButton
 
 from src.gpt.chat import GPTChat
@@ -170,7 +170,7 @@ class GPTListWidgetItem(KitLayoutButton):
         if self.chat.name and self.chat.name.strip():
             self._name_label.text = self.chat.name
         else:
-            self._name_label.text = KitLocalString.default_chat_name
+            self._name_label.text = KitLocaleString.default_chat_name
 
         if self.chat.last_message:
             self._last_message_label.text = self.chat.last_message.content
@@ -208,14 +208,14 @@ class ContextMenu(KitMenu):
         self._chat = chat
         self.action = None
 
-        action = self.addAction(KitLocalString.delete, 'line-trash')
+        action = self.addAction(KitLocaleString.delete, 'line-trash')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
 
         if self._chat.pinned:
-            action = self.addAction(KitLocalString.unpin, 'custom-unpin')
+            action = self.addAction(KitLocaleString.unpin, 'custom-unpin')
             action.triggered.connect(lambda: self.set_action(ContextMenu.UNPIN))
         else:
-            action = self.addAction(KitLocalString.pin, 'custom-pin')
+            action = self.addAction(KitLocaleString.pin, 'custom-pin')
             action.triggered.connect(lambda: self.set_action(ContextMenu.PIN))
 
     def set_action(self, action):

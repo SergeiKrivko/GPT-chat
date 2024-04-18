@@ -4,7 +4,7 @@ import sys
 
 from PyQt6.QtCore import QLocale
 from PyQt6.QtGui import QIcon
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitMainWindow, KitDialog
 
 from src import config
@@ -30,8 +30,8 @@ class MainWindow(KitMainWindow):
             self.theme_manager.add_theme(key, item)
         self.set_theme(f"{self.sm.get('dark_theme', 'light')}_{self.sm.get('theme', 'blue')}")
         
-        self.theme_manager.set_lang_path('src.ui.local')
-        self.theme_manager.set_lang(self.sm.get('language', QLocale.languageToCode(QLocale.system().language())))
+        self.theme_manager.set_locales_path('src.ui.locale')
+        self.theme_manager.set_locale(self.sm.get('language'), 'en')
 
         self.chat_manager = ChatManager(self.sm)
         self.chat_manager.connectionErrorOccurred.connect(self._on_connection_error)
@@ -72,7 +72,7 @@ class MainWindow(KitMainWindow):
         super().closeEvent(a0)
 
     def _on_connection_error(self):
-        KitDialog.danger(self, KitLocalString.error, KitLocalString.connection_error)
+        KitDialog.danger(self, KitLocaleString.error, KitLocaleString.connection_error)
 
     def _close(self):
         self.close()

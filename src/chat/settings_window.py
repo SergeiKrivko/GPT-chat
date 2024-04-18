@@ -1,7 +1,7 @@
 import datetime
 
 from PyQt6.QtCore import Qt
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 
 from src.gpt.chat import GPTChat
@@ -17,7 +17,7 @@ class ChatSettingsWindow(KitDialog):
         self.sm = sm
         self._cm = cm
         self._um = um
-        self.name = KitLocalString.settings
+        self.name = KitLocaleString.settings
         self.main_palette = 'Bg'
 
         self._labels = []
@@ -28,7 +28,7 @@ class ChatSettingsWindow(KitDialog):
         main_layout.setSpacing(8)
         self.setWidget(main_layout)
 
-        label = KitLabel(KitLocalString.chat_name)
+        label = KitLabel(KitLocaleString.chat_name)
         self._labels.append(label)
         main_layout.addWidget(label)
 
@@ -40,7 +40,7 @@ class ChatSettingsWindow(KitDialog):
         self._labels.append(self._time_label)
         main_layout.addWidget(self._time_label)
 
-        label = KitLabel(KitLocalString.model)
+        label = KitLabel(KitLocaleString.model)
         self._labels.append(label)
         main_layout.addWidget(label)
 
@@ -51,7 +51,7 @@ class ChatSettingsWindow(KitDialog):
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 
-        label = KitLabel(KitLocalString.used_messages + ':')
+        label = KitLabel(KitLocaleString.used_messages + ':')
         self._labels.append(label)
         layout.addWidget(label)
 
@@ -75,7 +75,7 @@ class ChatSettingsWindow(KitDialog):
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 
-        label = KitLabel(KitLocalString.max_messages + ':')
+        label = KitLabel(KitLocaleString.max_messages + ':')
         self._labels.append(label)
         layout.addWidget(label)
 
@@ -89,7 +89,7 @@ class ChatSettingsWindow(KitDialog):
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
 
-        label = KitLabel(KitLocalString.temperature + ':')
+        label = KitLabel(KitLocaleString.temperature + ':')
         self._labels.append(label)
         layout.addWidget(label)
 
@@ -100,7 +100,7 @@ class ChatSettingsWindow(KitDialog):
         self._temperature_box._step = 0.01
         layout.addWidget(self._temperature_box)
 
-        self._sync_checkbox = KitCheckBox(KitLocalString.sync)
+        self._sync_checkbox = KitCheckBox(KitLocaleString.sync)
         self._sync_checkbox.main_palette = 'Bg'
         main_layout.addWidget(self._sync_checkbox)
 
@@ -109,7 +109,7 @@ class ChatSettingsWindow(KitDialog):
         self._saved_messages_box.setValue(self._chat.saved_messages)
         self._used_messages_box.setValue(self._chat.used_messages)
         # self._used_messages_label.setText(str(self._chat.used_messages))
-        self._time_label.text = KitLocalString.created + \
+        self._time_label.text = KitLocaleString.created + \
                                 f": {datetime.datetime.fromtimestamp(self._chat.ctime).strftime('%D %H:%M')}"
         self._name_label.setText(self._chat.name)
         self._sync_checkbox.setChecked(self._chat.remote_id is not None)

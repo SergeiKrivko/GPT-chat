@@ -3,7 +3,7 @@ from time import sleep
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
     KitMenu, KitDialog
 from googletrans import LANGUAGES
@@ -51,7 +51,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         self._top_layout.addWidget(self._button_back)
 
-        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocalString.chat)
+        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocaleString.chat)
         self._top_layout.addWidget(self._name_label)
 
         self._button_search = KitIconButton('custom-search')
@@ -91,7 +91,7 @@ class ChatWidget(KitVBoxLayout):
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_layout.addWidget(self._scroll_layout)
 
-        self._progress_marker = KitLabel(KitLocalString.gpt_print)
+        self._progress_marker = KitLabel(KitLocaleString.gpt_print)
         self._progress_marker.setContentsMargins(10, 0, 0, 0)
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
@@ -117,7 +117,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_bubble.addWidget(bottom_layout)
 
         self._text_edit = ChatInputArea()
-        self._text_edit.placeholder_text = KitLocalString.message_placeholder
+        self._text_edit.placeholder_text = KitLocaleString.message_placeholder
         self._text_edit.returnPressed.connect(lambda: self.send_message())
         bottom_layout.addWidget(self._text_edit, 1)
 
@@ -468,17 +468,17 @@ class _SendMessageContextMenu(KitMenu):
         self.data = None
         self.__height = 56 + 33
 
-        action = self.addAction(KitLocalString.send, 'line-send')
+        action = self.addAction(KitLocaleString.send, 'line-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND))
 
-        action = self.addAction(KitLocalString.send_without_request, 'solid-send')
+        action = self.addAction(KitLocaleString.send_without_request, 'solid-send')
         action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.SEND_WITHOUT_REQUEST))
 
         self.addSeparator()
 
-        menu = self.addMenu(KitLocalString.translate_to, 'custom-translate')
+        menu = self.addMenu(KitLocaleString.translate_to, 'custom-translate')
         for key in LANGUAGES:
-            action = menu.addAction(getattr(KitLocalString, f'lang_{key}'))
+            action = menu.addAction(getattr(KitLocaleString, f'lang_{key}'))
             action.triggered.connect(lambda x, lang=key: self.set_action(_SendMessageContextMenu.TRANSLATE, lang))
 
         self.detect_lang(text)
@@ -487,20 +487,20 @@ class _SendMessageContextMenu(KitMenu):
     async def detect_lang(self, text):
         try:
             message_lang = await async_detect(text)
-            message_lang = message_lang.lang
+            message_lang = message_lang.locale
         except Exception:
             message_lang = None
 
         if message_lang:
-            if message_lang != self.theme_manager.lang:
+            if message_lang != self.theme_manager.locale:
                 self.__height += 24
-                action = self.addAction(KitLocalString.translate_to_local, 'custom-translate')
+                action = self.addAction(KitLocaleString.translate_to_locale, 'custom-translate')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE,
-                                                                 self.theme_manager.lang))
+                                                                 self.theme_manager.locale))
 
-            if message_lang != 'en' and self.theme_manager.lang != 'en':
+            if message_lang != 'en' and self.theme_manager.locale != 'en':
                 self.__height += 24
-                action = self.addAction(KitLocalString.translate_to_english, 'custom-translate')
+                action = self.addAction(KitLocaleString.translate_to_english, 'custom-translate')
                 action.triggered.connect(lambda: self.set_action(_SendMessageContextMenu.TRANSLATE, 'en'))
 
             self._apply_theme()

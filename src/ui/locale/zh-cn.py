@@ -1,6 +1,6 @@
-from PyQtUIkit.themes.local import KitLocal
+from PyQtUIkit.themes.locale import KitLocale
 
-local = KitLocal('zh-cn', '简体中文）', {
+locale = KitLocale('zh-cn', '简体中文）', {
     'select_chat': "选择聊天",
     'error': "错误",
     'connection_error': "行动失败了。检查您的互联网连接。",
@@ -14,7 +14,7 @@ local = KitLocal('zh-cn', '简体中文）', {
     'send': "发送",
     'send_without_request': "无需请求即可发送",
     'translate_to': "翻译成 ...",
-    'translate_to_local': "翻译成中文",
+    'translate_to_locale': "翻译成中文",
     'translate_to_english': "翻译成英语",
     'reply': "回答",
     'select_all': "全选",

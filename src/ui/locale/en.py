@@ -1,6 +1,6 @@
-from PyQtUIkit.themes.local import KitLocal
+from PyQtUIkit.themes.locale import KitLocale
 
-local = KitLocal('en', 'English', {
+locale = KitLocale('en', 'English', {
     'select_chat': "Select chat",
     'error': "Error",
     'connection_error': "The action failed. Check your internet connection.",
@@ -14,7 +14,7 @@ local = KitLocal('en', 'English', {
     'send': "Send",
     'send_without_request': "Send without request",
     'translate_to': "Translate to ...",
-    'translate_to_local': "Translate to English",
+    'translate_to_locale': "Translate to English",
     'translate_to_english': "Translate into English",
     'reply': "Answer",
     'select_all': "Select all",

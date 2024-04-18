@@ -5,7 +5,7 @@ from time import sleep
 import aiohttp
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.core import KitFont
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -51,7 +51,7 @@ class PatchNotesDialog(KitDialog):
 
     def __init__(self, parent, sm: SettingsManager):
         super().__init__(parent)
-        self.name = KitLocalString.patch_note
+        self.name = KitLocaleString.patch_note
         self._sm = sm
         self.setFixedSize(600, 400)
 
@@ -165,13 +165,13 @@ class PatchNotesDialog(KitDialog):
         cur_version = Version(config.APP_VERSION)
 
         if version == cur_version:
-            version_desc = KitLocalString.current_version
+            version_desc = KitLocaleString.current_version
         elif version > cur_version:
-            version_desc = KitLocalString.next_version
+            version_desc = KitLocaleString.next_version
         else:
-            version_desc = KitLocalString.last_version
+            version_desc = KitLocaleString.last_version
 
-        self._version_label.text = KitLocalString.version + ' ' + str(version) + ' (' + version_desc + ')'
+        self._version_label.text = KitLocaleString.version + ' ' + str(version) + ' (' + version_desc + ')'
         self._text_edit.setMarkdown(text)
         html = self._text_edit.toHtml().replace("font-family:'Courier New'", "font-family:'Roboto Mono'").replace(
             "font-family:'Segoe UI'", "font-family:'Roboto'").replace('font-size:9pt', 'font-size:11pt')

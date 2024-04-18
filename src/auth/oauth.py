@@ -7,7 +7,7 @@ import aiohttp
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QApplication
 from PyQtUIkit.core import KitFont
-from PyQtUIkit.themes.local import KitLocalString
+from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -61,7 +61,7 @@ class OAuthScreen(KitVBoxLayout):
         self._code.setSpacing(10)
         self._tab_layout.addWidget(self._code)
 
-        self._code.addWidget(label := KitLabel(KitLocalString.copy_code))
+        self._code.addWidget(label := KitLabel(KitLocaleString.copy_code))
         label.setWordWrap(True)
 
         group = KitHGroup()
@@ -101,7 +101,7 @@ class OAuthScreen(KitVBoxLayout):
         self._error_line.main_palette = 'Danger'
         link.addWidget(self._error_line)
 
-        button = KitButton(KitLocalString.sign_in)
+        button = KitButton(KitLocaleString.sign_in)
         button.setFixedSize(256, 50)
         button.clicked.connect(lambda: self._try_link())
         link.addWidget(button)
@@ -135,7 +135,7 @@ class OAuthScreen(KitVBoxLayout):
             webbrowser.open(self._url)
 
     def auth(self, provider: Literal['google', 'github', 'apple', 'microsoft']):
-        self._top_label.text = KitLocalString.sign_in_via + f" {provider.upper()}"
+        self._top_label.text = KitLocaleString.sign_in_via + f" {provider.upper()}"
         self._provider = provider
         match provider:
             case 'github':
@@ -143,7 +143,7 @@ class OAuthScreen(KitVBoxLayout):
             case 'google':
                 self.auth_with_google()
             case _:
-                KitDialog.warning(self, KitLocalString.error.get(self._tm),
+                KitDialog.warning(self, KitLocaleString.error.get(self._tm),
                                   "Данный метод авторизации пока не поддерживается")
 
     @asyncSlot()
@@ -159,15 +159,15 @@ class OAuthScreen(KitVBoxLayout):
                 config.GOOGLE_OAUTH_SECRETS,
                 scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'])
 
-            def run_local_server():
-                flow.run_local_server(port=2000)
+            def run_locale_server():
+                flow.run_locale_server(port=2000)
                 self._provider_data = f"id_token={flow.oauth2session.token['id_token']}&providerId=google.com"
 
-            thread = self._sm.run_process(run_local_server, 'oauth-google')
+            thread = self._sm.run_process(run_locale_server, 'oauth-google')
             thread.finished.connect(lambda: self.sign_in())
 
         except aiohttp.ClientConnectionError:
-            self.show_error(KitLocalString.auth_connection_error)
+            self.show_error(KitLocaleString.auth_connection_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")
 
@@ -222,7 +222,7 @@ class OAuthScreen(KitVBoxLayout):
                                f"?key={config.FIREBASE_API_KEY}"
                 async with session.post(rest_api_url, data={
                     "postBody": self._provider_data,
-                    "requestUri": "http://localhost",
+                    "requestUri": "http://localehost",
                     "returnIdpCredential": True,
                     "returnSecureToken": True
                 }) as resp:
@@ -234,14 +234,14 @@ class OAuthScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localId'])
+                        self._sm.set('user_id', res['localeId'])
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
                         print(res.get('error', dict()).get('message'))
                         self.show_error(res.get('error', dict()).get('message'))
         except aiohttp.ClientConnectionError:
-            self.show_error(KitLocalString.auth_connction_error)
+            self.show_error(KitLocaleString.auth_connction_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")
 
@@ -261,11 +261,11 @@ class OAuthScreen(KitVBoxLayout):
                     else:
                         match res.get('error', dict()).get('message'):
                             case 'INVALID_LOGIN_CREDENTIALS':
-                                self.show_password_error(KitLocalString.wrong_password)
+                                self.show_password_error(KitLocaleString.wrong_password)
                             case 'INVALID_EMAIL':
-                                self.show_password_error(KitLocalString.wrong_email)
+                                self.show_password_error(KitLocaleString.wrong_email)
                             case 'MISSING_PASSWORD':
-                                self.show_password_error(KitLocalString.missing_password)
+                                self.show_password_error(KitLocaleString.missing_password)
                             case _:
                                 self.show_password_error(res.get('error', dict()).get('message'))
                         return
@@ -275,7 +275,7 @@ class OAuthScreen(KitVBoxLayout):
                 async with session.post(rest_api_url, data={
                     "postBody": self._provider_data,
                     "idToken": token,
-                    "requestUri": "http://localhost",
+                    "requestUri": "http://localehost",
                     "returnIdpCredential": True,
                     "returnSecureToken": True
                 }) as resp:
@@ -284,12 +284,12 @@ class OAuthScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localId'])
+                        self._sm.set('user_id', res['localeId'])
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
                         self.show_error(res.get('error', dict()).get('message'))
         except aiohttp.ClientConnectionError:
-            self.show_error(KitLocalString.auth_connection_error)
+            self.show_error(KitLocaleString.auth_connection_error)
         except Exception as ex:
             self.show_error(f"{ex.__class__.__name__}: {ex}")

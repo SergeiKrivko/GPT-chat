@@ -16,7 +16,7 @@ a = Analysis(
         (os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
         (os.path.abspath("assets"), "assets")
     ],
-    hiddenimports=['matplotlib.backends.backend_svg'],
+    hiddenimports=['matplotlib.backends.backend_svg', *[f'src.ui.locale.{el[:-3]}' for el in os.listdir('src/ui/locale')]],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
