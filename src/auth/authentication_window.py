@@ -190,7 +190,7 @@ class _SignInScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localeId'])
+                        self._sm.set('user_id', res['localId'])
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
@@ -339,7 +339,7 @@ class _SignUpScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localeId'])
+                        self._sm.set('user_id', res['localId'])
                         self._sm.authorized = True
                         self.signedUp.emit()
                     else:

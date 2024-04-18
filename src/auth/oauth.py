@@ -130,7 +130,7 @@ class OAuthScreen(KitVBoxLayout):
         self._tab_layout.setCurrent(3)
 
     def open_url(self):
-        QApplication.clipboard().setText(self._code_label.text())
+        QApplication.clipboard().setText(self._code_label.text)
         if self._url:
             webbrowser.open(self._url)
 
@@ -159,11 +159,11 @@ class OAuthScreen(KitVBoxLayout):
                 config.GOOGLE_OAUTH_SECRETS,
                 scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'])
 
-            def run_locale_server():
-                flow.run_locale_server(port=2000)
+            def run_local_server():
+                flow.run_local_server(port=2000)
                 self._provider_data = f"id_token={flow.oauth2session.token['id_token']}&providerId=google.com"
 
-            thread = self._sm.run_process(run_locale_server, 'oauth-google')
+            thread = self._sm.run_process(run_local_server, 'oauth-google')
             thread.finished.connect(lambda: self.sign_in())
 
         except aiohttp.ClientConnectionError:
@@ -222,7 +222,7 @@ class OAuthScreen(KitVBoxLayout):
                                f"?key={config.FIREBASE_API_KEY}"
                 async with session.post(rest_api_url, data={
                     "postBody": self._provider_data,
-                    "requestUri": "http://localehost",
+                    "requestUri": "http://localhost",
                     "returnIdpCredential": True,
                     "returnSecureToken": True
                 }) as resp:
@@ -234,7 +234,7 @@ class OAuthScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localeId'])
+                        self._sm.set('user_id', res['localId'])
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
@@ -275,7 +275,7 @@ class OAuthScreen(KitVBoxLayout):
                 async with session.post(rest_api_url, data={
                     "postBody": self._provider_data,
                     "idToken": token,
-                    "requestUri": "http://localehost",
+                    "requestUri": "http://localhost",
                     "returnIdpCredential": True,
                     "returnSecureToken": True
                 }) as resp:
@@ -284,7 +284,7 @@ class OAuthScreen(KitVBoxLayout):
                         self._sm.set('user_email', res['email'])
                         self._sm.set('user_token', res['idToken'])
                         self._sm.set('user_refresh_token', res['refreshToken'])
-                        self._sm.set('user_id', res['localeId'])
+                        self._sm.set('user_id', res['localId'])
                         self._sm.authorized = True
                         self.signedIn.emit()
                     else:
