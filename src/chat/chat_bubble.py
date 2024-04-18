@@ -266,7 +266,7 @@ class ContextMenu(KitMenu):
     async def detect_lang(self, text):
         try:
             message_lang = await async_detect(text)
-            message_lang = message_lang.locale
+            message_lang = message_lang.lang
         except Exception:
             message_lang = None
 
