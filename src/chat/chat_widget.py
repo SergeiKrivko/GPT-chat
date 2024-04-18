@@ -51,7 +51,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         self._top_layout.addWidget(self._button_back)
 
-        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocaleString.chat)
+        self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocaleString.default_chat_name)
         self._top_layout.addWidget(self._name_label)
 
         self._button_search = KitIconButton('custom-search')
