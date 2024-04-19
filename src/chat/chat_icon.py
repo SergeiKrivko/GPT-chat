@@ -39,7 +39,18 @@ class ChatIcon(KitHBoxLayout):
 
     def import_image(self, path):
         self._clear_files()
-        shutil.copy(path, os.path.join(self._sm.user_data_path, 'chat-icons', f'{self._chat.id}.png'))
+
+        image = QImage(path)
+        imgsize = min(image.width(), image.height())
+        rect = QRect(
+            (image.width() - imgsize) // 2,
+            (image.height() - imgsize) // 2,
+            imgsize,
+            imgsize,
+        )
+        image = image.copy(rect).scaled(128, 128, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        image.save(os.path.join(self._sm.user_data_path, 'chat-icons', f'{self._chat.id}.png'))
+
         self._load_icon()
         self.draw()
 

@@ -144,7 +144,8 @@ class ChatSettingsWindow(KitDialog):
         self._cm.make_remote(self._chat, self._sync_checkbox.state)
 
     def import_icon(self):
-        path, _ = QFileDialog.getOpenFileName(self, directory=self.sm.get('chat_icon_dir', '.'), filter='Image (*.png)')
+        path, _ = QFileDialog.getOpenFileName(self, directory=self.sm.get('chat_icon_dir', '.'),
+                                              filter='Image (*.png *.bmp *.jpg *.jpeg *.webp *.svg)')
         if path:
             self.sm.set('chat_icon_dir', os.path.dirname(path))
             self._chat_icon.import_image(path)
