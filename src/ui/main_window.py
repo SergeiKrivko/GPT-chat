@@ -62,7 +62,7 @@ class MainWindow(KitMainWindow):
         if self.sm.get('maximized', False) not in {False, 'False', 'false', 0}:
             self.showMaximized()
 
-        self.sm.run_process(gpt.init, 'g4f-import')
+        self.sm.run_process(lambda: gpt.init(self.sm), 'gpt-init')
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)

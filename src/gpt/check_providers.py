@@ -10,6 +10,7 @@ from qasync import asyncSlot
 
 from src import config
 from src.gpt import gpt
+from src.gpt.gpt import plugins
 from src.settings_manager import SettingsManager
 
 MANAGER = None
@@ -113,6 +114,10 @@ class _ModelItem(KitLayoutButton):
         super().__init__()
         self.model = model
         self._value = model
+
+        if model.startswith('__plugin_'):
+            self.model = plugins[model.replace('__plugin_', '')].model_name
+
         self.setCheckable(True)
         self.clicked.connect(self._on_clicked)
         self.border = 0
@@ -120,7 +125,7 @@ class _ModelItem(KitLayoutButton):
         self.padding = 6, 3, 3, 3
         self.setFixedHeight(30)
 
-        self._label = KitLabel(model)
+        self._label = KitLabel(self.model)
         self.addWidget(self._label)
 
         self._spinner = KitSpinner()
@@ -177,7 +182,7 @@ class ModelComboBox(KitHBoxLayout):
         self.__current = None
 
         self._button = KitLayoutButton()
-        self._button.setContentsMargins(3, 3, 3, 3)
+        self._button.setContentsMargins(6, 3, 3, 3)
         self.addWidget(self._button)
         self._button.setFixedHeight(28)
 
@@ -250,7 +255,7 @@ class ModelComboBox(KitHBoxLayout):
         self.__widgets[self.__current].setChecked(True)
 
         if self.__current is not None:
-            self._label.setText(self.__widgets[self.__current].model)
+            self._label.text = self.__widgets[self.__current].model
         self.currentValueChanged.emit(self.currentValue())
         self.currentIndexChanged.emit(self.__current)
 

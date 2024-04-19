@@ -314,6 +314,12 @@ class ChatManager(QObject):
             self._database.commit()
             raise ex
 
+    def clear_model(self, model):
+        for chat in self._database.chats:
+            if chat.model == model:
+                chat.model = 'default'
+        self._database.commit()
+
 
 class Looper(QThread):
     event = pyqtSignal(str, list)

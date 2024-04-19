@@ -3,6 +3,7 @@ from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 
 from src.ui.patch_notes_dialog import PatchNotesDialog
+from src.ui.plugins_window import PluginsWindow
 from src.ui.update_manager import UpdateManager
 
 
@@ -46,7 +47,7 @@ class SettingsWindow(KitDialog):
                                       KitComboBoxItem(KitLocaleString.green, 'green'),
                                       KitComboBoxItem(KitLocaleString.red, 'red'),
                                       KitComboBoxItem(KitLocaleString.orange, 'orange'),
-                                      KitComboBoxItem(KitLocaleString.pink, 'pink'),)
+                                      KitComboBoxItem(KitLocaleString.pink, 'pink'), )
         self._theme_box.setCurrentIndex(['blue', 'green', 'red', 'orange', 'pink'].index(self.sm.get('theme', 'blue')))
         self._theme_box.currentValueChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
@@ -66,6 +67,14 @@ class SettingsWindow(KitDialog):
         self._patch_notes_button = KitButton(KitLocaleString.patch_note)
         self._patch_notes_button.on_click = self._patch_notes_window.exec
         main_layout.addWidget(self._patch_notes_button)
+
+        self._plugins_button = KitButton(KitLocaleString.custom_providers)
+        self._plugins_button.on_click = self._plugins_widow
+        main_layout.addWidget(self._plugins_button)
+
+    def _plugins_widow(self):
+        dialog = PluginsWindow(self, self.sm, self._cm)
+        dialog.exec()
 
     def save(self):
         self.sm.set('auto_update', 'true' if self._auto_update_checkbox.state else '')

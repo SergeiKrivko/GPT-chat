@@ -7,6 +7,7 @@ from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 
 from src.chat.chat_icon import ChatIcon
+from src.gpt import gpt
 from src.gpt.chat import GPTChat
 from src.gpt.check_providers import ModelComboBox
 from src.gpt.gpt import get_models
@@ -125,7 +126,14 @@ class ChatSettingsWindow(KitDialog):
         self._sync_checkbox.main_palette = 'Bg'
         main_layout.addWidget(self._sync_checkbox)
 
-        self._model_box.setCurrentIndex(get_models().index(self._chat.model))
+        try:
+            self._model_box.setCurrentIndex(list(get_models()).index(self._chat.model))
+        except ValueError as ex:
+            if gpt.inited:
+                self._model_box.setCurrentIndex(0)
+            else:
+                raise ex
+
         self._temperature_box.setValue(self._chat.temperature)
         self._saved_messages_box.setValue(self._chat.saved_messages)
         self._used_messages_box.setValue(self._chat.used_messages)

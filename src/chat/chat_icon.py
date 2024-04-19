@@ -151,7 +151,7 @@ class ChatIcon(KitHBoxLayout):
             }, f)
 
     def _generate_text(self):
-        text = self._chat.name
+        text = self._chat.name or ''
         if len(text.split()) >= 2:
             text = text.split()[0][0] + text.split()[1][0]
         elif text != text.lower() and text != text.upper() and text != text.capitalize():

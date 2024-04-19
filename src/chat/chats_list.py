@@ -154,7 +154,7 @@ class GPTListWidgetItem(KitLayoutButton):
         self._icon_pinned.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_pinned)
 
-        self._icon_remote = KitIconWidget("line-globe")
+        self._icon_remote = KitIconWidget("custom-globe")
         self._icon_remote.setFixedSize(18, 18)
         self._icon_remote.setFixedSize(GPTListWidgetItem.ICON_SIZE, GPTListWidgetItem.ICON_SIZE)
         self._right_layout.addWidget(self._icon_remote)

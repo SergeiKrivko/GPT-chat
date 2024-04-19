@@ -10,6 +10,7 @@ from googletrans import LANGUAGES
 from qasync import asyncSlot
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
+from src.chat.chat_icon import ChatIcon
 from src.chat.reply_widget import ReplyList
 from src.chat.search_widget import SearchWidget
 from src.chat.settings_window import ChatSettingsWindow
@@ -50,6 +51,9 @@ class ChatWidget(KitVBoxLayout):
         # self._button_back.setContentsMargins(3, 3, 3, 3)
         self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
         self._top_layout.addWidget(self._button_back)
+
+        self._icon_widget = ChatIcon(self._sm, self._chat)
+        self._top_layout.addWidget(self._icon_widget)
 
         self._name_label = KitLabel(chat.name if chat.name and chat.name.strip() else KitLocaleString.default_chat_name)
         self._top_layout.addWidget(self._name_label)
@@ -354,16 +358,20 @@ class ChatWidget(KitVBoxLayout):
         ind -= 5
         if ind > 0:
             for el in self._chat.drop_messages(self._bubbles[lst[ind]].message.id):
-                bubble: ChatBubble = self._bubbles.pop(el.id)
-                bubble.setParent(None)
-                bubble.delete()
-                bubble.disconnect()
+                try:
+                    bubble: ChatBubble = self._bubbles.pop(el.id)
+                    bubble.setParent(None)
+                    bubble.delete()
+                    bubble.disconnect()
+                except KeyError:
+                    pass
 
     def _open_settings(self):
         dialog = ChatSettingsWindow(self, self._sm, self._cm, self._um, self._chat)
         dialog.exec()
         dialog.save()
-        self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')
+        self._name_label.text = self._chat.name if self._chat.name.strip() else KitLocaleString.default_chat_name
+        self._icon_widget.update_icon()
         self._chat._db.commit()
 
     def _on_gpt_error(self, ex):

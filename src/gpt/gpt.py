@@ -1,7 +1,17 @@
+import json
+import os.path
+
+from src.gpt.plugins import Plugin
+
 global g4f
 
 
-def init():
+plugins = dict()
+
+inited = False
+
+
+def init(sm):
     from time import sleep
 
     sleep(3)
@@ -9,10 +19,24 @@ def init():
     import g4f as lib
     g4f = lib
 
+    for el in json.loads(sm.get('plugins', '[]')):
+        plugin = Plugin(os.path.join(sm.app_data_dir, 'plugins', el))
+        plugins[plugin.name] = plugin
+        sleep(0.1)
+
+    global inited
+    inited = True
+
 
 def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
     if model is None or model == 'default':
         model = g4f.models.default
+
+    if model.startswith('__plugin_'):
+        for el in plugins[model[9:]](messages, **kwargs):
+            yield el
+        return
+
     try:
         response = g4f.ChatCompletion.create(
             model=model,
@@ -30,6 +54,10 @@ def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
 def simple_response(messages: list[dict[str: str]], model=None, **kwargs):
     if model is None or model == 'default':
         model = g4f.models.default
+
+    if model.startswith('__plugin_'):
+        return ''.join(plugins[model[9:]](messages, **kwargs))
+
     response = g4f.ChatCompletion.create(
         model=model,
         messages=messages,
@@ -59,7 +87,11 @@ def try_response(messages: list[dict[str: str]], model=None, count=5, handler=No
 
 
 def get_models():
+    yield 'default'
     try:
-        return ['default'] + g4f.models._all_models
+        for el in g4f.models._all_models:
+            yield el
     except NameError:
-        return ['default']
+        pass
+    for plugin in plugins.keys():
+        yield f'__plugin_{plugin}'
