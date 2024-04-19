@@ -76,6 +76,7 @@ locale = KitLocale('zh-cn', '简体中文）', {
     'sign_out': "登出",
     'copy_code': "复制代码并点击链接",
     'sign_in_via': "登录方式",
+    'select_file': "选择一个文件",
     'blue': "蓝色的",
     'green': "绿色的",
     'red': "红色的",

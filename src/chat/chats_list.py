@@ -6,6 +6,7 @@ from PyQtUIkit.core import KitFont
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitScrollArea, KitVBoxLayout, KitButton, KitLabel, KitIconWidget, KitMenu, KitLayoutButton
 
+from src.chat.chat_icon import ChatIcon
 from src.gpt.chat import GPTChat
 
 
@@ -13,8 +14,9 @@ class GPTListWidget(KitScrollArea):
     currentItemChanged = pyqtSignal(int)
     deleteItem = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, sm):
         super().__init__()
+        self._sm = sm
         self.setMinimumWidth(240)
         self.main_palette = 'Menu'
         self.radius = 0
@@ -56,7 +58,7 @@ class GPTListWidget(KitScrollArea):
         self.currentItemChanged.emit(chat_id)
 
     def add_item(self, chat: GPTChat, no_sort=False):
-        item = GPTListWidgetItem(self._tm, chat)
+        item = GPTListWidgetItem(self._sm, chat)
         item.selected.connect(self._on_item_selected)
         item.deleteRequested.connect(self.deleteItem)
         item.pinRequested.connect(self.pin_chat)
@@ -108,9 +110,9 @@ class GPTListWidgetItem(KitLayoutButton):
     deleteRequested = pyqtSignal(int)
     pinRequested = pyqtSignal(int)
 
-    def __init__(self, tm, chat: GPTChat):
+    def __init__(self, sm, chat: GPTChat):
         super().__init__()
-        self._tm = tm
+        self._sm = sm
         self.chat = chat
         self._chat_id = chat.id
         self.main_palette = 'Menu'
@@ -125,9 +127,8 @@ class GPTListWidgetItem(KitLayoutButton):
         self.setFixedHeight(56)
         self.setContentsMargins(12, 5, 12, 5)
 
-        self._icon_label = KitIconWidget('line-chatbox')
-        self._icon_label.setFixedSize(24, 24)
-        self.addWidget(self._icon_label)
+        self._icon_widget = ChatIcon(self._sm, self.chat)
+        self.addWidget(self._icon_widget)
 
         layout = KitVBoxLayout()
         layout.setContentsMargins(0, 1, 0, 1)
@@ -176,6 +177,8 @@ class GPTListWidgetItem(KitLayoutButton):
             self._last_message_label.text = self.chat.last_message.content
         else:
             self._last_message_label.text = ''
+
+        self._icon_widget.update_icon()
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self, self.chat)

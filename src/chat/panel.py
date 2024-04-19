@@ -74,7 +74,7 @@ class ChatPanel(KitHBoxLayout):
         self._button_settings.clicked.connect(self._open_settings)
         layout.addWidget(self._button_settings)
 
-        self._list_widget = GPTListWidget()
+        self._list_widget = GPTListWidget(self.sm)
         self._main_layout.addWidget(self._list_widget)
         self._list_widget.deleteItem.connect(self._delete_chat)
         self._list_widget.currentItemChanged.connect(self._select_chat)

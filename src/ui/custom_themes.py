@@ -6,10 +6,14 @@ _LIGHT = KitTheme({
     'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A1A1A1, stop:1 #D5D5D5)', text='#222222'),
     'LastMessage': KitPalette('#00000000', text='#4D4D4D'),
     'Text': KitPalette('#222222'),
-    'FontSizeSmall': 9,
-    'FontSizeMedium': 11,
-    'FontSizeBig': 14,
-    'FontSizeMono': 10,
+
+    'ChatIcon0': KitPalette('#DB2E0C', text='#222222'),
+    'ChatIcon1': KitPalette('#2847F2', text='#222222'),
+    'ChatIcon2': KitPalette('#53D142', text='#222222'),
+    'ChatIcon3': KitPalette('#DBAD33', text='#222222'),
+    'ChatIcon4': KitPalette('#B856A4', text='#222222'),
+    'ChatIcon5': KitPalette('#71CFC2', text='#222222'),
+
 }, {
     'default': KitFont('Roboto', 9, 11, 14, 20),
     'italic': KitFont('Roboto', 9, 11, 14, 20, italic=True),
@@ -22,10 +26,14 @@ _DARK = KitTheme({
     'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18191C, stop:1 #2A2B30)', text='#F0F0F0'),
     'LastMessage': KitPalette('#00000000', text='#999999'),
     'Text': KitPalette('#F0F0F0'),
-    'FontSizeSmall': 9,
-    'FontSizeMedium': 11,
-    'FontSizeBig': 14,
-    'FontSizeMono': 10,
+
+    'ChatIcon0': KitPalette('#C70D0D', text='#F0F0F0'),
+    'ChatIcon1': KitPalette('#232BAD', text='#F0F0F0'),
+    'ChatIcon2': KitPalette('#35852A', text='#F0F0F0'),
+    'ChatIcon3': KitPalette('#856221', text='#F0F0F0'),
+    'ChatIcon4': KitPalette('#7A396D', text='#F0F0F0'),
+    'ChatIcon5': KitPalette('#437A73', text='#F0F0F0'),
+
 }, {
     'default': KitFont('Roboto', 9, 11, 14, 20),
     'italic': KitFont('Roboto', 9, 11, 14, 20, italic=True),

@@ -1,9 +1,12 @@
 import datetime
+import os.path
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFileDialog
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 
+from src.chat.chat_icon import ChatIcon
 from src.gpt.chat import GPTChat
 from src.gpt.check_providers import ModelComboBox
 from src.gpt.gpt import get_models
@@ -33,8 +36,26 @@ class ChatSettingsWindow(KitDialog):
         main_layout.addWidget(label)
 
         self._name_label = KitLineEdit()
+        self._name_label.editingFinished.connect(self._on_name_changed)
         self._name_label.setFixedHeight(24)
         main_layout.addWidget(self._name_label)
+
+        layout = KitHBoxLayout()
+        layout.spacing = 6
+        main_layout.addWidget(layout)
+
+        self._chat_icon = ChatIcon(self.sm, chat)
+        layout.addWidget(self._chat_icon)
+
+        self._button_import_icon = KitButton(KitLocaleString.select_file)
+        self._button_import_icon.on_click = self.import_icon
+        self._button_import_icon.setFixedHeight(24)
+        layout.addWidget(self._button_import_icon)
+
+        self._button_clear_icon = KitIconButton('line-close')
+        self._button_clear_icon.size = 24
+        self._button_clear_icon.on_click = self._chat_icon.clear_image
+        layout.addWidget(self._button_clear_icon)
 
         self._time_label = KitLabel()
         self._labels.append(self._time_label)
@@ -121,3 +142,13 @@ class ChatSettingsWindow(KitDialog):
         self._chat.temperature = self._temperature_box.value
         self._chat.model = self._model_box.currentValue()
         self._cm.make_remote(self._chat, self._sync_checkbox.state)
+
+    def import_icon(self):
+        path, _ = QFileDialog.getOpenFileName(self, directory=self.sm.get('chat_icon_dir', '.'), filter='Image (*.png)')
+        if path:
+            self.sm.set('chat_icon_dir', os.path.dirname(path))
+            self._chat_icon.import_image(path)
+
+    def _on_name_changed(self):
+        self._chat.name = self._name_label.text
+        self._chat_icon.update_text()

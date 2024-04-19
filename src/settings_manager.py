@@ -20,41 +20,6 @@ class SettingsManager(QObject):
         self._background_processes = dict()
         self._background_process_count = 0
 
-        self._authorized = False
-        self._authorization()
-
-    @property
-    def authorized(self):
-        return self._authorized
-
-    @authorized.setter
-    def authorized(self, value):
-        self._authorized = value
-
-    @asyncSlot()
-    async def _authorization(self):
-        while not self._authorized:
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                            f"https://securetoken.googleapis.com/v1/token?key={config.FIREBASE_API_KEY}",
-                            data={
-                                'grant_type': 'refresh_token',
-                                'refresh_token': self.get('user_refresh_token')
-                            }) as resp:
-                        if resp.ok:
-                            res = await resp.json()
-                            self._authorized = True
-                            self.set('user_token', res['access_token'])
-                            self.set('user_refresh_token', res['refresh_token'])
-                            await asyncio.sleep(float(res['expires_in']) - 10)
-                        else:
-                            self.set('user_token', '')
-
-            except aiohttp.ClientConnectionError:
-                pass
-            await asyncio.sleep(5)
-
     @property
     def user_data_path(self):
         if not (uid := self.get('user_id')):

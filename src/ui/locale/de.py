@@ -76,6 +76,7 @@ locale = KitLocale('de', 'Deutsch', {
     'sign_out': "Abmelden",
     'copy_code': "Kopieren Sie den Code und folgen Sie dem Link",
     'sign_in_via': "Melden Sie sich an über",
+    'select_file': "Wählen Sie eine Datei aus",
     'blue': "Blau",
     'green': "Grün",
     'red': "Rot",

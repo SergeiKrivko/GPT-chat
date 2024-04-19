@@ -76,6 +76,7 @@ locale = KitLocale('ja', '日本語', {
     'sign_out': "サインアウト",
     'copy_code': "コードをコピーしてリンクをたどります",
     'sign_in_via': "ログイン方法",
+    'select_file': "ファイルを選択してください",
     'blue': "青",
     'green': "緑",
     'red': "赤",
