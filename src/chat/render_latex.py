@@ -51,7 +51,7 @@ def render_latex(sm, tm, latex: str):
     t = ax.text(0.5, 0.5, f"${latex}$",
                 horizontalalignment='center',
                 verticalalignment='center',
-                fontsize=14, color=tm['Main'].text)
+                fontsize=14, color=tm.palette('Main').text)
 
     # Определение размеров формулы
     ax.figure.canvas.draw()
@@ -64,7 +64,7 @@ def render_latex(sm, tm, latex: str):
     image_id = uuid4()
     path = f"{sm.app_data_dir}/temp/{image_id}.svg"
     plt.savefig(path)
-    _images[latex] = _LatexImage(latex, path, tm['Main'].text)
+    _images[latex] = _LatexImage(latex, path, tm.palette('Main').text)
     return path
 
 
