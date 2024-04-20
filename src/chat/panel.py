@@ -1,11 +1,10 @@
-import asyncio
 import shutil
 
 from PyQt6.QtCore import Qt
-from PyQtUIkit.core import KitIcon, KitFont
+from PyQtUIkit.core import KitFont
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitHBoxLayout, KitVBoxLayout, KitIconButton, KitDialog, KitVSeparator, KitLabel, \
-    KitIconWidget
+    KitIconWidget, KitTabLayout
 from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
@@ -56,28 +55,41 @@ class ChatPanel(KitHBoxLayout):
         self._button_add.clicked.connect(self._new_chat)
         top_layout.addWidget(self._button_add)
 
-        layout = KitHBoxLayout()
-        layout.alignment = Qt.AlignmentFlag.AlignRight
-        top_layout.addWidget(layout)
+        self._button_archive = KitIconButton('line-archive')
+        self._button_archive.size = 36
+        self._button_archive.main_palette = 'Bg'
+        self._button_archive.border = 0
+        self._button_archive.setCheckable(True)
+        self._button_archive.on_click = lambda flag: self._folders_layout.setCurrent(1 if flag else 0)
+        top_layout.addWidget(self._button_archive)
+
+        top_layout.addWidget(KitHBoxLayout(), 100)
 
         self._button_user = KitIconButton('line-person')
         self._button_user.size = 36
         self._button_user.main_palette = 'Bg'
         self._button_user.border = 0
         self._button_user.clicked.connect(self._open_user_window)
-        layout.addWidget(self._button_user)
+        top_layout.addWidget(self._button_user)
 
         self._button_settings = KitIconButton('line-settings')
         self._button_settings.size = 36
         self._button_settings.main_palette = 'Bg'
         self._button_settings.border = 0
         self._button_settings.clicked.connect(self._open_settings)
-        layout.addWidget(self._button_settings)
+        top_layout.addWidget(self._button_settings)
 
-        self._list_widget = GPTListWidget(self.sm)
-        self._main_layout.addWidget(self._list_widget)
-        self._list_widget.deleteItem.connect(self._delete_chat)
-        self._list_widget.currentItemChanged.connect(self._select_chat)
+        self._folders_layout = KitTabLayout()
+        self._main_layout.addWidget(self._folders_layout)
+
+        self._folders = list()
+        for i in range(2):
+            list_widget = GPTListWidget(self.sm)
+            self._folders.append(list_widget)
+            self._folders_layout.addWidget(list_widget)
+            list_widget.deleteItem.connect(self._delete_chat)
+            list_widget.currentItemChanged.connect(self._select_chat)
+            list_widget.moveToFolderRequested.connect(self._move_chat)
 
         self._separator = KitVSeparator()
         self.addWidget(self._separator)
@@ -114,11 +126,6 @@ class ChatPanel(KitHBoxLayout):
         self._settings_window.exec()
         self._settings_window.save()
 
-    @asyncSlot()
-    async def _update_chats(self):
-        await asyncio.sleep(0.1)
-        self._list_widget.sort_chats()
-
     def _open_user_window(self):
         uid = self.sm.get('user_id')
         window = AuthenticationWindow(self, self.sm)
@@ -130,14 +137,14 @@ class ChatPanel(KitHBoxLayout):
 
     def _clear_chats(self):
         self._close_chat(self.current)
-        for el in self.chats:
-            self._list_widget.delete_item(el)
+        for el in self._folders:
+            el.clear()
         self.chats.clear()
         for el in self.chat_widgets.values():
             el.setParent(None)
         self.chat_widgets.clear()
 
-    def _on_remote_chat_deleted(self, chat):
+    def _on_remote_chat_deleted(self, chat: GPTChat):
         if not chat:
             return
         if KitDialog.question(self, f"Синхронизация чата {chat.name} была прекращена. Удалить локальную копию чата?",
@@ -145,15 +152,17 @@ class ChatPanel(KitHBoxLayout):
             self._delete_chat(chat.id)
         else:
             self._chat_manager.make_remote(chat, False)
-            self._list_widget.sort_chats()
+            self._folders[chat.folder].sort_chats()
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)
         if chat.id == self._last_chat:
-            self._list_widget.select(chat.id)
+            self._folders[chat.folder].select(chat.id)
 
     def _new_chat(self):
         self._chat_manager.new_chat()
+        self._folders_layout.setCurrent(0)
+        self._button_archive.setChecked(False)
 
     def _add_chat(self, chat, no_sort=False):
         self.chats[chat.id] = chat
@@ -161,11 +170,11 @@ class ChatPanel(KitHBoxLayout):
         chat_widget = ChatWidget(self.sm, self._chat_manager, self._um, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
-        chat_widget.updated.connect(self._list_widget.sort_chats)
+        chat_widget.updated.connect(self._folders[chat.folder].sort_chats)
         self.addWidget(chat_widget, 2)
         self.chat_widgets[chat.id] = chat_widget
 
-        self._list_widget.add_item(chat, no_sort=no_sort)
+        self._folders[chat.folder].add_item(chat, no_sort=no_sort)
 
     def _add_chats(self, chats: list):
         for i in range(len(chats) - 1):
@@ -182,8 +191,8 @@ class ChatPanel(KitHBoxLayout):
         if chat_id == self.current:
             self._close_chat(chat_id)
         self.chat_widgets.pop(chat_id)
-        self._list_widget.delete_item(chat_id)
-        self.chats.pop(chat_id)
+        for folder in self._folders:
+            folder.delete_item(chat_id)
 
     def _select_chat(self, chat_id):
         if self.current is not None:
@@ -193,6 +202,12 @@ class ChatPanel(KitHBoxLayout):
         self.chat_widgets[chat_id].show()
         self.current = chat_id
         self._resize()
+
+    def _move_chat(self, chat_id, folder):
+        chat = self.chats[chat_id]
+        self._folders[chat.folder].delete_item(chat_id)
+        chat.folder = folder
+        self._folders[chat.folder].add_item(chat)
 
     def _on_new_message(self, chat_id, message):
         self.chat_widgets[chat_id].add_message(message)
@@ -213,8 +228,8 @@ class ChatPanel(KitHBoxLayout):
         self.set_list_hidden(False)
         self.current = None
         self._resize()
-        self._list_widget.deselect(chat_id)
-        self._list_widget.update_item_name(chat_id)
+        self._folders[self.chats[chat_id].folder].deselect(chat_id)
+        self._folders[self.chats[chat_id].folder].update_item_name(chat_id)
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):

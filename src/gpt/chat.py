@@ -85,13 +85,13 @@ class GPTChat:
         return GPTMessage(self._db, self.id, message_id[0])
 
     @property
-    def type(self):
+    def folder(self):
         self._db.cursor.execute(f"""SELECT type from Chats WHERE id = {self._id}""")
         type = self._db.cursor.fetchone()[0]
         return type
 
-    @type.setter
-    def type(self, type):
+    @folder.setter
+    def folder(self, type):
         self._db.cursor.execute(f"""UPDATE Chats SET type = ? WHERE id = {self._id}""", (type,))
 
     @property

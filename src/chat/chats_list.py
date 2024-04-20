@@ -13,6 +13,7 @@ from src.gpt.chat import GPTChat
 class GPTListWidget(KitScrollArea):
     currentItemChanged = pyqtSignal(int)
     deleteItem = pyqtSignal(int)
+    moveToFolderRequested = pyqtSignal(int, int)
 
     def __init__(self, sm):
         super().__init__()
@@ -58,6 +59,7 @@ class GPTListWidget(KitScrollArea):
         item.selected.connect(self._on_item_selected)
         item.deleteRequested.connect(self.deleteItem)
         item.pinRequested.connect(self.pin_chat)
+        item.moveToFolderRequested.connect(self.moveToFolderRequested.emit)
         chat_id = chat.id
         self._items[chat_id] = item
         self._layout.addWidget(item)
@@ -69,8 +71,13 @@ class GPTListWidget(KitScrollArea):
         self.sort_chats()
 
     def delete_item(self, chat_id):
-        self._items[chat_id].setParent(None)
+        if chat_id not in self._items:
+            return
+        self._layout.deleteWidget(self._items[chat_id])
         self._items.pop(chat_id)
+
+    def clear(self):
+        self._layout.clear()
 
     def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
         super().resizeEvent(a0)
@@ -105,6 +112,7 @@ class GPTListWidgetItem(KitLayoutButton):
     selected = pyqtSignal(int)
     deleteRequested = pyqtSignal(int)
     pinRequested = pyqtSignal(int)
+    moveToFolderRequested = pyqtSignal(int, int)
 
     def __init__(self, sm, chat: GPTChat):
         super().__init__()
@@ -189,6 +197,10 @@ class GPTListWidgetItem(KitLayoutButton):
             case ContextMenu.UNPIN:
                 self.chat.pinned = False
                 self.pinRequested.emit(self._chat_id)
+            case ContextMenu.TO_ARCHIVE:
+                self.moveToFolderRequested.emit(self.chat.id, 1)
+            case ContextMenu.FROM_ARCHIVE:
+                self.moveToFolderRequested.emit(self.chat.id, 0)
 
     def _on_clicked(self, flag):
         if not flag:
@@ -201,6 +213,8 @@ class ContextMenu(KitMenu):
     DELETE = 0
     PIN = 1
     UNPIN = 2
+    TO_ARCHIVE = 3
+    FROM_ARCHIVE = 4
 
     def __init__(self, parent, chat):
         super().__init__(parent)
@@ -216,6 +230,13 @@ class ContextMenu(KitMenu):
         else:
             action = self.addAction(KitLocaleString.pin, 'custom-pin')
             action.triggered.connect(lambda: self.set_action(ContextMenu.PIN))
+
+        if self._chat.folder != 1:
+            action = self.addAction(KitLocaleString.to_archive, 'line-archive')
+            action.triggered.connect(lambda: self.set_action(ContextMenu.TO_ARCHIVE))
+        else:
+            action = self.addAction(KitLocaleString.from_archive, 'line-archive')
+            action.triggered.connect(lambda: self.set_action(ContextMenu.FROM_ARCHIVE))
 
     def set_action(self, action):
         self.action = action
