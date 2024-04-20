@@ -44,7 +44,7 @@ _DARK = KitTheme({
 
 THEMES = {
     'light_blue': KitTheme({
-        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3F76BF, stop:1 #3B97CF)',
+        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4A8BE0, stop:1 #45B1F2)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#3B97CF', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#3B97CF', '#222222'),
@@ -52,7 +52,7 @@ THEMES = {
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#3B97CF', '#222222'),
     }, inherit=_LIGHT),
     'light_green': KitTheme({
-        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #377D2A, stop:1 #72B238)',
+        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4BAB39, stop:1 #9AF04B)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#67A132', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#67A132', '#222222'),
@@ -68,7 +68,7 @@ THEMES = {
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#F23C18', '#222222'),
     }, inherit=_LIGHT),
     'light_pink': KitTheme({
-        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C25EBD, stop:1 #C086C2)',
+        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #D467CE, stop:1 #E19DE3)',
                                   text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#C25EBD', '#222222'),
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#C25EBD', '#222222'),
@@ -76,14 +76,12 @@ THEMES = {
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#C25EBD', '#222222'),
     }, inherit=_LIGHT),
     'light_orange': KitTheme({
-        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C9650C, stop:1 #E38710)',
+        'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ED8E14, stop:1 #E39612)',
                                   text='#222222'),
-        'GptMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3A3A3, stop:1 #E0E0E0)',
-                                 text='#222222'),
         'Main': KitPalette('#FFFFFF', '#DFE1E5', '#E37412', '#222222'),
-        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#E37412', '#222222'),
-        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#E37412', '#222222'),
-        'Border': KitPalette('#BFC0C2', '#A6A7A8', '#E37412', '#222222'),
+        'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#ED8E14', '#222222'),
+        'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#ED8E14', '#222222'),
+        'Border': KitPalette('#BFC0C2', '#A6A7A8', '#ED8E14', '#222222'),
     }, inherit=_LIGHT),
 
     'dark_blue': KitTheme({

@@ -38,15 +38,11 @@ class GPTListWidget(KitScrollArea):
         self._on_item_selected(chat_id)
 
     def sort_chats(self):
-        for el in self._items.values():
-            el.setParent(None)
+        self._layout.clear()
         items = sorted(self._items.values(), key=lambda item: item.chat.get_sort_key(), reverse=True)
         for el in items:
             self._layout.addWidget(el)
             el.update_name()
-
-    def move_to_top(self, chat_id):
-        self.sort_chats()
 
     def update_item_name(self, chat_id):
         self._items[chat_id].update_name()

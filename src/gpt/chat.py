@@ -220,7 +220,6 @@ class GPTChat:
                 role, content, replys, replied_count, deleted, ctime) 
                 VALUES (?, ?, ?, 0, 0, {t})""", (role, content, struct.pack(f'{len(reply)}q', *reply)))
         message_id = self._db.cursor.lastrowid
-        self.utime = t
 
         for mid in reply:
             mes = self.get_message(mid)

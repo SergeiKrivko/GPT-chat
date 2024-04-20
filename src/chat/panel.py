@@ -53,7 +53,7 @@ class ChatPanel(KitHBoxLayout):
         self._button_add.size = 36
         self._button_add.border = 0
         self._button_add.main_palette = 'Bg'
-        self._button_add.clicked.connect(lambda: self._new_chat())
+        self._button_add.clicked.connect(self._new_chat)
         top_layout.addWidget(self._button_add)
 
         layout = KitHBoxLayout()
@@ -152,8 +152,8 @@ class ChatPanel(KitHBoxLayout):
         if chat.id == self._last_chat:
             self._list_widget.select(chat.id)
 
-    def _new_chat(self, chat_type=GPTChat.SIMPLE):
-        self._chat_manager.new_chat(chat_type)
+    def _new_chat(self):
+        self._chat_manager.new_chat()
 
     def _add_chat(self, chat, no_sort=False):
         self.chats[chat.id] = chat
@@ -161,7 +161,7 @@ class ChatPanel(KitHBoxLayout):
         chat_widget = ChatWidget(self.sm, self._chat_manager, self._um, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
-        chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
+        chat_widget.updated.connect(self._list_widget.sort_chats)
         self.addWidget(chat_widget, 2)
         self.chat_widgets[chat.id] = chat_widget
 

@@ -28,6 +28,8 @@ class Firebase:
         self._user_token = ""
         self._authorized = False
 
+        self._session = aiohttp.ClientSession()
+
         self.expires_in = 0
 
     @property
@@ -43,37 +45,36 @@ class Firebase:
 
     async def _auth(self):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                        f"https://securetoken.googleapis.com/v1/token?key={config.FIREBASE_API_KEY}",
-                        data={
-                            'grant_type': 'refresh_token',
-                            'refresh_token': self._sm.get('user_refresh_token')
-                        }) as resp:
-                    if resp.ok:
-                        res = await resp.json()
-                        self._authorized = True
-                        self._user_token = res['access_token']
-                        self._sm.set('user_token', res['access_token'])
-                        self._sm.set('user_refresh_token', res['refresh_token'])
-                        self.expires_in = int(res['expires_in'])
+            async with self._session.post(
+                    f"https://securetoken.googleapis.com/v1/token?key={config.FIREBASE_API_KEY}",
+                    data={
+                        'grant_type': 'refresh_token',
+                        'refresh_token': self._sm.get('user_refresh_token')
+                    }) as resp:
+                if resp.ok:
+                    res = await resp.json()
+                    self._authorized = True
+                    self._user_token = res['access_token']
+                    self._sm.set('user_token', res['access_token'])
+                    self._sm.set('user_refresh_token', res['refresh_token'])
+                    self.expires_in = int(res['expires_in'])
 
-                    else:
-                        self._sm.set('user_token', '')
+                else:
+                    self._authorized = False
+                    self._sm.set('user_token', '')
 
         except aiohttp.ClientConnectionError:
-            pass
+            self._authorized = False
 
     def _url(self, key):
         return f"https://gpt-chat-bf384-default-rtdb.europe-west1.firebasedatabase.app/users/" \
                f"{self._user_id}/{key}.json?auth={self._user_token}"
 
     async def get(self, key: str):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._url(key)) as resp:
-                res = await resp.text()
-                if not resp.ok:
-                    raise FirebaseError(res)
+        async with self._session.get(self._url(key)) as resp:
+            res = await resp.text()
+            if not resp.ok:
+                raise FirebaseError(res)
         return json.loads(res)
 
     async def select(self, key, start=None, end=None):
@@ -82,27 +83,24 @@ class Firebase:
             url += f'&startAt="{str(start)}"'
         if end is not None:
             url += f'&endAt="{str(end)}"'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                res = await resp.text()
-                if not resp.ok:
-                    raise FirebaseError(res)
+        async with self._session.get(url) as resp:
+            res = await resp.text()
+            if not resp.ok:
+                raise FirebaseError(res)
         return json.loads(res)
 
     async def set(self, key: str, value):
-        async with aiohttp.ClientSession() as session:
-            async with session.put(self._url(key), data=json.dumps(value)) as resp:
-                res = await resp.text()
-                if not resp.ok:
-                    raise FirebaseError(res)
+        async with self._session.put(self._url(key), data=json.dumps(value)) as resp:
+            res = await resp.text()
+            if not resp.ok:
+                raise FirebaseError(res)
         return res
 
     async def delete(self, key):
-        async with aiohttp.ClientSession() as session:
-            async with session.delete(self._url(key)) as resp:
-                res = await resp.text()
-                if not resp.ok:
-                    raise FirebaseError(res)
+        async with self._session.delete(self._url(key)) as resp:
+            res = await resp.text()
+            if not resp.ok:
+                raise FirebaseError(res)
         return res
 
     def stream(self, key, handler):
@@ -340,18 +338,3 @@ class KeepAuthSession(Session):
 
     def rebuild_auth(self, prepared_request, response):
         pass
-
-
-# async def main():
-#     firebase = Firebase()
-#     firebase.set_user(
-#         "S9uRvTsAofUsKoWfmR82sceZf8B3",
-#         "eyJhbGciOiJSUzI1NiIsImtpZCI6IjY5NjI5NzU5NmJiNWQ4N2NjOTc2Y2E2YmY0Mzc3NGE3YWE5OTMxMjkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZ3B0LWNoYXQtYmYzODQiLCJhdWQiOiJncHQtY2hhdC1iZjM4NCIsImF1dGhfdGltZSI6MTcwNjQzNTcxMSwidXNlcl9pZCI6IlM5dVJ2VHNBb2ZVc0tvV2ZtUjgyc2NlWmY4QjMiLCJzdWIiOiJTOXVSdlRzQW9mVXNLb1dmbVI4MnNjZVpmOEIzIiwiaWF0IjoxNzA2NDQ2MzQ5LCJleHAiOjE3MDY0NDk5NDksImVtYWlsIjoic2VyZ2lrLmtyaXZrb0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsic2VyZ2lrLmtyaXZrb0BnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.ixUg24jDJf9P_cNdgR4RIib_afz1BH7zWofRd5Bi20htekbUruQFOA8LDmfjHwvjl1OprArL_saPbIqvFlGy4ghfzpvaIJt9hRyYLxG-ogez_N14lqgcI7YwVnTUdl31oa_mRVjVD7aFk0uviIJxtSrmyg7-WkPAx21YVzO8Pm12JGhXAgJRp12n_HMOVLyQcgBubk2z4ztWWE0zXPjohNPKeue0sY8_AeFpVc1NzVMJIEPphtnmcZN_9sBslASqvHSQ00SWmNvtuKMCVc1LeYigK-lyusXpIALf1_2QcYLpXSobwyqG4HDRIm76ZZZtiSWrWqp-M7Uv72NlK_6uug"
-#     )
-#     # res = await firebase.get('test')
-#     # print(res)
-#     firebase.stream('test')
-#
-#
-# if __name__ == '__main__':
-#     asyncio.run(main())
