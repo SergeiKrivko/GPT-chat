@@ -26,11 +26,26 @@ def wallpapers(name, width, height, color):
                                    'copies': copies, 'color': color})
 
 
+def gradient(width, height, color):
+    return f"""
+<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="{width}" height="{height}" fill="url(#paint0_linear_51_3434)"/>
+    <defs>
+        <linearGradient id="paint0_linear_51_3434" x1="{width}" y1="{height}" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stop-color="{color}" stop-opacity="0"/>
+            <stop offset="1" stop-color="{color}" stop-opacity="0.8"/>
+        </linearGradient>
+    </defs>
+</svg>
+"""
+
+
 class WallpaperWidget(KitVBoxLayout):
     def __init__(self):
         super().__init__()
         self._wallpaper = None
         self._pixmap = None
+        self._gradient = None
         self._painter = QPainter()
 
     def set_wallpaper(self, name):
@@ -48,12 +63,18 @@ class WallpaperWidget(KitVBoxLayout):
         svg = wallpapers(self._wallpaper, self.width(), self.height(), self._tm.palette('Chat').text).encode('utf-8')
         self._pixmap = QPixmap.fromImage(QImage.fromData(svg))
 
+        svg = gradient(self.width(), self.height(), self._tm.palette('Chat').main).encode('utf-8')
+        with open('bg.svg', 'bw') as f:
+            f.write(svg)
+        self._gradient = QPixmap.fromImage(QImage.fromData(svg))
+
     def paintEvent(self, a0):
         super().paintEvent(a0)
         if not self._pixmap:
             return
         self._painter.begin(self)
         self._painter.drawPixmap(0, 0, self._pixmap)
+        self._painter.drawPixmap(0, 0, self._gradient)
         self._painter.end()
 
     def _apply_theme(self):

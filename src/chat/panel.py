@@ -254,6 +254,7 @@ class ChatPanel(KitHBoxLayout):
         if self.width() > 550:
             self._separator.show()
             self.set_list_hidden(False)
+            self._chats_layout.show()
             if self.current is not None:
                 self.chat_widgets[self.current].set_top_hidden(True)
             else:
@@ -262,10 +263,12 @@ class ChatPanel(KitHBoxLayout):
         elif self.current is not None:
             self._separator.hide()
             self.set_list_hidden(True)
+            self._chats_layout.show()
             self.chat_widgets[self.current].set_top_hidden(False)
         else:
             self._separator.hide()
             self._no_chat_widget.hide()
+            self._chats_layout.hide()
             self.set_list_hidden(False)
             self._main_layout.setMaximumWidth(10000)
 
