@@ -50,6 +50,7 @@ THEMES = {
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#3B97CF', '#222222'),
         'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#3B97CF', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#3B97CF', '#222222'),
+        'Chat': KitPalette('#FFFFFF', text='#347AEB'),
     }, inherit=_LIGHT),
     'light_green': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4BAB39, stop:1 #9AF04B)',
@@ -58,6 +59,7 @@ THEMES = {
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#67A132', '#222222'),
         'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#67A132', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#67A132', '#222222'),
+        'Chat': KitPalette('#FFFFFF', text='#5DD63C'),
     }, inherit=_LIGHT),
     'light_red': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F23C18, stop:1 #F26149)',
@@ -66,6 +68,7 @@ THEMES = {
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#F23C18', '#222222'),
         'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#F23C18', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#F23C18', '#222222'),
+        'Chat': KitPalette('#FFFFFF', text='#D63A32'),
     }, inherit=_LIGHT),
     'light_pink': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #D467CE, stop:1 #E19DE3)',
@@ -74,6 +77,7 @@ THEMES = {
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#C25EBD', '#222222'),
         'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#C25EBD', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#C25EBD', '#222222'),
+        'Chat': KitPalette('#FFFFFF', text='#D670CF'),
     }, inherit=_LIGHT),
     'light_orange': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ED8E14, stop:1 #E39612)',
@@ -82,6 +86,7 @@ THEMES = {
         'Bg': KitPalette('#D0D8DB', '#A8A9AB', '#ED8E14', '#222222'),
         'Menu': KitPalette('#C4CBCF', '#9DA3A6', '#ED8E14', '#222222'),
         'Border': KitPalette('#BFC0C2', '#A6A7A8', '#ED8E14', '#222222'),
+        'Chat': KitPalette('#FFFFFF', text='#D68322'),
     }, inherit=_LIGHT),
 
     'dark_blue': KitTheme({
@@ -91,6 +96,7 @@ THEMES = {
         'Bg': KitPalette('#141517', '#4E5157', '#264773', '#F0F0F0'),
         'Menu': KitPalette('#1F2024', '#4E5157', '#264773', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#264773', '#F0F0F0'),
+        'Chat': KitPalette('#2B2D30', text='#4F54A6'),
     }, inherit=_DARK),
     'dark_green': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #24521C, stop:1 #489632)',
@@ -99,6 +105,7 @@ THEMES = {
         'Bg': KitPalette('#141517', '#4E5157', '#306E25', '#F0F0F0'),
         'Menu': KitPalette('#1F2024', '#4E5157', '#306E25', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#306E25', '#F0F0F0'),
+        'Chat': KitPalette('#2B2D30', text='#2E5E25'),
     }, inherit=_DARK),
     'dark_red': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B81818, stop:1 #B83D25)',
@@ -107,6 +114,7 @@ THEMES = {
         'Bg': KitPalette('#141517', '#4E5157', '#B81818', '#F0F0F0'),
         'Menu': KitPalette('#1F2024', '#4E5157', '#B81818', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#B81818', '#F0F0F0'),
+        'Chat': KitPalette('#2B2D30', text='#962C2C'),
     }, inherit=_DARK),
     'dark_pink': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #75165F, stop:1 #B32291)',
@@ -115,6 +123,7 @@ THEMES = {
         'Bg': KitPalette('#141517', '#4E5157', '#75165F', '#F0F0F0'),
         'Menu': KitPalette('#1F2024', '#4E5157', '#75165F', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#75165F', '#F0F0F0'),
+        'Chat': KitPalette('#2B2D30', text='#91478C'),
     }, inherit=_DARK),
     'dark_orange': KitTheme({
         'UserMessage': KitPalette('qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #B25B15, stop:1 #B28F32)',
@@ -123,5 +132,6 @@ THEMES = {
         'Bg': KitPalette('#141517', '#4E5157', '#B25B15', '#F0F0F0'),
         'Menu': KitPalette('#1F2024', '#4E5157', '#B25B15', '#F0F0F0'),
         'Border': KitPalette('#474747', '#595959', '#B25B15', '#F0F0F0'),
+        'Chat': KitPalette('#2B2D30', text='#8A5629'),
     }, inherit=_DARK),
 }

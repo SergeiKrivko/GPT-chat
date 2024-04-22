@@ -14,6 +14,7 @@ from src.chat.chat_icon import ChatIcon
 from src.chat.reply_widget import ReplyList
 from src.chat.search_widget import SearchWidget
 from src.chat.settings_window import ChatSettingsWindow
+from src.chat.wallpapers import WallpaperWidget
 from src.database import ChatManager
 from src.gpt import gpt
 from src.gpt.chat import GPTChat
@@ -34,8 +35,7 @@ class ChatWidget(KitVBoxLayout):
 
         self._bubbles = dict()
 
-        self.setContentsMargins(0, 0, 0, 0)
-        self.setSpacing(0)
+        self.main_palette = 'Transparent'
 
         self._top_layout = KitHBoxLayout()
         self._top_layout.main_palette = 'Bg'
@@ -82,6 +82,7 @@ class ChatWidget(KitVBoxLayout):
 
         self._scroll_area = ScrollArea()
         self._scroll_area.radius = 0
+        self._scroll_area.main_palette = 'Transparent'
         self.addWidget(self._scroll_area, 1)
         self._scroll_area.verticalScrollBar().valueChanged.connect(self._on_scrolled)
 
@@ -101,7 +102,7 @@ class ChatWidget(KitVBoxLayout):
         self._progress_marker.hide()
 
         text_bg_layout = KitVBoxLayout()
-        text_bg_layout.main_palette = 'Main'
+        text_bg_layout.main_palette = 'Transparent'
         text_bg_layout.radius = 0
         text_bg_layout.setContentsMargins(5, 5, 5, 5)
         self.addWidget(text_bg_layout)

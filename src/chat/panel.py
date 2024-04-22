@@ -10,6 +10,7 @@ from qasync import asyncSlot
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
 from src.chat.render_latex import rerender_all
+from src.chat.wallpapers import WallpaperWidget
 from src.gpt.check_providers import CheckModelsService
 from src.ui.settings_window import SettingsWindow
 from src.database import ChatManager
@@ -36,15 +37,12 @@ class ChatPanel(KitHBoxLayout):
 
         self._check_model_service = CheckModelsService(self.sm)
 
-        self.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.setContentsMargins(0, 0, 0, 0)
-
         self._main_layout = KitVBoxLayout()
         self.addWidget(self._main_layout, 1)
 
         top_layout = KitHBoxLayout()
         top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        top_layout.setContentsMargins(8, 8, 8, 8)
+        top_layout.padding = 8
         top_layout.setSpacing(4)
         self._main_layout.addWidget(top_layout)
 
@@ -94,9 +92,17 @@ class ChatPanel(KitHBoxLayout):
         self._separator = KitVSeparator()
         self.addWidget(self._separator)
 
+        layout = KitVBoxLayout()
+        layout.main_palette = 'Chat'
+        self.addWidget(layout)
+
+        self._chats_layout = WallpaperWidget()
+        layout.addWidget(self._chats_layout)
+        self._set_wallpaper(self.sm.get('wallpaper', 0))
+
         self._no_chat_widget = KitVBoxLayout()
         self._no_chat_widget.alignment = Qt.AlignmentFlag.AlignCenter
-        self.addWidget(self._no_chat_widget)
+        self._chats_layout.addWidget(self._no_chat_widget)
         self._no_chat_widget.addWidget(KitVBoxLayout(), 100)
 
         icon_widget = KitIconWidget('line-chatbubbles')
@@ -116,11 +122,19 @@ class ChatPanel(KitHBoxLayout):
         self.current = None
 
         self._settings_window = SettingsWindow(self, self.sm, self._chat_manager, self._um)
+        self._settings_window.wallpaperChanged.connect(self._set_wallpaper)
 
         try:
             self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
             self._last_chat = None
+
+    def _set_wallpaper(self, index):
+        if index == 0:
+            self._chats_layout.set_wallpaper(None)
+        else:
+            self._chats_layout.set_wallpaper(f'pattern-{index}')
+        self._chats_layout.update()
 
     def _open_settings(self):
         self._settings_window.exec()
@@ -171,7 +185,7 @@ class ChatPanel(KitHBoxLayout):
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(self._folders[chat.folder].sort_chats)
-        self.addWidget(chat_widget, 2)
+        self._chats_layout.addWidget(chat_widget, 2)
         self.chat_widgets[chat.id] = chat_widget
 
         self._folders[chat.folder].add_item(chat, no_sort=no_sort)
@@ -190,6 +204,7 @@ class ChatPanel(KitHBoxLayout):
     def _on_chat_deleted(self, chat_id):
         if chat_id == self.current:
             self._close_chat(chat_id)
+        self._chats_layout.deleteWidget(self.chat_widgets[chat_id])
         self.chat_widgets.pop(chat_id)
         for folder in self._folders:
             folder.delete_item(chat_id)

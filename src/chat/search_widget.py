@@ -15,7 +15,7 @@ class SearchWidget(KitVBoxLayout):
         self._chat = chat
 
         self.setContentsMargins(5, 5, 5, 5)
-        self.main_palette = 'Main'
+        self.main_palette = 'Transparent'
         self.radius = 0
 
         self._bubble = KitHBoxLayout()

@@ -286,7 +286,7 @@ class ChatManager(QObject):
     async def _update_chat_info(self, chat: GPTChat):
         await self._firebase.set(f'chats/{chat.remote_id}', {
             'id': chat.remote_id,
-            'type': chat.type,
+            'folder': chat.folder,
             'type_data': chat.type_data,
             'name': chat.name,
             'ctime': chat.ctime,

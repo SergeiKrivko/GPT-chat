@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFontMetrics, QIcon, QTextCursor, QFont
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QVBoxLayout, QSizePolicy, QLabel, QPushButton
+from PyQt6.QtGui import QFontMetrics, QTextCursor, QFont
+from PyQt6.QtWidgets import QWidget, QSizePolicy
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 from googletrans import LANGUAGES
@@ -40,7 +40,7 @@ class ChatBubble(KitHBoxLayout):
         self._bubble_widget = KitVBoxLayout()
         self._bubble_widget.main_palette = 'UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'
         self._bubble_widget.radius = 10
-        self._bubble_widget.border = 1
+        self._bubble_widget.border = 0
         self._bubble_widget.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed))
         self._bubble_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._bubble_widget.customContextMenuRequested.connect(
@@ -332,4 +332,3 @@ class TranslatedWidget(KitHBoxLayout):
 
     def set_src(self, src):
         self._label.text = getattr(KitLocaleString, f'translated_from_{src}')
-

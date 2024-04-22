@@ -8,6 +8,8 @@ from src.ui.update_manager import UpdateManager
 
 
 class SettingsWindow(KitDialog):
+    wallpaperChanged = pyqtSignal(int)
+
     def __init__(self, parent, sm, cm, um: UpdateManager):
         super().__init__(parent)
         self.sm = sm
@@ -38,10 +40,7 @@ class SettingsWindow(KitDialog):
         layout.setSpacing(6)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addWidget(layout)
-
-        label = KitLabel(KitLocaleString.theme_color + ':')
-        self._labels.append(label)
-        layout.addWidget(label)
+        layout.addWidget(KitLabel(KitLocaleString.theme_color + ':'))
 
         self._theme_box = KitComboBox(KitComboBoxItem(KitLocaleString.blue, 'blue'),
                                       KitComboBoxItem(KitLocaleString.green, 'green'),
@@ -51,6 +50,22 @@ class SettingsWindow(KitDialog):
         self._theme_box.setCurrentIndex(['blue', 'green', 'red', 'orange', 'pink'].index(self.sm.get('theme', 'blue')))
         self._theme_box.currentValueChanged.connect(self._on_theme_changed)
         layout.addWidget(self._theme_box)
+
+        layout = KitHBoxLayout()
+        layout.setSpacing(6)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        main_layout.addWidget(layout)
+        layout.addWidget(KitLabel(KitLocaleString.wallpaper + ':'))
+
+        self._wallpaper_box = KitComboBox(KitComboBoxItem(KitLocaleString.no_wallpaper, 0))
+        for i in range(1, 32):
+            if i not in [3, 11]:
+                self._wallpaper_box.addItem(KitComboBoxItem(getattr(KitLocaleString, f'wallpaper_{i}'), i))
+        self._wallpaper_box.setCurrentValue(int(self.sm.get('wallpaper', 0)))
+        self._wallpaper_box.currentValueChanged.connect(self._on_wallpaper_changed)
+        layout.addWidget(self._wallpaper_box)
+
+        main_layout.addWidget(KitHSeparator())
 
         self._update_widget = UpdateWidget()
         self._um.set_widget(self._update_widget)
@@ -84,6 +99,10 @@ class SettingsWindow(KitDialog):
         self.sm.set('theme', self._theme_box.currentValue())
         self.theme_manager.set_theme(f"{self.sm.get('dark_theme')}_{self.sm.get('theme')}")
         self._apply_theme()
+
+    def _on_wallpaper_changed(self):
+        self.sm.set('wallpaper', self._wallpaper_box.currentValue())
+        self.wallpaperChanged.emit(self._wallpaper_box.currentValue())
 
     def _on_lang_changed(self):
         self.sm.set('language', self.theme_manager.locale)
