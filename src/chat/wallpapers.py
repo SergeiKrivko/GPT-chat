@@ -64,8 +64,6 @@ class WallpaperWidget(KitVBoxLayout):
         self._pixmap = QPixmap.fromImage(QImage.fromData(svg))
 
         svg = gradient(self.width(), self.height(), self._tm.palette('Chat').main).encode('utf-8')
-        with open('bg.svg', 'bw') as f:
-            f.write(svg)
         self._gradient = QPixmap.fromImage(QImage.fromData(svg))
 
     def paintEvent(self, a0):
