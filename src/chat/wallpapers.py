@@ -78,4 +78,3 @@ class WallpaperWidget(KitVBoxLayout):
     def _apply_theme(self):
         super()._apply_theme()
         self._update_pixmap()
-

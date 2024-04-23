@@ -268,12 +268,15 @@ class GPTChat:
         return GPTMessage(self._db, self.id, message_id)
 
     def messages_to_prompt(self, reply: list[int] = tuple()):
-        messages = list(self.message_ids)
-        ind = min(len(messages), self.used_messages)
-        ids = messages[-ind:]
-        for el in reversed(reply):
-            if el not in ids:
-                ids.insert(0, el)
+        if reply:
+            ids = reply
+            ids.append(list(self.message_ids)[-1])
+        else:
+            messages = list(self.message_ids)
+            ind = min(len(messages), self.used_messages)
+            ids = messages[-ind:]
+
+        print(ids)
 
         return [GPTMessage(self._db, self.id, message_id).to_json() for message_id in ids]
 

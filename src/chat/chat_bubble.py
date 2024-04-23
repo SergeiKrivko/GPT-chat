@@ -288,6 +288,10 @@ class _FakeMessage:
     def content(self):
         return self._content
 
+    @content.setter
+    def content(self, value):
+        self._content = value
+
     def add_text(self, text):
         self._content += text
 
@@ -307,9 +311,6 @@ class _FakeMessage:
 class FakeBubble(ChatBubble):
     def __init__(self, sm, chat):
         super().__init__(sm, chat, _FakeMessage())
-
-    def set_theme(self):
-        super().set_theme()
 
 
 class TranslatedWidget(KitHBoxLayout):

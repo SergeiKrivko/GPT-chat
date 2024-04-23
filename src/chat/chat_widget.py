@@ -96,6 +96,10 @@ class ChatWidget(KitVBoxLayout):
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_layout.addWidget(self._scroll_layout)
 
+        self._fake_bubble = FakeBubble(self._sm, self._chat)
+        scroll_layout.addWidget(self._fake_bubble)
+        self._fake_bubble.hide()
+
         self._progress_marker = KitLabel(KitLocaleString.gpt_print)
         self._progress_marker.setContentsMargins(10, 0, 0, 0)
         scroll_layout.addWidget(self._progress_marker)
@@ -148,8 +152,6 @@ class ChatWidget(KitVBoxLayout):
         self._button_scroll.setParent(self._scroll_area)
 
         self.looper = None
-        self._last_bubble = None
-        self._last_message = None
         self._to_bottom = True
         self._last_maximum = 0
         self._want_to_scroll = None
@@ -190,18 +192,15 @@ class ChatWidget(KitVBoxLayout):
 
     def delete_message(self, message_id):
         bubble = self._bubbles.pop(message_id)
-        bubble.setParent(None)
+        self._scroll_layout.deleteWidget(bubble)
         bubble.disconnect()
         bubble.delete()
 
     def run_gpt(self, message):
         if message.role != 'user' or message.content != self._sending_message:
             return
-        if self._last_bubble:
-            self._bubbles.pop(self._last_bubble.message.id)
-            self._last_bubble.setParent(None)
-            self._last_bubble = None
         self._sending_message = None
+        self._fake_bubble.message.content = ''
 
         messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
         for el in self._reply_list.messages:
@@ -277,18 +276,14 @@ class ChatWidget(KitVBoxLayout):
             self._bubbles[bubble.message.id] = bubble
 
     def add_text(self, text):
-        if self._last_bubble is None:
-            self._last_bubble = FakeBubble(self._sm, self._chat)
-            self._add_bubble(self._last_bubble)
-        self._last_bubble.add_text(text)
+        if isinstance(self.looper, QThread) and not self.looper.isFinished():
+            self._fake_bubble.show()
+        self._fake_bubble.add_text(text)
 
     def finish_gpt(self):
-        if self._last_bubble:
-            bubble = self._last_bubble
-            self._last_bubble = None
-            bubble.setParent(None)
-            self._bubbles.pop(bubble.message.id)
-            self._cm.new_message(self._chat.id, 'assistant', bubble.message.content)
+        self._fake_bubble.hide()
+        if self._fake_bubble.message.content:
+            self._cm.new_message(self._chat.id, 'assistant', self._fake_bubble.message.content)
         self._progress_marker.hide()
 
     def _run_context_menu(self, pos):
@@ -361,7 +356,7 @@ class ChatWidget(KitVBoxLayout):
             for el in self._chat.drop_messages(self._bubbles[lst[ind]].message.id):
                 try:
                     bubble: ChatBubble = self._bubbles.pop(el.id)
-                    bubble.setParent(None)
+                    self._scroll_layout.deleteWidget(bubble)
                     bubble.delete()
                     bubble.disconnect()
                 except KeyError:
