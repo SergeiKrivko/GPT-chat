@@ -461,8 +461,12 @@ class _SignedScreen(KitVBoxLayout):
         super().__init__()
         self._sm = sm
 
-        self.setContentsMargins(20, 20, 20, 20)
-        self.setSpacing(5)
+        self.padding = 20
+        self.spacing = 5
+
+        icon_widget = KitIconWidget('solid-person-circle')
+        icon_widget.setFixedHeight(125)
+        self.addWidget(icon_widget)
 
         self._label = KitLabel()
         self._label.font_size = KitFont.Size.BIG

@@ -6,7 +6,7 @@ from src import config
 
 WIDTH = 1125
 HEIGHT = 2436
-SCALE = 5
+SCALE = 3
 
 
 def wallpapers(name, width, height, color):
@@ -22,7 +22,7 @@ def wallpapers(name, width, height, color):
                 copies.append(f'<use href="#mainLayer" transform="translate({x}, {y})"/>')
     copies = '\n        '.join(copies) + '\n        '
 
-    return eval(f'f"""{text}"""', {'width': width, 'height': height, 'scale': 5,
+    return eval(f'f"""{text}"""', {'width': width, 'height': height, 'scale': SCALE,
                                    'copies': copies, 'color': color})
 
 

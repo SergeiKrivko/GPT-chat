@@ -83,6 +83,7 @@ locale = KitLocale('ja', '日本語', {
     'archive': "アーカイブ",
     'to_archive': "アーカイブに移動",
     'from_archive': "アーカイブから戻る",
+    'sudo_required': "アプリケーションを更新するにはスーパーユーザー権限が必要です",
     'blue': "青",
     'green': "緑",
     'red': "赤",

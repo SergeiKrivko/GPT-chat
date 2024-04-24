@@ -14,7 +14,6 @@ from src.chat.chat_icon import ChatIcon
 from src.chat.reply_widget import ReplyList
 from src.chat.search_widget import SearchWidget
 from src.chat.settings_window import ChatSettingsWindow
-from src.chat.wallpapers import WallpaperWidget
 from src.database import ChatManager
 from src.gpt import gpt
 from src.gpt.chat import GPTChat

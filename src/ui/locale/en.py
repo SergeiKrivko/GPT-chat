@@ -83,6 +83,7 @@ locale = KitLocale('en', 'English', {
     'archive': "Archive",
     'to_archive': "Move to archive",
     'from_archive': "Return from archive",
+    'sudo_required': "Superuser rights are required to update the application",
     'blue': "Blue",
     'green': "Green",
     'red': "Red",

@@ -83,6 +83,7 @@ locale = KitLocale('zh-cn', '简体中文）', {
     'archive': "档案",
     'to_archive': "移至存档",
     'from_archive': "从存档返回",
+    'sudo_required': "更新应用程序需要超级用户权限",
     'blue': "蓝色的",
     'green': "绿色的",
     'red': "红色的",

@@ -83,6 +83,7 @@ locale = KitLocale('es', 'Español', {
     'archive': "Archivo",
     'to_archive': "Mover al archivo",
     'from_archive': "Volver del archivo",
+    'sudo_required': "Se requieren derechos de superusuario para actualizar la aplicación.",
     'blue': "Azul",
     'green': "Verde",
     'red': "Rojo",

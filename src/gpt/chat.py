@@ -276,8 +276,6 @@ class GPTChat:
             ind = min(len(messages), self.used_messages)
             ids = messages[-ind:]
 
-        print(ids)
-
         return [GPTMessage(self._db, self.id, message_id).to_json() for message_id in ids]
 
     def delete(self):
