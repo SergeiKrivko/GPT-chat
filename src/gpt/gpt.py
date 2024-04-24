@@ -1,6 +1,8 @@
 import json
 import os.path
 
+from g4f.client import Client
+
 from src.gpt.plugins import Plugin
 
 global g4f
@@ -32,7 +34,7 @@ def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
     if model is None or model == 'default':
         model = g4f.models.default
 
-    if model.startswith('__plugin_'):
+    elif model.startswith('__plugin_'):
         for el in plugins[model[9:]](messages, **kwargs):
             yield el
         return

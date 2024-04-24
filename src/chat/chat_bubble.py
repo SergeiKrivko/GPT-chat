@@ -3,13 +3,13 @@ from PyQt6.QtGui import QFontMetrics, QTextCursor, QFont
 from PyQt6.QtWidgets import QWidget, QSizePolicy
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
-from googletrans import LANGUAGES
 from qasync import asyncSlot
+from translatepy import Language
 
 from src.chat.render_latex import render_latex, delete_image
 from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
-from src.gpt.translate import async_translate, async_detect
+from src.gpt.translate import async_translate, async_detect, LANGUAGES
 
 
 class ChatBubble(KitHBoxLayout):
@@ -146,9 +146,9 @@ class ChatBubble(KitHBoxLayout):
     @asyncSlot()
     async def _translate_message(self, dest='ru'):
         res = await async_translate(self._text_edit.toMarkdown(), dest)
-        self._translated_widget.set_src(res.src)
+        self._translated_widget.set_src(res.source_language.alpha2)
         self._translated_widget.show()
-        self._set_html(res.text)
+        self._set_html(res.result)
 
     def _show_original_message(self):
         self._translated_widget.hide()
@@ -266,11 +266,11 @@ class ContextMenu(KitMenu):
     async def detect_lang(self, text):
         try:
             message_lang = await async_detect(text)
-            message_lang = message_lang.lang
+            message_lang = message_lang.result.alpha2
         except Exception:
             message_lang = None
 
-        if message_lang != self.theme_manager.locale:
+        if message_lang != Language(self.theme_manager.locale):
             action = self.addAction(KitLocaleString.translate_to_locale, 'custom-translate')
             action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, self.theme_manager.locale))
             self._apply_theme()

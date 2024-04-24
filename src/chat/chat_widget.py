@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import QApplication
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
     KitMenu, KitDialog
-from googletrans import LANGUAGES
 from qasync import asyncSlot
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
@@ -18,7 +17,7 @@ from src.database import ChatManager
 from src.gpt import gpt
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
-from src.gpt.translate import async_translate, async_detect
+from src.gpt.translate import async_translate, async_detect, LANGUAGES
 
 
 class ChatWidget(KitVBoxLayout):
@@ -303,7 +302,7 @@ class ChatWidget(KitVBoxLayout):
     @asyncSlot()
     async def translate(self, lang):
         res = await async_translate(self._text_edit.toPlainText(), lang)
-        self._text_edit.setText(res.text)
+        self._text_edit.setText(res.result)
 
     def scroll_to_message(self, message_id):
         if message_id not in self._bubbles:
@@ -490,7 +489,7 @@ class _SendMessageContextMenu(KitMenu):
     async def detect_lang(self, text):
         try:
             message_lang = await async_detect(text)
-            message_lang = message_lang.lang
+            message_lang = message_lang.result.alpha2
         except Exception:
             message_lang = None
 
