@@ -8,6 +8,7 @@ from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 from translatepy import Language
 
+from src.chat.image_viewer import ImageViewer
 from src.chat.input_area import ChatInputArea
 from src.gpt.text_extract import extract_text
 from src.settings_manager import SettingsManager
@@ -27,7 +28,9 @@ class ExtractTextDialog(KitDialog):
         main_layout = KitHBoxLayout()
         self.setWidget(main_layout)
 
-        self._image_label = KitLabel(self)
+        self._image_label = ImageViewer()
+        self._image_label.setFixedSize(500, 500)
+        self._image_label.main_palette = 'Bg'
         main_layout.addWidget(self._image_label)
 
         right_layout = KitVBoxLayout()
@@ -58,6 +61,7 @@ class ExtractTextDialog(KitDialog):
 
         self._text_area = ChatInputArea()
         self._text_area.hide()
+        self._text_area.max_height = 500 - 62
         right_layout.addWidget(self._text_area)
 
         buttons_layout = KitHBoxLayout()
@@ -99,17 +103,8 @@ class ExtractTextDialog(KitDialog):
 
     def _apply_pixmap(self):
         pixmap = QPixmap(self._file)
-        width, height = pixmap.width(), pixmap.height()
-        if pixmap.width() > ExtractTextDialog.IMAGE_MAX_WIDTH:
-            height = height * ExtractTextDialog.IMAGE_MAX_WIDTH / width
-            width = ExtractTextDialog.IMAGE_MAX_WIDTH
-        if height > ExtractTextDialog.IMAGE_MAX_HEIGHT:
-            width = width * ExtractTextDialog.IMAGE_MAX_HEIGHT / height
-            height = ExtractTextDialog.IMAGE_MAX_HEIGHT
-        pixmap = pixmap.scaled(int(width), int(height), Qt.AspectRatioMode.KeepAspectRatio,
-                               Qt.TransformationMode.SmoothTransformation)
-        self._image_label.setFixedSize(int(width), int(height))
-        self._text_area.max_height = int(height) - 62
+        self._image_label.setPixmap(pixmap)
+        # self._text_area.max_height = int(height) - 62
         self._image_label.setPixmap(pixmap)
 
     @asyncSlot()
