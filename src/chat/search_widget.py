@@ -56,6 +56,10 @@ class SearchWidget(KitVBoxLayout):
         self.__anim = None
         self._text_edit = QTextEdit()
 
+    def set_text(self, text: str):
+        self._line_edit.setText(text)
+        self._search()
+
     def _search(self):
         self._search_result.clear()
         substr = self._line_edit.text

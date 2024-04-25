@@ -203,6 +203,10 @@ class ChatBubble(KitHBoxLayout):
         cursor.setPosition(offset + length, QTextCursor.MoveMode.KeepAnchor)
         self._text_edit.setTextCursor(cursor)
 
+    @property
+    def selected_text(self):
+        return self._text_edit.textCursor().selectedText()
+
     def _apply_theme(self):
         super()._apply_theme()
         # palette = 'UserMessage' if self._side == ChatBubble.SIDE_RIGHT else 'GptMessage'

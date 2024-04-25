@@ -268,6 +268,9 @@ class ChatWidget(KitVBoxLayout):
 
     def _show_search(self):
         self._search_widget.setHidden(not self.search_active)
+        if self.search_active and isinstance(self._bubble_with_selected_text, ChatBubble) and \
+                self._bubble_with_selected_text.selected_text:
+            self._search_widget.set_text(self._bubble_with_selected_text.selected_text)
 
     def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._cm.delete_message(self._chat.id, bubble.message))
@@ -296,7 +299,7 @@ class ChatWidget(KitVBoxLayout):
     def _run_context_menu(self, pos):
         if not self._text_edit.toMarkdown():
             return
-        menu = _SendMessageContextMenu(self, self._text_edit.toMarkdown())
+        menu = _SendMessageContextMenu(self, self._sm, self._text_edit.toMarkdown())
         pos = self._button.mapToGlobal(pos)
         menu.move(pos - QPoint(206, menu.get_height()))
         menu.exec()
@@ -385,6 +388,12 @@ class ChatWidget(KitVBoxLayout):
 
     def _on_gpt_error(self, ex):
         KitDialog.danger(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
+
+    def keyPressEvent(self, a0):
+        if a0.key() == Qt.Key.Key_F and a0.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.show_search(True)
+        elif a0.key() == Qt.Key.Key_Escape and self.search_active:
+            self.show_search(False)
 
     def _set_tm(self, tm):
         super()._set_tm(tm)
