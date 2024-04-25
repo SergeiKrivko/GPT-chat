@@ -65,10 +65,11 @@ class SearchWidget(KitVBoxLayout):
         substr = self._line_edit.text
 
         if not substr.strip():
+            self._label.setText("")
             return
         substr = substr.lower()
         for message in self._chat.messages:
-            text: str = message.content.lower()
+            text: str = self._clear_latex(message.content.lower())
             self._text_edit.setMarkdown(text)
             text = self._text_edit.toPlainText()
 
@@ -82,6 +83,29 @@ class SearchWidget(KitVBoxLayout):
 
         self._current_selected = len(self._search_result) - 1
         self._select_text()
+
+    @staticmethod
+    def _clear_latex(text: str):
+        lst = []
+
+        text = text.replace('\\(', '\\[').replace('\\)', '\\]')
+        while '\\[' in text:
+            ind = text.index('\\[')
+            lst.append(text[:ind])
+            text = text[ind + 2:]
+
+            if '\\]' in text:
+                ind = text.index('\\]')
+                lst.append("⫘")
+                text = text[ind + 2:]
+
+        lst.append(text)
+
+        return ''.join(lst)
+
+    def set_focus(self):
+        self._line_edit.setFocus()
+        self._line_edit.selectAll()
 
     def _select_previous(self):
         if not self._search_result:

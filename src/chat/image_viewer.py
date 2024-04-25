@@ -14,6 +14,7 @@ class ImageViewer(KitScrollArea):
         self._pixmap = QPixmap()
 
         self._zoom = 1.0
+        self._pos = None
 
     def _apply_pixmap(self):
         if self.width() / self.height() > self._initial_pixmap.width() / self._initial_pixmap.height():
@@ -32,7 +33,7 @@ class ImageViewer(KitScrollArea):
         self._label.setFixedSize(self._pixmap.size())
 
     def zoom_in(self, pos: QPoint = None):
-        self._set_zoom(min(100.0, self._zoom * 1.5), pos)
+        self._set_zoom(min(32.0, self._zoom * 1.5), pos)
 
     def zoom_out(self, pos: QPoint = None):
         self._set_zoom(max(1.0, self._zoom / 1.5), pos)
@@ -56,6 +57,26 @@ class ImageViewer(KitScrollArea):
             self.zoom_in(a0.position())
         else:
             self.zoom_out(a0.position())
+
+    def mousePressEvent(self, a0):
+        if a0.button() == Qt.MouseButton.LeftButton:
+            self._pos = a0.position()
+        else:
+            super().mousePressEvent(a0)
+
+    def mouseReleaseEvent(self, a0):
+        if a0.button() == Qt.MouseButton.LeftButton:
+            self._pos = None
+        else:
+            super().mousePressEvent(a0)
+
+    def mouseMoveEvent(self, a0):
+        if self._pos:
+            self.scroll(int(self._pos.x() - a0.position().x()),
+                        int(self._pos.y() - a0.position().y()), animation=False)
+            self._pos = a0.position()
+        else:
+            super().mouseMoveEvent(a0)
 
     def setPixmap(self, pixmap: QPixmap):
         self._initial_pixmap = pixmap

@@ -268,9 +268,8 @@ class ChatWidget(KitVBoxLayout):
 
     def _show_search(self):
         self._search_widget.setHidden(not self.search_active)
-        if self.search_active and isinstance(self._bubble_with_selected_text, ChatBubble) and \
-                self._bubble_with_selected_text.selected_text:
-            self._search_widget.set_text(self._bubble_with_selected_text.selected_text)
+        if self.search_active:
+            self._search_widget.set_focus()
 
     def _add_bubble(self, bubble, index=None):
         bubble.deleteRequested.connect(lambda: self._cm.delete_message(self._chat.id, bubble.message))
@@ -322,8 +321,8 @@ class ChatWidget(KitVBoxLayout):
             if not self._chat.get_message(message_id).deleted:
                 self._want_to_scroll = message_id
                 self._load_messages(to_message=message_id)
-            return
-        self._scroll_area.scrollTo(y=self._bubbles[message_id].pos().y() - 5, animation=True)
+        else:
+            self._scroll_area.scrollTo(y=self._bubbles[message_id].pos().y() - 5, animation=True)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
@@ -392,6 +391,9 @@ class ChatWidget(KitVBoxLayout):
     def keyPressEvent(self, a0):
         if a0.key() == Qt.Key.Key_F and a0.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.show_search(True)
+            if self.search_active and isinstance(self._bubble_with_selected_text, ChatBubble) and \
+                    self._bubble_with_selected_text.selected_text:
+                self._search_widget.set_text(self._bubble_with_selected_text.selected_text)
         elif a0.key() == Qt.Key.Key_Escape and self.search_active:
             self.show_search(False)
 

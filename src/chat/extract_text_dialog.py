@@ -59,9 +59,10 @@ class ExtractTextDialog(KitDialog):
         spinner.width = 2
         self._spinner.addWidget(spinner)
 
-        self._text_area = ChatInputArea()
+        self._text_area = KitTextEdit()
+        self._text_area.main_palette = 'Bg'
+        self._text_area.border = 0
         self._text_area.hide()
-        self._text_area.max_height = 500 - 62
         right_layout.addWidget(self._text_area)
 
         buttons_layout = KitHBoxLayout()
