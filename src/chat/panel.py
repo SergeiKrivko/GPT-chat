@@ -181,7 +181,7 @@ class ChatPanel(KitHBoxLayout):
     def _add_chat(self, chat, no_sort=False):
         self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self._chat_manager, self._um, chat)
+        chat_widget = ChatWidget(self.sm, self._chat_manager, chat)
         chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
         chat_widget.updated.connect(self._folders[chat.folder].sort_chats)

@@ -1,15 +1,15 @@
 from time import sleep
+from uuid import uuid4
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QApplication
 from PyQtUIkit.themes.locale import KitLocaleString
-from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitTextEdit, \
-    KitMenu, KitDialog
+from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitMenu, KitDialog
 from qasync import asyncSlot
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
 from src.chat.chat_icon import ChatIcon
+from src.chat.extract_text_dialog import ExtractTextDialog
+from src.chat.input_area import ChatInputArea
 from src.chat.reply_widget import ReplyList
 from src.chat.search_widget import SearchWidget
 from src.chat.settings_window import ChatSettingsWindow
@@ -17,18 +17,18 @@ from src.database import ChatManager
 from src.gpt import gpt
 from src.gpt.chat import GPTChat
 from src.gpt.message import GPTMessage
-from src.gpt.translate import async_translate, async_detect, LANGUAGES
+from src.gpt.translate import translate, detect, LANGUAGES
+from src.settings_manager import SettingsManager
 
 
 class ChatWidget(KitVBoxLayout):
     buttonBackPressed = pyqtSignal(int)
     updated = pyqtSignal()
 
-    def __init__(self, sm, cm: ChatManager, um, chat: GPTChat):
+    def __init__(self, sm: SettingsManager, cm: ChatManager, chat: GPTChat):
         super().__init__()
         self._sm = sm
         self._cm = cm
-        self._um = um
         self._chat = chat
 
         self._bubbles = dict()
@@ -47,7 +47,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_back.main_palette = 'Bg'
         self._button_back.border = 0
         # self._button_back.setContentsMargins(3, 3, 3, 3)
-        self._button_back.clicked.connect(lambda: self.buttonBackPressed.emit(self._chat.id))
+        self._button_back.on_click = lambda: self.buttonBackPressed.emit(self._chat.id)
         self._top_layout.addWidget(self._button_back)
 
         self._icon_widget = ChatIcon(self._sm, self._chat)
@@ -61,7 +61,7 @@ class ChatWidget(KitVBoxLayout):
         self._button_search.main_palette = 'Bg'
         self._button_search.border = 0
         # self._button_search.setContentsMargins(3, 3, 3, 3)
-        self._button_search.clicked.connect(self._show_search)
+        self._button_search.on_click = self._show_search
         self._button_search.setCheckable(True)
         self._top_layout.addWidget(self._button_search)
 
@@ -103,6 +103,8 @@ class ChatWidget(KitVBoxLayout):
         scroll_layout.addWidget(self._progress_marker)
         self._progress_marker.hide()
 
+        self._extract_text_dialog = ExtractTextDialog(self, self._sm)
+
         text_bg_layout = KitVBoxLayout()
         text_bg_layout.main_palette = 'Transparent'
         text_bg_layout.radius = 0
@@ -123,6 +125,14 @@ class ChatWidget(KitVBoxLayout):
         bottom_layout = KitHBoxLayout()
         self._text_bubble.addWidget(bottom_layout)
 
+        # self._button_attach = KitIconButton("line-attach")
+        # self._button_attach.main_palette = 'Bg'
+        # self._button_attach.size = 30
+        # self._button_attach.border = 0
+        # self._button_attach.radius = 5
+        # self._button_attach.on_click = lambda: self._extract_text_dialog.exec()
+        # bottom_layout.addWidget(self._button_attach)
+
         self._text_edit = ChatInputArea()
         self._text_edit.placeholder_text = KitLocaleString.message_placeholder
         self._text_edit.returnPressed.connect(lambda: self.send_message())
@@ -135,7 +145,7 @@ class ChatWidget(KitVBoxLayout):
         self._button.radius = 5
         self._button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._button.customContextMenuRequested.connect(self._run_context_menu)
-        self._button.clicked.connect(lambda: self.send_message())
+        self._button.on_click = lambda: self.send_message()
         bottom_layout.addWidget(self._button)
 
         self._button_scroll = KitIconButton('line-chevron-down')
@@ -208,7 +218,6 @@ class ChatWidget(KitVBoxLayout):
         self.looper = Looper(messages, self._chat, model=self._chat.model, temperature=self._chat.temperature)
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
-        self._last_message = None
         self._progress_marker.show()
         self.looper.sendMessage.connect(self.add_text)
         self.looper.exception.connect(self._on_gpt_error)
@@ -301,7 +310,8 @@ class ChatWidget(KitVBoxLayout):
 
     @asyncSlot()
     async def translate(self, lang):
-        res = await async_translate(self._text_edit.toPlainText(), lang)
+        res = await self._sm.run_async(lambda: translate(self._text_edit.toPlainText(), lang),
+                                       f'translate-{self._chat.id}')
         self._text_edit.setText(res.result)
 
     def scroll_to_message(self, message_id):
@@ -361,7 +371,7 @@ class ChatWidget(KitVBoxLayout):
                     pass
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self, self._sm, self._cm, self._um, self._chat)
+        dialog = ChatSettingsWindow(self, self._sm, self._cm, self._chat)
         dialog.exec()
         dialog.save()
         self._name_label.text = self._chat.name if self._chat.name.strip() else KitLocaleString.default_chat_name
@@ -400,35 +410,6 @@ class Looper(QThread):
             self.exception.emit(ex)
 
 
-class ChatInputArea(KitTextEdit):
-    returnPressed = pyqtSignal()
-    resize = pyqtSignal(int)
-
-    def __init__(self):
-        super().__init__()
-        self.setFixedHeight(26)
-        self.textChanged.connect(self._on_text_changed)
-        self.main_palette = 'Bg'
-        self.border = 0
-
-        self._shift_pressed = False
-
-    def _on_text_changed(self):
-        height = self.verticalScrollBar().maximum()
-        if not height:
-            self.setFixedHeight(26)
-            height = self.verticalScrollBar().maximum()
-        self.setFixedHeight(min(300, self.height() + height))
-
-    def keyPressEvent(self, e: QKeyEvent) -> None:
-        modifiers = QApplication.keyboardModifiers()
-        if (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter) and \
-                modifiers != Qt.KeyboardModifier.ShiftModifier:
-            self.returnPressed.emit()
-        else:
-            super().keyPressEvent(e)
-
-
 class _ScrollWidget(KitVBoxLayout):
     resized = pyqtSignal()
 
@@ -464,10 +445,11 @@ class _SendMessageContextMenu(KitMenu):
     SEND_WITHOUT_REQUEST = 2
     TRANSLATE = 3
 
-    def __init__(self, parent, text=''):
+    def __init__(self, parent, sm: SettingsManager, text=''):
         super().__init__(parent)
         self.action = None
         self.data = None
+        self._sm = sm
         self.__height = 56 + 33
 
         action = self.addAction(KitLocaleString.send, 'line-send')
@@ -488,7 +470,7 @@ class _SendMessageContextMenu(KitMenu):
     @asyncSlot()
     async def detect_lang(self, text):
         try:
-            message_lang = await async_detect(text)
+            message_lang = await self._sm.run_async(lambda: detect(text), f'detect-{uuid4()}')
             message_lang = message_lang.result.alpha2
         except Exception:
             message_lang = None

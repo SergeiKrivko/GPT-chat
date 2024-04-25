@@ -47,6 +47,14 @@ class SettingsManager(QObject):
         thread.start()
         return thread
 
+    async def run_async(self, thread: QThread | Callable[[], Any], name: str):
+        thread = self.run_process(thread, name)
+        while thread.isRunning():
+            await asyncio.sleep(0.2)
+        if isinstance(thread, Looper):
+            return thread.res
+        return thread
+
     def _on_thread_finished(self, name, process):
         self._background_process_count -= 1
         if self._background_processes[name] == process:

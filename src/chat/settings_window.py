@@ -15,12 +15,11 @@ from src.ui.update_manager import UpdateManager
 
 
 class ChatSettingsWindow(KitDialog):
-    def __init__(self, parent, sm, cm, um: UpdateManager, chat: GPTChat):
+    def __init__(self, parent, sm, cm, chat: GPTChat):
         super().__init__(parent)
         self._chat = chat
         self.sm = sm
         self._cm = cm
-        self._um = um
         self.name = KitLocaleString.settings
         self.main_palette = 'Bg'
 

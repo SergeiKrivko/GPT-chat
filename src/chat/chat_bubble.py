@@ -9,7 +9,8 @@ from translatepy import Language
 from src.chat.render_latex import render_latex, delete_image
 from src.chat.reply_widget import ReplyList
 from src.gpt.message import GPTMessage
-from src.gpt.translate import async_translate, async_detect, LANGUAGES
+from src.gpt.translate import detect, LANGUAGES, translate_html
+from src.settings_manager import SettingsManager
 
 
 class ChatBubble(KitHBoxLayout):
@@ -23,7 +24,7 @@ class ChatBubble(KitHBoxLayout):
     scrollRequested = pyqtSignal(int)
     textSelectionChanged = pyqtSignal()
 
-    def __init__(self, sm, chat, message: GPTMessage):
+    def __init__(self, sm: SettingsManager, chat, message: GPTMessage):
         super().__init__()
         self._sm = sm
         self._chat = chat
@@ -123,7 +124,7 @@ class ChatBubble(KitHBoxLayout):
             delete_image(el)
 
     def run_context_menu(self, pos):
-        menu = ContextMenu(self, self)
+        menu = ContextMenu(self, self._sm)
         menu.move(pos)
         menu.exec()
         match menu.action:
@@ -145,10 +146,12 @@ class ChatBubble(KitHBoxLayout):
 
     @asyncSlot()
     async def _translate_message(self, dest='ru'):
-        res = await async_translate(self._text_edit.toMarkdown(), dest)
-        self._translated_widget.set_src(res.source_language.alpha2)
+        res = await self._sm.run_async(lambda: translate_html(self._text_edit.toHtml(), dest),
+                                       f'translate-{self._chat.id}')
+        source = await self._sm.run_async(lambda: detect(self._text_edit.toMarkdown()), f'detect-{self._chat.id}')
+        self._translated_widget.set_src(source.result.alpha2)
         self._translated_widget.show()
-        self._set_html(res.result)
+        self._text_edit.setHtml(res)
 
     def _show_original_message(self):
         self._translated_widget.hide()
@@ -225,10 +228,11 @@ class ContextMenu(KitMenu):
     TRANSLATE = 7
     SHOW_ORIGINAL = 8
 
-    def __init__(self, parent, bubble: ChatBubble):
+    def __init__(self, parent: ChatBubble, sm: SettingsManager):
         super().__init__(parent)
         self.action = None
         self.data = None
+        self._sm = sm
 
         action = self.addAction(KitLocaleString.reply, 'custom-reply')
         action.triggered.connect(lambda: self.set_action(ContextMenu.REPLY))
@@ -251,26 +255,28 @@ class ContextMenu(KitMenu):
 
         self.addSeparator()
 
-        if bubble.translated:
+        if parent.translated:
             action = self.addAction(KitLocaleString.show_original)
             action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
         menu = self.addMenu(KitLocaleString.translate_to, 'custom-translate')
-        for key in LANGUAGES:
-            action = menu.addAction(getattr(KitLocaleString, f'lang_{key}'))
+        languages = [(key, getattr(KitLocaleString, f'lang_{key}').get(parent.theme_manager)) for key in LANGUAGES]
+        languages.sort(key=lambda x: x[1])
+        for key, name in languages:
+            action = menu.addAction(name)
             action.triggered.connect(lambda x, lang=key: self.set_action(ContextMenu.TRANSLATE, lang))
 
-        self.detect_lang(bubble.message.content)
+        self.detect_lang(parent.message.content)
 
     @asyncSlot()
     async def detect_lang(self, text):
         try:
-            message_lang = await async_detect(text)
+            message_lang = await self._sm.run_async(lambda: detect(text), 'detect')
             message_lang = message_lang.result.alpha2
         except Exception:
             message_lang = None
 
-        if message_lang != Language(self.theme_manager.locale):
+        if message_lang != self.theme_manager.locale:
             action = self.addAction(KitLocaleString.translate_to_locale, 'custom-translate')
             action.triggered.connect(lambda: self.set_action(ContextMenu.TRANSLATE, self.theme_manager.locale))
             self._apply_theme()
@@ -331,5 +337,5 @@ class TranslatedWidget(KitHBoxLayout):
         self._button.clicked.connect(self.showOriginal.emit)
         self.addWidget(self._button)
 
-    def set_src(self, src):
+    def set_src(self, src, service=''):
         self._label.text = getattr(KitLocaleString, f'translated_from_{src}')

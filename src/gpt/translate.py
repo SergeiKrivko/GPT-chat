@@ -1,11 +1,7 @@
-import asyncio
-
-from translatepy import Translator as _Translator, Language
-from uuid import uuid4
+from translatepy import Translator as Translator
 
 from translatepy.models import TranslationResult, LanguageResult
-
-from src.settings_manager import SettingsManager
+from translatepy.translators import *
 
 
 LANGUAGES = {
@@ -116,46 +112,39 @@ LANGUAGES = {
 }
 
 
-class Translator:
-    def __init__(self):
-        self.sm: SettingsManager = None
-        self.translator = _Translator()
-
-    def init(self, sm):
-        self.sm = sm
-
-    def async_translate(self, text, dest='ru'):
-        return self.sm.run_process(lambda: self.translator.translate(text, dest), f'translate-{uuid4()}')
-
-    def async_detect(self, text):
-        return self.sm.run_process(lambda: self.translator.language(text), f'translate-{uuid4()}')
-
-
-_translator = Translator()
+SERVICES = {
+    'Google': GoogleTranslate,
+    'Google-v1': GoogleTranslateV1,
+    'Google-v2': GoogleTranslateV2,
+    'Yandex': YandexTranslate,
+    'Bing': BingTranslate,
+    'Microsoft': MicrosoftTranslate,
+    'Deepl': DeeplTranslate,
+    'Libre': LibreTranslate,
+    'Reverso': ReversoTranslate,
+    'MyMemory': MyMemoryTranslate,
+    'Translate.com': TranslateComTranslate,
+}
 
 
-def init(sm):
-    _translator.init(sm)
+_translator: Translator
+
+
+def set_service(service=None):
+    global _translator
+    if service:
+        _translator = Translator([SERVICES[service]])
+    else:
+        _translator = Translator()
 
 
 def translate(text, dest='ru') -> TranslationResult:
-    return _translator.translator.translate(text, dest)
+    return _translator.translate(text, dest)
 
 
-async def async_translate(text, dest='ru') -> TranslationResult:
-    looper = _translator.async_translate(text, dest=dest)
-    while not looper.isFinished():
-        await asyncio.sleep(0.2)
-    return looper.res
+def translate_html(text, dest='ru') -> str:
+    return _translator.translate_html(text, dest)
 
 
 def detect(text) -> LanguageResult:
-    return _translator.translator.language(text)
-
-
-async def async_detect(text) -> LanguageResult:
-    looper = _translator.async_detect(text)
-    while not looper.isFinished():
-        await asyncio.sleep(0.2)
-    return looper.res
-
+    return _translator.language(text)

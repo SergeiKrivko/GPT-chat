@@ -54,7 +54,7 @@ class MainWindow(KitMainWindow):
         self._chat_widget = ChatPanel(self.sm, self.chat_manager, self._update_manager)
         self.setCentralWidget(self._chat_widget)
 
-        translate.init(self.sm)
+        translate.set_service(self.sm.get('translator', None))
 
         self.__previous_size = (0, 0)
         self.__size = (0, 0)

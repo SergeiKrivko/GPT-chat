@@ -2,6 +2,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.themes.locale import KitLocaleString
 from PyQtUIkit.widgets import *
 
+import src.gpt.translate as translate
 from src.ui.patch_notes_dialog import PatchNotesDialog
 from src.ui.plugins_window import PluginsWindow
 from src.ui.update_manager import UpdateManager
@@ -83,6 +84,21 @@ class SettingsWindow(KitDialog):
         self._patch_notes_button.on_click = self._patch_notes_window.exec
         main_layout.addWidget(self._patch_notes_button)
 
+        main_layout.addWidget(KitHSeparator())
+
+        layout = KitHBoxLayout()
+        layout.spacing = 6
+        main_layout.addWidget(layout)
+        layout.addWidget(KitLabel(KitLocaleString.translator + ':'))
+
+        self._translator_box = KitComboBox()
+        layout.addWidget(self._translator_box)
+        self._translator_box.addItem(KitComboBoxItem(KitLocaleString.default, None))
+        for el in translate.SERVICES:
+            self._translator_box.addItem(el, el)
+        self._translator_box.setCurrentValue(self.sm.get('translator'))
+        self._translator_box.currentValueChanged.connect(self._on_translator_changed)
+
         self._plugins_button = KitButton(KitLocaleString.custom_providers)
         self._plugins_button.on_click = self._plugins_widow
         main_layout.addWidget(self._plugins_button)
@@ -103,6 +119,10 @@ class SettingsWindow(KitDialog):
     def _on_wallpaper_changed(self):
         self.sm.set('wallpaper', self._wallpaper_box.currentValue())
         self.wallpaperChanged.emit(self._wallpaper_box.currentValue())
+
+    def _on_translator_changed(self):
+        self.sm.set('translator', self._translator_box.currentValue())
+        translate.set_service(self._translator_box.currentValue())
 
     def _on_lang_changed(self):
         self.sm.set('language', self.theme_manager.locale)
