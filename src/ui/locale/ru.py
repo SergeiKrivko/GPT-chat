@@ -88,6 +88,7 @@ locale = KitLocale('ru', "Русский", {
     'cancel': "Отмена",
     'default': "По умолчанию",
     'translator': "Переводчик",
+    'language': "Язык",
 
     'blue': "Синий",
     'green': "Зеленый",

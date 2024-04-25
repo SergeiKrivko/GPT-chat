@@ -114,7 +114,7 @@ class ChatWidget(KitVBoxLayout):
         self._text_bubble = KitVBoxLayout()
         self._text_bubble.main_palette = 'Bg'
         self._text_bubble.radius = 8
-        self._text_bubble.setContentsMargins(5, 5, 5, 5)
+        self._text_bubble.padding = 5
         text_bg_layout.addWidget(self._text_bubble)
 
         self._reply_list = ReplyList(self._chat)
@@ -125,13 +125,13 @@ class ChatWidget(KitVBoxLayout):
         bottom_layout = KitHBoxLayout()
         self._text_bubble.addWidget(bottom_layout)
 
-        # self._button_attach = KitIconButton("line-attach")
-        # self._button_attach.main_palette = 'Bg'
-        # self._button_attach.size = 30
-        # self._button_attach.border = 0
-        # self._button_attach.radius = 5
-        # self._button_attach.on_click = lambda: self._extract_text_dialog.exec()
-        # bottom_layout.addWidget(self._button_attach)
+        self._button_attach = KitIconButton("line-attach")
+        self._button_attach.main_palette = 'Bg'
+        self._button_attach.size = 30
+        self._button_attach.border = 0
+        self._button_attach.radius = 5
+        self._button_attach.on_click = self._extract_text
+        bottom_layout.addWidget(self._button_attach)
 
         self._text_edit = ChatInputArea()
         self._text_edit.placeholder_text = KitLocaleString.message_placeholder
@@ -185,11 +185,11 @@ class ChatWidget(KitVBoxLayout):
                 self.scroll_to_message(self._want_to_scroll)
             self._want_to_scroll = None
 
-    def send_message(self, run_gpt=True):
-        if not ((text := self._text_edit.toPlainText()).strip()):
+    def send_message(self, run_gpt=True, text=None, data=None):
+        if not ((text := text or self._text_edit.toPlainText()).strip()):
             return
         self._sending_message = text if run_gpt else ''
-        self._cm.new_message(self._chat.id, 'user', text, tuple(self._reply_list.messages))
+        self._cm.new_message(self._chat.id, 'user', text, tuple(self._reply_list.messages), data=data)
         self._text_edit.setText("")
 
     def add_message(self, message):
@@ -377,6 +377,11 @@ class ChatWidget(KitVBoxLayout):
         self._name_label.text = self._chat.name if self._chat.name.strip() else KitLocaleString.default_chat_name
         self._icon_widget.update_icon()
         self._chat._db.commit()
+
+    def _extract_text(self):
+        if self._extract_text_dialog.exec():
+            self.send_message(True, text=self._extract_text_dialog.text,
+                              data={'extract_text_image': self._extract_text_dialog.path})
 
     def _on_gpt_error(self, ex):
         KitDialog.danger(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")

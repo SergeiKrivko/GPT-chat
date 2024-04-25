@@ -223,7 +223,7 @@ class ChatManager(QObject):
             await self._firebase.set(f'chats/{chat.remote_id}/utime', chat.utime)
 
     @asyncSlot()
-    async def new_message(self, chat_id: int, role, content, reply: list | tuple = tuple()):
+    async def new_message(self, chat_id: int, role, content, reply: list | tuple = tuple(), data=None):
         chat = self._database.get_chat(chat_id)
         message = chat.add_message(role, content, reply)
 

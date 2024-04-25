@@ -87,6 +87,7 @@ locale = KitLocale('zh-cn', '简体中文）', {
     'cancel': "消除",
     'default': "默认",
     'translator': "翻译",
+    'language': "语言",
     'blue': "蓝色的",
     'green': "绿色的",
     'red': "红色的",

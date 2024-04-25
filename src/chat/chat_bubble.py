@@ -260,7 +260,8 @@ class ContextMenu(KitMenu):
             action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_ORIGINAL))
 
         menu = self.addMenu(KitLocaleString.translate_to, 'custom-translate')
-        languages = [(key, getattr(KitLocaleString, f'lang_{key}').get(parent.theme_manager)) for key in LANGUAGES]
+        languages = [(key, getattr(KitLocaleString, f'lang_{key}').get(parent.theme_manager).capitalize())
+                     for key in LANGUAGES]
         languages.sort(key=lambda x: x[1])
         for key, name in languages:
             action = menu.addAction(name)

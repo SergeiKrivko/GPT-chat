@@ -87,6 +87,7 @@ locale = KitLocale('fr', 'Français', {
     'cancel': "Annulation",
     'default': "Défaut",
     'translator': "Traducteur",
+    'language': "Langue",
     'blue': "Bleu",
     'green': "Vert",
     'red': "Rouge",

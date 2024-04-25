@@ -214,7 +214,7 @@ class GPTChat:
     def model(self, model):
         self._db.cursor.execute(f"""UPDATE Chats SET model = ? WHERE id = {self._id}""", (model,))
 
-    def add_message(self, role: Literal['user', 'assistant', 'system'], content="", reply=tuple(), skip_event=False):
+    def add_message(self, role: Literal['user', 'assistant', 'system'], content="", reply=tuple(), data=None):
         t = time.time()
         self._db.cursor.execute(f"""INSERT INTO Messages{self._id} (
                 role, content, replys, replied_count, deleted, ctime) 

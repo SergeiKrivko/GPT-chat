@@ -87,6 +87,7 @@ locale = KitLocale('ja', '日本語', {
     'cancel': "キャンセル",
     'default': "デフォルト",
     'translator': "翻訳者",
+    'language': "言語",
     'blue': "青",
     'green': "緑",
     'red': "赤",
