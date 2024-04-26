@@ -65,6 +65,18 @@ class GPTChat:
                 count += len(mes.content)
                 yield mes
 
+    def load_message(self):
+        if self._first_message is None:
+            self._db.cursor.execute(f'SELECT id FROM Messages{self.id} WHERE deleted = 0 ORDER BY id DESC')
+        else:
+            self._db.cursor.execute(
+                f'SELECT id FROM Messages{self.id} WHERE deleted = 0 AND id < {self._first_message} ORDER BY id DESC')
+        res = self._db.cursor.fetchone()
+        if res is None:
+            return None
+        self._first_message = res[0]
+        return GPTMessage(self._db, self.id, res[0])
+
     def drop_messages(self, from_message):
         self._db.cursor.execute(
             f'SELECT id FROM Messages{self.id} WHERE deleted = 0 AND id < {from_message} AND '

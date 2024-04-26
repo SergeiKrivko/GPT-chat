@@ -204,7 +204,7 @@ class ChatPanel(KitHBoxLayout):
     def _on_chat_deleted(self, chat_id):
         if chat_id == self.current:
             self._close_chat(chat_id)
-        self._chats_layout.deleteWidget(self.chat_widgets[chat_id])
+        self._chats_layout.removeWidget(self.chat_widgets[chat_id])
         self.chat_widgets.pop(chat_id)
         for folder in self._folders:
             folder.delete_item(chat_id)

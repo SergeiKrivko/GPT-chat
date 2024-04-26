@@ -1,9 +1,11 @@
+import asyncio
 from time import sleep
 from uuid import uuid4
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPoint
 from PyQtUIkit.themes.locale import KitLocaleString
-from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitMenu, KitDialog
+from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitScrollArea, KitLabel, KitMenu, KitDialog, \
+    KitTextEdit
 from qasync import asyncSlot
 
 from src.chat.chat_bubble import ChatBubble, FakeBubble
@@ -31,7 +33,7 @@ class ChatWidget(KitVBoxLayout):
         self._cm = cm
         self._chat = chat
 
-        self._bubbles = dict()
+        self._bubbles: dict[str: ChatBubble] = dict()
 
         self.main_palette = 'Transparent'
 
@@ -162,28 +164,48 @@ class ChatWidget(KitVBoxLayout):
         self.looper = None
         self._to_bottom = True
         self._last_maximum = 0
-        self._want_to_scroll = None
         self._messages_is_loaded = False
-        self._loading_messages = False
+        self._loading_messages = None
         self._sending_message = None
         self._bubble_with_selected_text = None
 
-    def _load_messages(self, to_message=None):
-        self._loading_messages = True
+    @asyncSlot()
+    async def _load_messages(self):
+        self._loading_messages = operation_id = uuid4()
         self._messages_is_loaded = True
-        loader = MessageLoader(list(self._chat.load_messages(to_message=to_message)))
-        loader.messageLoaded.connect(self.insert_bubble)
-        loader.finished.connect(self._on_load_finished)
-        self._sm.run_process(loader, f"load-{self._chat.id}")
+        count = 0
 
-    def _on_load_finished(self):
-        self._loading_messages = False
-        if self._want_to_scroll is not None:
-            if isinstance(self._want_to_scroll, tuple):
-                self._select_text(*self._want_to_scroll)
-            else:
-                self.scroll_to_message(self._want_to_scroll)
-            self._want_to_scroll = None
+        while count < 5000 and self._loading_messages == operation_id:
+            message = self._chat.load_message()
+            if message is None:
+                break
+            self.insert_bubble(message)
+            count += len(message.content)
+            await asyncio.sleep(0.1)
+
+        if self._loading_messages == operation_id:
+            self._loading_messages = None
+
+    @asyncSlot()
+    async def _load_to_message(self, message_id, offset=None, length=None):
+        self._loading_messages = operation_id = uuid4()
+
+        while self._loading_messages == operation_id:
+            message = self._chat.load_message()
+            if message is None:
+                return
+            self.insert_bubble(message)
+            if message.id <= message_id:
+                if message.id == message_id:
+                    if offset is not None:
+                        self._select_text(message_id, offset, length)
+                    else:
+                        self.scroll_to_message(message_id)
+                break
+            await asyncio.sleep(0.1)
+
+        if self._loading_messages == operation_id:
+            self._loading_messages = None
 
     def send_message(self, run_gpt=True, text=None, data=None):
         if not ((text := text or self._text_edit.toPlainText()).strip()):
@@ -200,7 +222,7 @@ class ChatWidget(KitVBoxLayout):
 
     def delete_message(self, message_id):
         bubble = self._bubbles.pop(message_id)
-        self._scroll_layout.deleteWidget(bubble)
+        self._scroll_layout.removeWidget(bubble)
         bubble.disconnect()
         bubble.delete()
 
@@ -246,10 +268,12 @@ class ChatWidget(KitVBoxLayout):
     def _select_text(self, message_id, offset, length):
         if message_id in self._bubbles:
             self._bubbles[message_id].select_text(offset, length)
-            self.scroll_to_message(message_id)
+
+            text = self._bubbles[message_id].plain_text
+
+            self.scroll_to_message(message_id, offset / len(text))
         else:
-            self._want_to_scroll = message_id, offset, length
-            self._load_messages(to_message=message_id)
+            self._load_to_message(message_id, offset, length)
 
     def _on_text_selected(self, bubble):
         if self._bubble_with_selected_text == bubble:
@@ -316,13 +340,16 @@ class ChatWidget(KitVBoxLayout):
                                        f'translate-{self._chat.id}')
         self._text_edit.setText(res.result)
 
-    def scroll_to_message(self, message_id):
+    def scroll_to_message(self, message_id, part_of_message=0):
         if message_id not in self._bubbles:
             if not self._chat.get_message(message_id).deleted:
-                self._want_to_scroll = message_id
-                self._load_messages(to_message=message_id)
+                self._load_to_message(message_id)
         else:
-            self._scroll_area.scrollTo(y=self._bubbles[message_id].pos().y() - 5, animation=True)
+            bubble = self._bubbles[message_id]
+            y_top = bubble.pos().y() - 5
+            y = y_top + bubble.height() * part_of_message - self._scroll_area.height() // 2
+
+            self._scroll_area.scrollTo(y=max(y, y_top), animation=True)
 
     def _on_scrolled(self):
         self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
@@ -366,7 +393,7 @@ class ChatWidget(KitVBoxLayout):
             for el in self._chat.drop_messages(self._bubbles[lst[ind]].message.id):
                 try:
                     bubble: ChatBubble = self._bubbles.pop(el.id)
-                    self._scroll_layout.deleteWidget(bubble)
+                    self._scroll_layout.removeWidget(bubble)
                     bubble.delete()
                     bubble.disconnect()
                 except KeyError:
@@ -433,19 +460,6 @@ class _ScrollWidget(KitVBoxLayout):
         super().resizeEvent(a0)
         self.setContentsMargins(0, 7, 0, 7)
         self.resized.emit()
-
-
-class MessageLoader(QThread):
-    messageLoaded = pyqtSignal(GPTMessage)
-
-    def __init__(self, messages):
-        super().__init__()
-        self._messages = messages
-
-    def run(self) -> None:
-        for el in self._messages:
-            self.messageLoaded.emit(el)
-            sleep(0.1)
 
 
 class ScrollArea(KitScrollArea):

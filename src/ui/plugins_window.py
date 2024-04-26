@@ -80,7 +80,7 @@ class PluginsWindow(KitDialog):
             self._scroll_layout.addWidget(item)
 
     def _on_delete_requested(self, item: 'PluginItem'):
-        self._scroll_layout.deleteWidget(item)
+        self._scroll_layout.removeWidget(item)
         plugins.pop(item.plugin.name)
 
         self._cm.clear_model(f'__plugin_{item.plugin.name}')

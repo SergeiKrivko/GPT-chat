@@ -180,6 +180,10 @@ class ChatBubble(KitHBoxLayout):
         return self._message.content
 
     @property
+    def plain_text(self):
+        return self._text_edit.toPlainText()
+
+    @property
     def message(self):
         return self._message
 

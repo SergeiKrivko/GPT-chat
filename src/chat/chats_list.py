@@ -73,7 +73,7 @@ class GPTListWidget(KitScrollArea):
     def delete_item(self, chat_id):
         if chat_id not in self._items:
             return
-        self._layout.deleteWidget(self._items[chat_id])
+        self._layout.removeWidget(self._items[chat_id])
         self._items.pop(chat_id)
 
     def clear(self):
