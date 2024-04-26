@@ -195,6 +195,8 @@ class ChatPanel(KitHBoxLayout):
             self._add_chat(chats[i], no_sort=True)
         if chats:
             self._add_chat(chats[-1])
+        for el in self._folders:
+            el.sort_chats()
 
     def _delete_chat(self, chat_id):
         if chat_id == self.current:
