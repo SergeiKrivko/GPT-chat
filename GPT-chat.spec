@@ -11,7 +11,7 @@ lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/p
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[('icon.png', '.')],
+    binaries=[],
     datas=[
         (os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
         (os.path.abspath("assets"), "assets")

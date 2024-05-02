@@ -20,7 +20,7 @@ class MainWindow(KitMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
-        self.setWindowIcon(QIcon('icon.png'))
+        self.setWindowIcon(QIcon(f'{config.ASSETS_DIR}/icon.png'))
 
         self.theme_manager.add_icons(f'{config.ASSETS_DIR}/icons', 'custom')
 
