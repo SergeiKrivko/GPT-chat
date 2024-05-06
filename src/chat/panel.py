@@ -9,7 +9,7 @@ from qasync import asyncSlot
 
 from src.chat.chat_widget import ChatWidget
 from src.chat.chats_list import GPTListWidget
-from src.chat.render_latex import rerender_all
+from src.chat.bubble.render_latex import rerender_all
 from src.chat.wallpapers import WallpaperWidget
 from src.gpt.check_providers import CheckModelsService
 from src.ui.settings_window import SettingsWindow

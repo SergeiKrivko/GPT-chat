@@ -8,7 +8,8 @@ from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitSc
     KitTextEdit
 from qasync import asyncSlot
 
-from src.chat.chat_bubble import ChatBubble, FakeBubble
+from src.chat.bubble import ChatBubble
+from src.chat.bubble.fake import FakeBubble
 from src.chat.chat_icon import ChatIcon
 from src.chat.extract_text_dialog import ExtractTextDialog
 from src.chat.input_area import ChatInputArea

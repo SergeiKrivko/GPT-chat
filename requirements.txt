@@ -2,7 +2,7 @@ PyQt6~=6.6.1
 PyQt6-Qt6==6.6.2
 Pillow~=10.2.0
 appdirs~=1.4.4
-g4f~=0.3.0.7
+g4f~=0.3.0.10
 matplotlib~=3.8.0
 networkx~=3.2.1
 qasync~=0.27.1
@@ -11,5 +11,5 @@ Brotli~=1.1.0
 platformdirs~=4.2.0
 undetected-chromedriver~=3.5.5
 translatepy~=2.3
-PyQtUIkit==2.8.2
+PyQtUIkit==2.9.3
 google-auth-oauthlib~=1.2.0

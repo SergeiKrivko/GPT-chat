@@ -22,7 +22,7 @@ class MainWindow(KitMainWindow):
         self.setWindowTitle(config.APP_NAME)
         self.setWindowIcon(QIcon(f'{config.ASSETS_DIR}/icon.png'))
 
-        self.theme_manager.add_icons(f'{config.ASSETS_DIR}/icons', 'custom')
+        self.theme_manager.add_icons('assets.icons', 'custom')
 
         self.sm = SettingsManager()
         for key, item in THEMES.items():
