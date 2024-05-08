@@ -206,25 +206,30 @@ class TextArea(KitVBoxLayout):
         self.clear()
         self._last_part = None
         for line in text.splitlines():
-            self._new_line(line)
+            self._new_line(line + '\n')
 
-    def add_text(self, text):
-        for line in text.splitlines():
+    def add_text(self, text: str):
+        lines = text.splitlines()
+        for i in range(len(lines) - 1):
+            lines[i] += '\n'
+        if text.endswith('\n'):
+            lines[-1] += '\n'
+        for line in lines:
             self._new_line(line)
 
     def _new_line(self, line):
         if line.startswith('```'):
             if isinstance(self._last_part, _CodePart):
-                self._last_part.add(line + '\n')
+                self._last_part.add(line)
                 self._last_part = None
             else:
-                self._last_part = _CodePart(line + '\n')
+                self._last_part = _CodePart(line)
                 self._add(self._last_part)
         elif self._last_part is None:
-            self._last_part = _TextPart(line + '\n', self.__parse_latex)
+            self._last_part = _TextPart(line, self.__parse_latex)
             self._add(self._last_part)
         else:
-            self._last_part.add(line + '\n')
+            self._last_part.add(line)
 
     def plain_text(self):
         return '\n'.join(el.plain_text() for el in self.__parts)
