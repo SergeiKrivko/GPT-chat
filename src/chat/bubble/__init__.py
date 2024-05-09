@@ -119,6 +119,9 @@ class ChatBubble(KitHBoxLayout):
         for el in self._images:
             delete_image(el)
 
+    def clear_content(self):
+        self._text_area.clear()
+
     def run_context_menu(self, pos):
         menu = ContextMenu(self, self._sm)
         menu.move(pos)
@@ -131,7 +134,10 @@ class ChatBubble(KitHBoxLayout):
             case ContextMenu.COPY_AS_TEXT:
                 self._sm.copy_text(self._text_area.plain_text())
             case ContextMenu.COPY_AS_MARKDOWN:
-                self._sm.copy_text(self._message.content)
+                if self.translated:
+                    self._sm.copy_text(self._text_area.markdown())
+                else:
+                    self._sm.copy_text(self._message.content)
             # case ContextMenu.SELECT_ALL:
             #     self._text_edit.selectAll()
             #     self._text_edit.setFocus()

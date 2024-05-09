@@ -4,8 +4,8 @@ from uuid import uuid4
 
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QWidget, QHBoxLayout
-from PyQtUIkit.widgets import KitVBoxLayout, KitTextBrowser, KitScintilla, KitHBoxLayout, KitLabel, KitHSeparator, \
+from PyQt6.QtWidgets import QWidget
+from PyQtUIkit.widgets import KitVBoxLayout, KitScintilla, KitHBoxLayout, KitLabel, KitHSeparator, \
     KitIconButton, KitApplication, KitTextEdit
 
 from src.gpt.translate import translate_html, detect
@@ -32,6 +32,9 @@ class _Part(QObject):
         pass
 
     def plain_text(self):
+        return self.text
+
+    def markdown(self):
         return self.text
 
     def deselect(self):
@@ -83,6 +86,9 @@ class _TextPart(_Part):
         if self.widget.textCursor().hasSelection():
             self.textSelected.emit(self)
 
+    def markdown(self):
+        return self.widget.toMarkdown()
+
     def deselect(self):
         cursor = self.widget.textCursor()
         if cursor.hasSelection():
@@ -110,6 +116,8 @@ class _Scintilla(KitScintilla):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key.Key_F:
             self.parent().keyPressEvent(e)
+        else:
+            super().keyPressEvent(e)
 
 
 class _CodePart(_Part):
@@ -157,6 +165,9 @@ class _CodePart(_Part):
     def plain_text(self):
         return self._scintilla.text()
 
+    def markdown(self):
+        return f"```{self._scintilla.language}\n{self.text}\n```"
+
     def _on_selection_changed(self):
         if self._scintilla.selectedText():
             self.textSelected.emit(self)
@@ -190,7 +201,7 @@ class TextArea(KitVBoxLayout):
 
     def _add(self, part: _Part):
         self.__parts.append(part)
-        if isinstance(part,_CodePart):
+        if isinstance(part, _CodePart):
             self.__has_code = True
         part.textSelected.connect(self._on_text_selected)
         self.addWidget(part.widget)
@@ -233,6 +244,9 @@ class TextArea(KitVBoxLayout):
 
     def plain_text(self):
         return '\n'.join(el.plain_text() for el in self.__parts)
+
+    def markdown(self):
+        return '\n'.join(el.markdown() for el in self.__parts)
 
     def _on_text_selected(self, selected_part):
         for part in self.__parts:
@@ -288,4 +302,3 @@ class TextArea(KitVBoxLayout):
         super().resizeEvent(a0)
         for part in self.__parts:
             part.resize()
-

@@ -231,7 +231,7 @@ class ChatWidget(KitVBoxLayout):
         if message.role != 'user' or message.content != self._sending_message:
             return
         self._sending_message = None
-        self._fake_bubble.message.content = ''
+        self._fake_bubble.clear_content()
 
         messages = self._chat.messages_to_prompt(list(self._reply_list.messages))
         for el in self._reply_list.messages:
