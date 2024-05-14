@@ -32,3 +32,7 @@ class _FakeMessage:
 class FakeBubble(ChatBubble):
     def __init__(self, sm, chat):
         super().__init__(sm, chat, _FakeMessage())
+
+    def clear_content(self):
+        super().clear_content()
+        self.message.content = ''
