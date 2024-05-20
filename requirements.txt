@@ -3,7 +3,7 @@ PyQt6-Qt6==6.6.2
 PyQt6-QScintilla~=2.14.1
 Pillow~=10.2.0
 appdirs~=1.4.4
-g4f~=0.3.1.2
+g4f~=0.3.1.8
 nodriver
 matplotlib~=3.8.0
 networkx~=3.2.1
