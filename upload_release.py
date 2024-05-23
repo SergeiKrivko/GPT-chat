@@ -59,9 +59,7 @@ def get_system():
 
 
 def get_arch():
-    res = os.getenv('ARCH')
-    if not res:
-        return 'x86-64'
+    return os.getenv('ARCHITECTURE')
 
 
 def release_file():

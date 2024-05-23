@@ -42,6 +42,8 @@ jobs:
           options: /O+
 
       - name: Upload release
+        env:
+          ARCHITECTURE: x86-64
         run: |
           venv\Scripts\Activate.ps1
           python upload_release.py
@@ -100,6 +102,8 @@ jobs:
           desc: 'GPT-chat'
 
       - name: Upload release
+        env:
+          ARCHITECTURE: x86-64
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -147,6 +151,8 @@ jobs:
           srcdir: 'dist/GPT-chat.app'
 
       - name: Upload release
+        env:
+          ARCHITECTURE: x86-64
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -195,7 +201,7 @@ jobs:
 
       - name: Upload release
         env:
-          ARCH: arm64
+          ARCHITECTURE: arm64
         run: |
           source venv/bin/activate
           python3 upload_release.py
