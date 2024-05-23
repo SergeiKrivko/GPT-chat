@@ -59,7 +59,9 @@ def get_system():
 
 
 def get_arch():
-    return os.getenv('ARCH', 'amd64')
+    res = os.getenv('ARCH')
+    if not res:
+        return 'x86-64'
 
 
 def release_file():
@@ -96,8 +98,6 @@ def compress_to_zip(path):
 
 def main():
     # auth()
-    print(platform.machine())
-    print(platform.architecture())
     upload_file(compress_to_zip(release_file()), f"{get_system()}-{get_arch()}.zip")
     upload_version()
 

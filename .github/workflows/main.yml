@@ -28,7 +28,7 @@ jobs:
           SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
           venv\Scripts\Activate.ps1
-          python -c "print('ARCH = \'amd64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
+          python -c "print('ARCH = \'x86-64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
 
       - name: Fix Qt6, Update setup.iss
@@ -79,7 +79,7 @@ jobs:
           SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
           source venv/bin/activate
-          python -c "print('ARCH = \'amd64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
+          python -c "print('ARCH = \'x86-64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
           cd src
           python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
@@ -136,7 +136,7 @@ jobs:
           SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
           source venv/bin/activate
-          python -c "print('ARCH = \'amd64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
+          python -c "print('ARCH = \'x86-64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
           rm -rf dist/GPT-chat
 
@@ -183,7 +183,7 @@ jobs:
           SECRET_CONFIG: ${{ secrets.SECRET_CONFIG }}
         run: |
           source venv/bin/activate
-          python -c "print('ARCH = \'arm\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
+          python -c "print('ARCH = \'arm64\'\n' + __import__('os').getenv('SECRET_CONFIG'))" > src/secret_config.py
           pyinstaller --noconfirm GPT-chat.spec
           rm -rf dist/GPT-chat
 
@@ -195,7 +195,7 @@ jobs:
 
       - name: Upload release
         env:
-          ARCH: arm
+          ARCH: arm64
         run: |
           source venv/bin/activate
           python3 upload_release.py
