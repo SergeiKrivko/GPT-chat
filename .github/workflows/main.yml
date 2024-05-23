@@ -203,5 +203,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GPT-chat_macos.dmg
+          name: GPT-chat_macos_arm.dmg
           path: GPT-chat.dmg
