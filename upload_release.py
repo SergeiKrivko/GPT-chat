@@ -1,5 +1,6 @@
 import json
 import os.path
+import platform
 import sys
 import zipfile
 from urllib.parse import quote
@@ -57,6 +58,10 @@ def get_system():
             return 'macos'
 
 
+def get_arch():
+    return os.getenv('ARCH', 'amd64')
+
+
 def release_file():
     match sys.platform:
         case 'win32':
@@ -68,7 +73,7 @@ def release_file():
 
 
 def version_file():
-    return f"{get_system()}.json"
+    return f"{get_system()}-{get_arch()}.json"
 
 
 def upload_version():
@@ -91,7 +96,9 @@ def compress_to_zip(path):
 
 def main():
     # auth()
-    upload_file(compress_to_zip(release_file()), get_system())
+    print(platform.machine())
+    print(platform.architecture())
+    upload_file(compress_to_zip(release_file()), f"{get_system()}-{get_arch()}.zip")
     upload_version()
 
 

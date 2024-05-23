@@ -1,3 +1,4 @@
+import platform
 import sys
 
 from PyQtUIkit.widgets import KitAsyncApplication
