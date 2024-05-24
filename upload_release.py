@@ -76,9 +76,9 @@ def version_file():
     return f"{get_system()}-{get_arch()}.json"
 
 
-def upload_version():
+def upload_version(name=None):
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{version_file()}', safe='')}{f'?auth={token}' if token else ''}"
+          f"{quote(f'releases/{name or version_file()}', safe='')}{f'?auth={token}' if token else ''}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
         'size': os.path.getsize(release_file()),
@@ -98,6 +98,9 @@ def main():
     # auth()
     upload_file(compress_to_zip(release_file()), f"{get_system()}-{get_arch()}.zip")
     upload_version()
+    if get_arch() == 'x86-64':
+        upload_file(release_file(), f"{get_system()}.zip")
+        upload_version(f"{get_system()}.json")
 
 
 if __name__ == '__main__':

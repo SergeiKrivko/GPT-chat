@@ -6,12 +6,13 @@ try:
     SECRET_DATA = True
 except ImportError:
     SECRET_DATA = False
+    ARCH = 'x86-64'
 
 
 ORGANISATION_NAME = "SergeiKrivko"
 ORGANISATION_URL = "https://github.com/SergeiKrivko/GPT-chat"
 APP_NAME = "GPT-chat"
-APP_VERSION = "3.13.13"
+APP_VERSION = "3.13.14"
 
 FIREBASE_API_KEY = "AIzaSyA8z4fe_VedzuLvLQk9HnQTFnVeJDRdxkc"
 

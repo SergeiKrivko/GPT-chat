@@ -53,7 +53,7 @@ class UpdateManager(QObject):
 
     @property
     def release_zip_path(self):
-        return f"{self._sm.app_data_dir}/releases/{self.system}.zip"
+        return f"{self._sm.app_data_dir}/releases/{self.system}-{config.ARCH}.zip"
 
     @property
     def release_exe_path(self):
@@ -70,7 +70,7 @@ class UpdateManager(QObject):
 
     async def get_release_info(self):
         url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-              f"{quote(f'releases/{self.system}.json', safe='')}?alt=media"
+              f"{quote(f'releases/{self.system}-{config.ARCH}.json', safe='')}?alt=media"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 res = await resp.text()
@@ -85,7 +85,7 @@ class UpdateManager(QObject):
         if self.widget:
             self.widget.set_status(2)
         url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-              f"{quote(f'releases/{self.system}.zip', safe='')}?alt=media"
+              f"{quote(f'releases/{self.system}-{config.ARCH}.zip', safe='')}?alt=media"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if not resp.ok:
