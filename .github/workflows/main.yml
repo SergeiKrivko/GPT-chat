@@ -44,6 +44,8 @@ jobs:
       - name: Upload release
         env:
           ARCHITECTURE: x86-64
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           venv\Scripts\Activate.ps1
           python upload_release.py
@@ -104,6 +106,8 @@ jobs:
       - name: Upload release
         env:
           ARCHITECTURE: x86-64
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -153,6 +157,8 @@ jobs:
       - name: Upload release
         env:
           ARCHITECTURE: x86-64
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -202,6 +208,8 @@ jobs:
       - name: Upload release
         env:
           ARCHITECTURE: arm64
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           source venv/bin/activate
           python3 upload_release.py

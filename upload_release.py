@@ -1,6 +1,5 @@
 import json
 import os.path
-import platform
 import sys
 import zipfile
 from urllib.parse import quote
@@ -9,39 +8,40 @@ import requests
 
 from src import config
 
-
 token = ""
+headers = dict()
 
 
 def auth():
     rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
     r = requests.post(rest_api_url,
                       params={"key": config.FIREBASE_API_KEY},
-                      data=json.dumps({"email": os.getenv("AdminEmail"),
-                                       "password": os.getenv("AdminPassword"),
-                                       "returnSecureToken": True}))
+                      json={"email": os.getenv("ADMIN_EMAIL"),
+                            "password": os.getenv("ADMIN_PASSWORD"),
+                            "returnSecureToken": True})
     if not r.ok:
-        raise Exception("Can not authorized")
+        raise Exception("Can not authorize")
     res = r.json()
     global token
     token = res['idToken']
+    headers['Authorization'] = 'Bearer ' + token
 
 
 def upload_file(path, name=''):
     if name and '.' not in name:
         name += '.' + path.split('.')[-1]
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{name or os.path.basename(path)}', safe='')}{f'?auth={token}' if token else ''}"
+          f"{quote(f'releases/{name or os.path.basename(path)}', safe='')}"
     with open(path, 'br') as f:
-        resp = requests.post(url, data=f.read())
+        resp = requests.post(url, data=f.read(), headers=headers)
         if not resp.ok:
             raise Exception(resp.text)
 
 
 def download_file(name):
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{name}', safe='')}?alt=media{f'?auth={token}' if token else ''}"
-    resp = requests.get(url, stream=True)
+          f"{quote(f'releases/{name}', safe='')}?alt=media"
+    resp = requests.get(url, stream=True, headers=headers)
     if resp.ok:
         return b''.join(resp).decode('utf-8')
     else:
@@ -78,11 +78,11 @@ def version_file():
 
 def upload_version(name=None):
     url = f"https://firebasestorage.googleapis.com/v0/b/gpt-chat-bf384.appspot.com/o/" \
-          f"{quote(f'releases/{name or version_file()}', safe='')}{f'?auth={token}' if token else ''}"
+          f"{quote(f'releases/{name or version_file()}', safe='')}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
         'size': os.path.getsize(release_file()),
-    }, indent=2).encode('utf-8'))
+    }, indent=2).encode('utf-8'), headers=headers)
     if not resp.ok:
         raise Exception(resp.text)
 
@@ -95,12 +95,9 @@ def compress_to_zip(path):
 
 
 def main():
-    # auth()
+    auth()
     upload_file(compress_to_zip(release_file()), f"{get_system()}-{get_arch()}.zip")
     upload_version()
-    if get_arch() == 'x86-64':
-        upload_file(release_file(), f"{get_system()}.zip")
-        upload_version(f"{get_system()}.json")
 
 
 if __name__ == '__main__':
