@@ -1,12 +1,9 @@
 import json
 import os.path
 
-from g4f.client import Client
-
 from src.gpt.plugins import Plugin
 
 global g4f
-
 
 plugins = dict()
 
