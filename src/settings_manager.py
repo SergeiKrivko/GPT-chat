@@ -20,6 +20,11 @@ class SettingsManager(QObject):
         self._background_processes = dict()
         self._background_process_count = 0
 
+        self.logs_file = open(f'{self.app_data_dir}/logs.txt', 'w')
+
+    def __del__(self):
+        self.logs_file.close()
+
     @property
     def user_data_path(self):
         if not (uid := self.get('user_id')):
@@ -37,7 +42,7 @@ class SettingsManager(QObject):
 
     def run_process(self, thread: QThread | Callable[[], Any], name: str) -> QThread:
         if not isinstance(thread, QThread):
-            thread = Looper(thread)
+            thread = Looper(self, thread)
 
         if name in self._background_processes:
             self._background_processes[name].terminate()
@@ -72,10 +77,15 @@ class SettingsManager(QObject):
 
 
 class Looper(QThread):
-    def __init__(self, func):
+    def __init__(self, sm: SettingsManager, func):
         super().__init__()
         self._func = func
         self.res = None
+        self.sm = sm
 
     def run(self) -> None:
-        self.res = self._func()
+        try:
+            self.res = self._func()
+        except Exception as ex:
+            self.sm.logs_file.write(f'{ex.__class__.__name__}: {ex}\n')
+            self.sm.logs_file.flush()
