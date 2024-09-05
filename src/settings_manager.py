@@ -1,4 +1,7 @@
 import asyncio
+import os
+import sys
+from datetime import datetime
 from typing import Callable, Any
 
 import aiohttp
@@ -20,10 +23,16 @@ class SettingsManager(QObject):
         self._background_processes = dict()
         self._background_process_count = 0
 
-        self.logs_file = open(f'{self.app_data_dir}/logs.txt', 'w')
+        os.makedirs(f'{self.app_data_dir}/logs', exist_ok=True)
+        date = datetime.now().isoformat().replace(':', '_')
+        self.logs_out_file = open(f'{self.app_data_dir}/logs/{date}-stdout.txt', 'w')
+        self.logs_err_file = open(f'{self.app_data_dir}/logs/{date}-stderr.txt', 'w')
+        sys.stdout = self.logs_out_file
+        sys.stderr = self.logs_err_file
 
     def __del__(self):
-        self.logs_file.close()
+        self.logs_out_file.close()
+        self.logs_err_file.close()
 
     @property
     def user_data_path(self):
@@ -42,7 +51,7 @@ class SettingsManager(QObject):
 
     def run_process(self, thread: QThread | Callable[[], Any], name: str) -> QThread:
         if not isinstance(thread, QThread):
-            thread = Looper(self, thread)
+            thread = Looper(thread)
 
         if name in self._background_processes:
             self._background_processes[name].terminate()
@@ -77,15 +86,10 @@ class SettingsManager(QObject):
 
 
 class Looper(QThread):
-    def __init__(self, sm: SettingsManager, func):
+    def __init__(self, func):
         super().__init__()
         self._func = func
         self.res = None
-        self.sm = sm
 
     def run(self) -> None:
-        try:
-            self.res = self._func()
-        except Exception as ex:
-            self.sm.logs_file.write(f'{ex.__class__.__name__}: {ex}\n')
-            self.sm.logs_file.flush()
+        self.res = self._func()
